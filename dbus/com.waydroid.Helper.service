@@ -1,4 +1,4 @@
 [D-BUS Service]
 Name=com.waydroid.manager
-Exec=/usr/bin/waydroid-manager-service
+Exec=/usr/lib/waydroid-helper/service.py
 User=root
