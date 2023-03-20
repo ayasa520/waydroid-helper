@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=com.waydroid.manager
+Exec=/usr/bin/waydroid-manager-service
+User=root
