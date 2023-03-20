@@ -7,11 +7,17 @@
 ## Installation
 
 ```
+pip install -r requirements.txt
+
+# build qmltermwidget
 cd ~
 git clone --depth=1 https://github.com/ayasa520/qmltermwidget
 cd qmltermwidget && qmake && make -j 
 make install
 
+ln -sf /usr/lib/qt/qml/QMLTermWidget $(python -m site --user-site)/PyQt5/Qt5/qml
+
+# install waydroid-helper
 cd ~
 git clone --depth=1 https://github.com/ayasa520/waydroid-helper
 cd waydroid-helper && make install
