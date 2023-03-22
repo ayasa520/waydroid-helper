@@ -15,7 +15,10 @@ ListView {
 
     Connections {
         function onSessionStatusChanged(status) {
-            generalConfig.model.refreshEnabledByStatus(status);
+            if (status == 0)
+                generalConfig.model.disable(status);
+            else if (status == 2)
+                generalConfig.model.enable(status);
         }
 
         target: Status

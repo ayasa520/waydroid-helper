@@ -121,7 +121,6 @@ class GeneralCfgModel(QAbstractItemModel):
 
     @pyqtSlot(str, str)
     def loadData(self, key, value):
-        self.enabled = True
         for i in range(len(self.data_list)):
             if key == self.data_list[i]["key"]:
                 self.data_list[i]["old_val"] = self.data_list[i]["value"]
@@ -157,21 +156,13 @@ class GeneralCfgModel(QAbstractItemModel):
         roles[Qt.ItemDataRole.UserRole+1] = QByteArray(b"isEnabled")
         return roles
 
-    @pyqtSlot(int)
-    def refreshEnabledByStatus(self, flag):
-        if flag == 0:
-            self.enabled = False
-            for i in range(len(self.data_list)):
-                self.dataChanged.emit(self.index(i, 0), self.index(i, 0))
-        else:
-            def timeOut():
-                self.initData()
-                self.timer.stop()
-                self.timer.deleteLater()
-                for i in range(len(self.data_list)):
-                    self.dataChanged.emit(self.index(i, 0), self.index(i, 0))
+    @pyqtSlot()
+    def disable(self):
+        self.enabled = False
+        for i in range(len(self.data_list)):
+            self.dataChanged.emit(self.index(i, 0), self.index(i, 0))
 
-            self.timer=QTimer()
-            self.timer.start(3000)
-            self.timer.timeout.connect(timeOut)
-
+    @pyqtSlot()
+    def enable(self):
+        self.enabled = True
+        self.initData()

@@ -113,10 +113,10 @@ class BasePropModel(QAbstractItemModel):
         roles[Qt.ItemDataRole.UserRole+1] = QByteArray(b"isEnabled")
         return roles
 
-    @pyqtSlot(int)
-    def refreshEnabledByStatus(self, flag):
+    @pyqtSlot()
+    def disable(self):
         pass
 
-    @pyqtSlot(int)
-    def refreshEnabledByDbus(self, flag):
+    @pyqtSlot()
+    def enable(self):
         pass

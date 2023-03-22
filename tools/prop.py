@@ -30,23 +30,23 @@ class Prop(QObject):
         process.setProperty("key", key)
         process.setProperty("value", value)
         self.m_process_list.append(process)
-        process.readyReadStandardOutput.connect(self.read_output)
+        # process.readyReadStandardOutput.connect(self.read_output)
         process.finished.connect(self.on_finished)
         process.errorOccurred.connect(self.on_error)
         process.readyReadStandardError.connect(self.on_stderr)
         process.start("waydroid", args)
 
-    @pyqtSlot()
-    def read_output(self):
-        process: QProcess = self.sender()
-        if not process:
-            return
-        output = process.readAllStandardOutput()
-        method = process.property("method")
-        if method == "get_prop":
-            key = process.property("key")
-            value = str(output, encoding="utf-8").strip()
-            self.GetProp.emit(key, value)
+    # @pyqtSlot()
+    # def read_output(self):
+    #     process: QProcess = self.sender()
+    #     if not process:
+    #         return
+    #     output = process.readAllStandardOutput()
+    #     method = process.property("method")
+    #     if method == "get_prop":
+    #         key = process.property("key")
+    #         value = str(output, encoding="utf-8").strip()
+    #         self.GetProp.emit(key, value)
 
     @pyqtSlot()
     def on_finished(self):

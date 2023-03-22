@@ -175,7 +175,10 @@ Window {
                         if (status === 0) {
                             statusText.text = " Stopped";
                             statusText.color = "#756f5c";
-                        } else {
+                        } else if (status === 1) {
+                            statusText.text = " Starting";
+                            statusText.color = "#b9a43e";
+                        } else if (status === 2) {
                             statusText.text = " Running";
                             statusText.color = "#107c10";
                         }
