@@ -12,7 +12,6 @@ import sys
 import time
 import tty
 import signal
-import psutil
 
 
 # names imported directly for test mocking purposes
@@ -177,7 +176,6 @@ class PTY:
 
         pid, master_fd = self.fork()
         if pid != self.CHILD:
-            print("pid: ", pid)
             self.pids.append(pid)
         if pid == self.CHILD:
             os.execlp(argv[0], *argv)
@@ -199,11 +197,12 @@ class PTY:
         return waitpid(pid, 0)[1]
 
     def stop(self):
-        print("PID 有:", self.pids)
         for pid in self.pids[::-1]:
-            if psutil.pid_exists(pid):
+            try:
                 print("kill",pid)
                 os.kill(pid, signal.SIGTERM)
-                self.pids.remove(pid)
+            except:
+                pass
+            self.pids.remove(pid)
 
     

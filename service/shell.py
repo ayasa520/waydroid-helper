@@ -28,11 +28,10 @@ class ShellService:
             c = self.s.accept()
             received = c[0].recv(1024).decode().strip()
             if received == secret:
-                print("对象是", self.pty)
                 pty = PTY(c[0].fileno(), c[0].fileno(), c[0].fileno())
                 self.ptys.append(pty)
                 pty.spawn(["waydroid", "shell", "--", "sh", "-c",
-                           'export PATH=/data/adb/overlay_modules/bin:$PATH;[ ! -e /dev/tty ] && mknod -m 666 /dev/tty c 5 0;sh'])
+                           'export BOOTCLASSPATH=/apex/com.android.art/javalib/core-oj.jar:/apex/com.android.art/javalib/core-libart.jar:/apex/com.android.art/javalib/core-icu4j.jar:/apex/com.android.art/javalib/okhttp.jar:/apex/com.android.art/javalib/bouncycastle.jar:/apex/com.android.art/javalib/apache-xml.jar:/system/framework/framework.jar:/system/framework/ext.jar:/system/framework/telephony-common.jar:/system/framework/voip-common.jar:/system/framework/ims-common.jar:/system/framework/framework-atb-backward-compatibility.jar:/apex/com.android.conscrypt/javalib/conscrypt.jar:/apex/com.android.media/javalib/updatable-media.jar:/apex/com.android.mediaprovider/javalib/framework-mediaprovider.jar:/apex/com.android.os.statsd/javalib/framework-statsd.jar:/apex/com.android.permission/javalib/framework-permission.jar:/apex/com.android.sdkext/javalib/framework-sdkextensions.jar:/apex/com.android.wifi/javalib/framework-wifi.jar:/apex/com.android.tethering/javalib/framework-tethering.jar;export PATH=/data/adb/overlay_modules/bin:$PATH;[ ! -e /dev/tty ] && mknod -m 666 /dev/tty c 5 0;sh'])
             else:
                 c[0].sendall(b'Invalid secret.\n')
             c[0].close()
@@ -50,7 +49,6 @@ class ShellService:
         self.ptys.clear()
 
         for thread in self.threads:
-            print("join了")
             thread.join()
         self.threads.clear()
         print("stop")

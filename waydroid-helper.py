@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import os
 from PyQt5.QtWidgets import QApplication, QMessageBox
@@ -26,14 +28,14 @@ if __name__ == '__main__':
     semaphore.acquire()
     sharedMemory1 = QSharedMemory("waydroid_helper")
     isRunning = False
-    if (sharedMemory1.attach()):
+    if sharedMemory1.attach():
         isRunning = True
     else:
         sharedMemory1.create(1)
         isRunning = False
     semaphore.release()
 
-    if (isRunning):
+    if isRunning:
         qDebug("Application is alreadly running!")
         QMessageBox.information(
             None, "Warning", "Application is alreadly running!"
@@ -44,10 +46,16 @@ if __name__ == '__main__':
     engine = QQmlApplicationEngine()
     qmlRegisterType(TcpSocket, "Tcp", 1, 0, "Tcp")
     engine.rootContext().setContextProperty("BasePropModel", BasePropModel(engine))
-    engine.rootContext().setContextProperty("GeneralCfgModel", GeneralCfgModel(engine))
+    engine.rootContext().setContextProperty(
+        "GeneralCfgModel", GeneralCfgModel(engine))
     engine.rootContext().setContextProperty("App", App(engine))
     engine.rootContext().setContextProperty("Status", Status(engine))
-    engine.load(QtCore.QUrl.fromLocalFile("qml/main.qml"))
+
+    helper_dir = os.path.join(os.path.dirname(__file__), "waydroid-helper")
+    qml_dir = "qml/main.qml" if not os.path.islink(helper_dir) else os.path.join(
+        os.path.dirname(os.readlink(helper_dir)), "qml/main.qml")
+    print(helper_dir, qml_dir)
+    engine.load(QtCore.QUrl.fromLocalFile(qml_dir))
     window = engine.rootObjects()[0]
     window.show()
     sys.exit(app.exec_())

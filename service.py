@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import configparser
 import subprocess
 import threading
@@ -11,37 +12,41 @@ from gi.repository import GLib
 from service.shell import ShellService
 
 
-class NotPrivilegedException (dbus.DBusException):
-    _dbus_error_name = "org.waydroid.Helper.dbus.service.PolKit.NotPrivilegedException"
+# class NotPrivilegedException(dbus.DBusException):
+#     _dbus_error_name = "org.waydroid.Helper.dbus.service.PolKit.NotPrivilegedException"
 
-    def __init__(self, action_id, *p, **k):
-        self._dbus_error_name = self.__class__._dbus_error_name + "." + action_id
-        super(NotPrivilegedException, self).__init__(*p, **k)
+#     def __init__(self, action_id, *p, **k):
+#         self._dbus_error_name = self.__class__._dbus_error_name + "." + action_id
+#         super(NotPrivilegedException, self).__init__(*p, **k)
 
 
 class Waydroid(dbus.service.Object):
+
     def __init__(self, conn=None, object_path=None, bus_name=None):
         self.dbus_info = None
         self.polkit = None
         self.shell_service = ShellService()
         dbus.service.Object.__init__(self, conn, object_path, bus_name)
 
-    @dbus.service.method(dbus_interface="com.waydroid.HelperInterface", in_signature="s", out_signature="s", sender_keyword="sender", connection_keyword="conn")
+    @dbus.service.method(dbus_interface="com.waydroid.HelperInterface", in_signature="s", out_signature="s",
+                         sender_keyword="sender", connection_keyword="conn")
     def Shell(self, command, sender=None, conn=None):
         self._check_polkit_privilege(sender, conn, "com.waydroid.Helper.auth")
         return tools.helper.shell(str(command)).stdout.decode("utf-8")
 
-    @dbus.service.method(dbus_interface="com.waydroid.HelperInterface", out_signature="s", sender_keyword="sender", connection_keyword="conn")
+    @dbus.service.method(dbus_interface="com.waydroid.HelperInterface", out_signature="s", sender_keyword="sender",
+                         connection_keyword="conn")
     def StartShell(self, sender=None, conn=None):
         self._check_polkit_privilege(sender, conn, "com.waydroid.Helper.auth")
         secret = secrets.token_hex(8)
         self.shell_service.start(secret)
         return secret
 
-    @dbus.service.method(dbus_interface="com.waydroid.HelperInterface",in_signature="s", out_signature="s", sender_keyword="sender", connection_keyword="conn")
+    @dbus.service.method(dbus_interface="com.waydroid.HelperInterface", in_signature="s", out_signature="s",
+                         sender_keyword="sender", connection_keyword="conn")
     def InstallApk(self, apk, sender=None, conn=None):
         self._check_polkit_privilege(sender, conn, "com.waydroid.Helper.auth")
-        output= tools.helper.shell("pm install /data/waydroid_tmp/{}".format(apk))
+        output = tools.helper.shell("pm install /data/waydroid_tmp/{}".format(apk))
         tools.helper.shell("rm -f /data/waydroid_tmp/{}".format(apk))
         return output.stdout.decode("utf-8").strip()
 
@@ -50,12 +55,14 @@ class Waydroid(dbus.service.Object):
         if self.shell_service:
             self.shell_service.stop()
 
-    @dbus.service.method(dbus_interface="com.waydroid.HelperInterface", sender_keyword="sender", connection_keyword="conn")
+    @dbus.service.method(dbus_interface="com.waydroid.HelperInterface", sender_keyword="sender",
+                         connection_keyword="conn")
     def Unfreeze(self, sender=None, conn=None):
         self._check_polkit_privilege(sender, conn, "com.waydroid.Helper.auth")
         tools.helper.run(["waydroid", "container", "unfreeze"])
 
-    @dbus.service.method(dbus_interface="com.waydroid.HelperInterface", in_signature="ss", out_signature="b", sender_keyword="sender", connection_keyword="conn")
+    @dbus.service.method(dbus_interface="com.waydroid.HelperInterface", in_signature="ss", out_signature="b",
+                         sender_keyword="sender", connection_keyword="conn")
     def SetBaseProp(self, key, value, sender, conn):
         self._check_polkit_privilege(sender, conn, "com.waydroid.Helper.auth")
         try:
@@ -72,7 +79,7 @@ class Waydroid(dbus.service.Object):
             cfg.set(section="DEFAULT", option=key, value=value)
             with open("/var/lib/waydroid/waydroid_base.prop", "w") as f:
                 f.writelines(["{} = {}\n".format(k, v)
-                             for k, v in cfg.items("DEFAULT")])
+                              for k, v in cfg.items("DEFAULT")])
         except:
             raise
         return dbus.Boolean(True)
@@ -129,9 +136,10 @@ class Waydroid(dbus.service.Object):
         if self.p:
             print("kill了")
             self.p.kill()
-        self.p=None
+        self.p = None
 
-    @dbus.service.method(dbus_interface="com.waydroid.HelperInterface", sender_keyword="sender", connection_keyword="conn")
+    @dbus.service.method(dbus_interface="com.waydroid.HelperInterface", sender_keyword="sender",
+                         connection_keyword="conn")
     def Logcat(self, sender=None, conn=None):
         self._check_polkit_privilege(sender, conn, "com.waydroid.Helper.auth")
         cmd = ["waydroid", "logcat"]
@@ -147,8 +155,10 @@ class Waydroid(dbus.service.Object):
                 except:
                     break
             print("logcat over")
+
         trd = threading.Thread(target=run)
         trd.start()
+
 
 if __name__ == "__main__":
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)

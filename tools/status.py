@@ -58,7 +58,6 @@ class Status(QObject):
                 if "STOPPED" in line:
                     session_state = self.SessionState.STOPPED
                 elif "RUNNING" in line:
-                    print(self.bootComplete)
                     if self.bootComplete:
                         session_state = self.SessionState.RUNNING
                     else:

@@ -74,7 +74,6 @@ class Prop(QObject):
 
     @pyqtSlot()
     def on_error(self):
-        print("process error")
         process: QProcess = self.sender()
         print("ProcessError:", process.ProcessError())
         key = process.property("key")
