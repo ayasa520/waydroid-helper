@@ -1,5 +1,3 @@
-import time
-import dbus
 import os
 from PyQt5.QtNetwork import QTcpSocket, QHostAddress
 from PyQt5.QtDBus import QDBusConnection, QDBusInterface, QDBusPendingCallWatcher, QDBusPendingReply

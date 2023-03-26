@@ -39,7 +39,7 @@ ListView {
         width: generalConfig.width
         height: 60
         Component.onCompleted: {
-            if (edit.toLowerCase() === "true" || edit.toLowerCase() === "false") {
+            if (type==="bool") {
                 var component = buttonComponent;
                 var object = component.createObject(item);
                 layout.children.push(object);

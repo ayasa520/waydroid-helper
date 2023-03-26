@@ -46,8 +46,7 @@ if __name__ == '__main__':
     engine = QQmlApplicationEngine()
     qmlRegisterType(TcpSocket, "Tcp", 1, 0, "Tcp")
     engine.rootContext().setContextProperty("BasePropModel", BasePropModel(engine))
-    engine.rootContext().setContextProperty(
-        "GeneralCfgModel", GeneralCfgModel(engine))
+    engine.rootContext().setContextProperty("GeneralCfgModel", GeneralCfgModel(engine))
     engine.rootContext().setContextProperty("App", App(engine))
     engine.rootContext().setContextProperty("Status", Status(engine))
 

@@ -9,13 +9,12 @@
 from select import select
 import os
 import sys
-import time
 import tty
 import signal
 
 
 # names imported directly for test mocking purposes
-from os import close, waitpid, kill
+from os import close, waitpid
 from tty import setraw, tcgetattr, tcsetattr
 
 
@@ -199,7 +198,7 @@ class PTY:
     def stop(self):
         for pid in self.pids[::-1]:
             try:
-                print("kill",pid)
+                print("kill", pid)
                 os.kill(pid, signal.SIGTERM)
             except:
                 pass
