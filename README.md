@@ -1,6 +1,6 @@
 # waydroid-helper
 
-GUI applications developed with PyGObject and Libadwaita
+A GUI application developed with PyGObject and Libadwaita
 
 ## Install waydroid-helper
 
