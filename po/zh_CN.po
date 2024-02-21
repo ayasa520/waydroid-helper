@@ -1,0 +1,98 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-02-22 01:29+0800\n"
+"PO-Revision-Date: 2024-02-20 15:37+0800\n"
+"Last-Translator: Takanashi Rikka<ayasa0520@gmail.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: waydroid_helper/window.ui:44
+msgid "Waydroid session is stopped"
+msgstr "Waydroid session 已经停止"
+
+#: waydroid_helper/window.ui:45
+msgid "Stopped"
+msgstr "已停止"
+
+#: waydroid_helper/window.ui:60
+msgid "Start"
+msgstr "启动"
+
+#: waydroid_helper/window.ui:69
+msgid "Stop"
+msgstr "停止"
+
+#: waydroid_helper/window.ui:78
+msgid "Update configs"
+msgstr "更新配置"
+
+#: waydroid_helper/window.ui:86
+msgid "Home"
+msgstr "主页"
+
+#: waydroid_helper/window.ui:105
+msgid "Most settings require restarting the waydroid session to apply"
+msgstr "多数设置需要重启 waydroid session 后生效"
+
+#: waydroid_helper/window.ui:110
+msgid "Enable window integration with the desktop"
+msgstr "开启多窗口模式"
+
+#: waydroid_helper/window.ui:125
+msgid ""
+"Workaround for showing the cursor inmulti_windows mode on some compositors"
+msgstr "在某些合成器上多窗口模式模式显示光标的解决方法"
+
+#: waydroid_helper/window.ui:141
+msgid ""
+"Swaps the color space from RGBA to BGRA (only works with our patched mutter "
+"so far)"
+msgstr "将色彩空间从 RGBA 切换为 BGRA (目前仅适用于我们修补过的 mutter)"
+
+#: waydroid_helper/window.ui:158 waydroid_helper/window.ui:175
+msgid ""
+"Let the Waydroid container sleep (after the display timeout) when no apps "
+"are active"
+msgstr "当没有应用运行时使 waydroid container 休眠"
+
+msgid "Allow android direct access to hotplugged devices"
+msgstr "允许安卓系统直接访问热插拔设备"
+
+#: waydroid_helper/window.ui:199
+msgid "Settings"
+msgstr "设置"
+
+#: waydroid_helper/window.ui:221
+msgid "Applications"
+msgstr "应用"
+
+#: waydroid_helper/window.ui:243
+msgid "Extensions"
+msgstr "扩展"
+
+#: waydroid_helper/window.ui:261
+msgid "Menu"
+msgstr "菜单"
+
+#: waydroid_helper/window.ui:290
+msgid "_Preferences"
+msgstr "首选项"
+
+#: waydroid_helper/window.ui:294
+msgid "_Keyboard Shortcuts"
+msgstr "快捷键"
+
+#: waydroid_helper/window.ui:298
+msgid "_About waydroid-helper"
+msgstr "关于 waydroid-helper"
+
+msgid "Connected"
+msgstr "已连接"
+
+msgid "Waydroid session is running"
+msgstr "Waydroid session 正在运行"

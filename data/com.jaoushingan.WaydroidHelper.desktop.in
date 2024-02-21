@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=waydroid-helper
+Exec=waydroid-helper
+Icon=com.jaoushingan.WaydroidHelper
+Terminal=false
+Type=Application
+Categories=GTK;
+StartupNotify=true

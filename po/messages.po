@@ -1,0 +1,95 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-02-22 01:29+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: waydroid_helper/window.ui:44
+msgid "Waydroid session is stopped"
+msgstr ""
+
+#: waydroid_helper/window.ui:45
+msgid "Stopped"
+msgstr ""
+
+#: waydroid_helper/window.ui:60
+msgid "Start"
+msgstr ""
+
+#: waydroid_helper/window.ui:69
+msgid "Stop"
+msgstr ""
+
+#: waydroid_helper/window.ui:78
+msgid "Update configs"
+msgstr ""
+
+#: waydroid_helper/window.ui:86
+msgid "Home"
+msgstr ""
+
+#: waydroid_helper/window.ui:105
+msgid "Most settings require restarting the waydroid session to apply"
+msgstr ""
+
+#: waydroid_helper/window.ui:110
+msgid "Enable window integration with the desktop"
+msgstr ""
+
+#: waydroid_helper/window.ui:125
+msgid ""
+"Workaround for showing the cursor inmulti_windows mode on some compositors"
+msgstr ""
+
+#: waydroid_helper/window.ui:141
+msgid ""
+" Swaps the color space from RGBA to BGRA (only works with our patched mutter "
+"so far)"
+msgstr ""
+
+#: waydroid_helper/window.ui:158 waydroid_helper/window.ui:175
+msgid ""
+"Let the Waydroid container sleep (after the display timeout) when no apps "
+"are active"
+msgstr ""
+
+#: waydroid_helper/window.ui:199
+msgid "Settings"
+msgstr ""
+
+#: waydroid_helper/window.ui:221
+msgid "Applications"
+msgstr ""
+
+#: waydroid_helper/window.ui:243
+msgid "Extensions"
+msgstr ""
+
+#: waydroid_helper/window.ui:261
+msgid "Menu"
+msgstr ""
+
+#: waydroid_helper/window.ui:290
+msgid "_Preferences"
+msgstr ""
+
+#: waydroid_helper/window.ui:294
+msgid "_Keyboard Shortcuts"
+msgstr ""
+
+#: waydroid_helper/window.ui:298
+msgid "_About waydroid-helper"
+msgstr ""

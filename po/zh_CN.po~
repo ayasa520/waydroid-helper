@@ -1,0 +1,71 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-02-20 17:47+0800\n"
+"PO-Revision-Date: 2024-02-20 15:37+0800\n"
+"Last-Translator: Takanashi Rikka<ayasa0520@gmail.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/window.ui:25
+msgid "Menu"
+msgstr "菜单"
+
+#: src/window.ui:43
+msgid "Home"
+msgstr "主页"
+
+#: src/window.ui:121
+msgid "Start"
+msgstr "启动"
+
+msgid "Stop"
+msgstr "停止"
+
+#: src/window.ui:141
+msgid "Settings"
+msgstr "设置"
+
+#: src/window.ui:165
+msgid "Applications"
+msgstr "应用"
+
+#: src/window.ui:187
+msgid "Extensions"
+msgstr "扩展"
+
+#: src/window.ui:219
+msgid "_Preferences"
+msgstr "首选项"
+
+#: src/window.ui:223
+msgid "_Keyboard Shortcuts"
+msgstr "快捷键"
+
+#: src/window.ui:227
+msgid "_About waydroid-helper"
+msgstr "关于 waydroid-helper"
+
+#: src/window.py:18
+msgid "Connected"
+msgstr "已连接"
+
+#: waydroid_helper/window.ui:78
+msgid "Update configs"
+msgstr "更新配置"
+
+#: src/window.py:19
+msgid "Waydroid session is running"
+msgstr "Waydroid session 正在运行"
+
+#: src/window.py:22
+msgid "Stopped"
+msgstr "已停止"
+
+#: src/window.py:23
+msgid "Waydroid session is stopped"
+msgstr "Waydroid session 已经停止"

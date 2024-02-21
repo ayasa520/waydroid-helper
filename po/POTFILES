@@ -1,0 +1,6 @@
+data/com.jaoushingan.WaydroidHelper.desktop.in
+data/com.jaoushingan.WaydroidHelper.metainfo.xml.in
+data/com.jaoushingan.WaydroidHelper.gschema.xml
+src/main.py
+src/window.py
+src/window.ui
