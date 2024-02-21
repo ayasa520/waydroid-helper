@@ -19,3 +19,4 @@ __pycache__/
 meson-private/
 builddir/
 test.py
+.flatpak-builder
