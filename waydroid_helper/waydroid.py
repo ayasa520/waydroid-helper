@@ -2,7 +2,7 @@ import configparser
 import appdirs
 import os
 import threading
-from gi.repository import GObject, GLib
+from gi.repository import GObject, GLib, Gtk
 from typing import Optional
 from functools import partial
 from waydroid_helper.util.ProcessLauncher import ProcessLauncher

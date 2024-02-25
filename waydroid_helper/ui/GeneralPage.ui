@@ -1,0 +1,70 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.16.0 -->
+<interface>
+  <template class="GeneralPage" parent="GtkBox">
+    <property name="margin-bottom">12</property>
+    <property name="margin-end">40</property>
+    <property name="margin-start">40</property>
+    <property name="margin-top">12</property>
+    <property name="orientation">1</property>
+    <property name="spacing">12</property>
+    <child>
+      <object class="GtkLabel" id="title-label">
+        <property name="label">Waydroid</property>
+        <property name="xalign">0</property>
+        <style>
+          <class name="title-1" />
+        </style>
+      </object>
+    </child>
+    <child>
+      <!-- <object class="GtkButton" id="informer">
+                        <property name="sensitive">0</property>
+                        <property name="visible">0</property>
+                      </object> -->
+    </child>
+    <child>
+      <object class="GtkListBox">
+        <property name="selection-mode">0</property>
+        <child>
+          <object class="AdwActionRow" id="status">
+            <property name="subtitle" translatable="yes">Waydroid session is stopped</property>
+            <property name="title" translatable="yes">Stopped</property>
+            <child type="prefix">
+              <object class="GtkImage" id="status-image">
+                <property name="icon-name">vcs-conflicting</property>
+              </object>
+            </child>
+            <style>
+              <class name="card" />
+            </style>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkButton">
+        <property name="label" translatable="yes">Start</property>
+        <property name="sensitive" bind-source="stop-button"
+          bind-property="sensitive"
+          bind-flags="sync-create | invert-boolean">True</property>
+        <signal name="clicked" handler="on_start_button_clicked" />
+      </object>
+    </child>
+    <child>
+      <object class="GtkButton" id="stop-button">
+        <property name="label" translatable="yes">Stop</property>
+        <signal name="clicked" handler="on_stop_button_clicked" />
+        <style>
+          <class name="destructive-action" />
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkButton" id="updrade_button">
+        <property name="label" translatable="yes">Update configs</property>
+        <signal name="clicked" handler="on_start_upgrade_offline_clicked" />
+      </object>
+    </child>
+  </template>
+</interface>

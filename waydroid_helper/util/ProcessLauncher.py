@@ -36,7 +36,7 @@ class ProcessLauncher:
                 cancellable=self.cancellable,
                 callback=self._on_finished
             )
-            print('Started')
+            # print('Started')
             stream = p.get_stdout_pipe()
             self.data_stream = Gio.DataInputStream.new(stream)
             self.queue_read()
@@ -51,11 +51,11 @@ class ProcessLauncher:
         )
 
     def cancel_read(self):
-        print('Cancelling read')
+        # print('Cancelling read')
         self.cancellable.cancel()
 
     def _on_finished(self, proc, results):
-        print('Process finished')
+        # print('Process finished')
         if self.callback:
             # self.callback(self.stout)
             GLib.idle_add(self.callback, self.stdout)
@@ -71,7 +71,7 @@ class ProcessLauncher:
         try:
             line, length = source.read_line_finish_utf8(result)
             if line:
-                # print(line)
+                print(line)
                 self.stdout = f'{self.stdout}\n{line}'
         except GLib.GError as e:
             # print(e)
@@ -79,11 +79,11 @@ class ProcessLauncher:
         self.queue_read()
 
     def stop(self):
-        print('Stop')
+        # print('Stop')
         self.process.send_signal(signal.SIGTERM)
 
     def kill(self):
-        print('Kill')
+        # print('Kill')
         self.cancel_read()
         self.process.send_signal(signal.SIGKILL)
 
