@@ -15,19 +15,39 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
     switch_3 = Gtk.Template.Child()
     switch_4 = Gtk.Template.Child()
     switch_5 = Gtk.Template.Child()
+    switch_6 = Gtk.Template.Child()
+    switch_7 = Gtk.Template.Child()
+    switch_21 = Gtk.Template.Child()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.waydroid = Waydroid()
         self.waydroid.bind_property(
             "state", self.informer, "sensitive",  GObject.BindingFlags.SYNC_CREATE)
-        self.waydroid.connect(
+        self.waydroid.persist_props.connect(
             "notify::state", self.on_waydroid_state_changed)
-        self.waydroid.bind_property("multi_windows", self.switch_1,"active", GObject.BindingFlags.BIDIRECTIONAL)
-        self.waydroid.bind_property("cursor_on_subsurface", self.switch_2,"active", GObject.BindingFlags.BIDIRECTIONAL)
-        self.waydroid.bind_property("invert_colors", self.switch_3,"active", GObject.BindingFlags.BIDIRECTIONAL)
-        self.waydroid.bind_property("suspend", self.switch_4,"active", GObject.BindingFlags.BIDIRECTIONAL)
-        self.waydroid.bind_property("uevent", self.switch_5,"active", GObject.BindingFlags.BIDIRECTIONAL)
+        self.waydroid.bind_property(
+            "state", self.switch_1, "sensitive", GObject.BindingFlags.SYNC_CREATE)
+        self.waydroid.persist_props.bind_property(
+            "multi-windows", self.switch_1, "active", GObject.BindingFlags.BIDIRECTIONAL)
+        self.waydroid.persist_props.bind_property(
+            "cursor-on_subsurface", self.switch_2, "active", GObject.BindingFlags.BIDIRECTIONAL)
+        self.waydroid.persist_props.bind_property(
+            "invert-colors", self.switch_3, "active", GObject.BindingFlags.BIDIRECTIONAL)
+        self.waydroid.persist_props.bind_property(
+            "suspend", self.switch_4, "active", GObject.BindingFlags.BIDIRECTIONAL)
+        self.waydroid.persist_props.bind_property(
+            "uevent", self.switch_5, "active", GObject.BindingFlags.BIDIRECTIONAL)
+        self.waydroid.persist_props.bind_property(
+            "fake-touch", self.switch_6, "text", GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE)
+        self.waydroid.persist_props.bind_property(
+            "fake-wifi", self.switch_7, "text", GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE)
+
+        self.waydroid.privileged_props.bind_property(
+            "qemu-hw-mainkeys", self.switch_21, "active",
+            GObject.BindingFlags.BIDIRECTIONAL |
+            GObject.BindingFlags.SYNC_CREATE
+        )
 
     def on_waydroid_state_changed(self, w: Waydroid, param):
         if w.get_property("state"):
@@ -53,11 +73,8 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
     def on_start_upgrade_offline_clicked(self, button):
         print("sudo waydroid upgrade -o")
         self.waydroid.upgrade(True)
-
+    
     @Gtk.Template.Callback()
-    def on_switch_button_clicked(self, switch:Gtk.Switch, GParamBoolean):
-        key=switch.get_name()
-        if switch.get_active():
-            self.waydroid.set_prop(key, True)
-        else:
-            self.waydroid.set_prop(key, False)
+    def on_save_privileged_props(self, button):
+        print("save")
+        self.waydroid.save_privileged_props()

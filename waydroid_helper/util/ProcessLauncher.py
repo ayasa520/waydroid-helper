@@ -11,16 +11,20 @@ priority = GLib.PRIORITY_DEFAULT
 
 
 class ProcessLauncher:
+    alive = True
     stdout: str = ''
     callback: Callable[[str], Any]
     args: list
 
     def __init__(self, cmd: str, callback: Callable[[str], Any] = None, timeout: Optional[int] = None) -> None:
-        GLib.idle_add(self.run,    cmd)
+        GLib.idle_add(self.run, cmd)
         self.callback = callback
         if timeout:
             GLib.timeout_add_seconds(
-                priority=priority, interval=timeout, function=self.stop)
+                priority=priority,
+                interval=timeout,
+                function=self.stop
+            )
 
     def run(self, cmd):
         self.cancellable = Gio.Cancellable()
@@ -53,21 +57,24 @@ class ProcessLauncher:
     def _on_finished(self, proc, results):
         print('Process finished')
         if self.callback:
-            self.callback(self.stdout)
+            # self.callback(self.stout)
+            GLib.idle_add(self.callback, self.stdout)
         try:
             proc.wait_check_finish(results)
         except Exception as e:
             print(e)
+            self.alive = False
         self.cancel_read()
+        self.alive = False
 
     def _on_data(self, source, result):
         try:
             line, length = source.read_line_finish_utf8(result)
             if line:
-                print(line)
+                # print(line)
                 self.stdout = f'{self.stdout}\n{line}'
         except GLib.GError as e:
-            print(e)
+            # print(e)
             return
         self.queue_read()
 
@@ -81,7 +88,7 @@ class ProcessLauncher:
         self.process.send_signal(signal.SIGKILL)
 
 
-if __name__ == '__main__':
-    p = ProcessLauncher("waydroid status")
-    m = GLib.MainLoop()
-    m.run()
+# if __name__ == '__main__':
+#     p = ProcessLauncher("waydroid status")
+#     m = GLib.MainLoop()
+#     m.run()

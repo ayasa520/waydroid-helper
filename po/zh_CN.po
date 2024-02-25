@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-02-22 01:29+0800\n"
+"POT-Creation-Date: 2024-02-25 01:16+0800\n"
 "PO-Revision-Date: 2024-02-20 15:37+0800\n"
 "Last-Translator: Takanashi Rikka<ayasa0520@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -43,51 +43,63 @@ msgstr "多数设置需要重启 waydroid session 后生效"
 msgid "Enable window integration with the desktop"
 msgstr "开启多窗口模式"
 
-#: waydroid_helper/window.ui:125
-msgid ""
-"Workaround for showing the cursor inmulti_windows mode on some compositors"
+#: waydroid_helper/window.ui:124
+msgid "Workaround for showing the cursor inmulti_windows mode on some compositors"
 msgstr "在某些合成器上多窗口模式模式显示光标的解决方法"
 
-#: waydroid_helper/window.ui:141
-msgid ""
-"Swaps the color space from RGBA to BGRA (only works with our patched mutter "
-"so far)"
+#: waydroid_helper/window.ui:142
+msgid "Swaps the color space from RGBA to BGRA (only works with our patched mutter so far)"
 msgstr "将色彩空间从 RGBA 切换为 BGRA (目前仅适用于我们修补过的 mutter)"
 
-#: waydroid_helper/window.ui:158 waydroid_helper/window.ui:175
-msgid ""
-"Let the Waydroid container sleep (after the display timeout) when no apps "
-"are active"
-msgstr "当没有应用运行时使 waydroid container 休眠"
+#: waydroid_helper/window.ui:161
+msgid "Let the Waydroid container sleep (after the display timeout) when no apps are active"
+msgstr "当没有应用运行时使 waydroid 容器休眠"
 
+#: waydroid_helper/window.ui:180
 msgid "Allow android direct access to hotplugged devices"
 msgstr "允许安卓系统直接访问热插拔设备"
 
-#: waydroid_helper/window.ui:199
+#: waydroid_helper/window.ui:198
+msgid "fake touch"
+msgstr "虚拟触摸"
+
+#: waydroid_helper/window.ui:216
+msgid "fake WIFI"
+msgstr "虚拟 WIFI"
+
+#: waydroid_helper/window.ui:237
+msgid "Click the button on the right to apply the changes to this group's configuration"
+msgstr "点击右侧按钮应用本组配置修改"
+
+#: waydroid_helper/window.ui:242
+msgid "hide navbar"
+msgstr "隐藏导航栏"
+
+#: waydroid_helper/window.ui:259
 msgid "Settings"
 msgstr "设置"
 
-#: waydroid_helper/window.ui:221
+#: waydroid_helper/window.ui:283
 msgid "Applications"
 msgstr "应用"
 
-#: waydroid_helper/window.ui:243
+#: waydroid_helper/window.ui:305
 msgid "Extensions"
 msgstr "扩展"
 
-#: waydroid_helper/window.ui:261
+#: waydroid_helper/window.ui:323
 msgid "Menu"
 msgstr "菜单"
 
-#: waydroid_helper/window.ui:290
+#: waydroid_helper/window.ui:352
 msgid "_Preferences"
 msgstr "首选项"
 
-#: waydroid_helper/window.ui:294
+#: waydroid_helper/window.ui:356
 msgid "_Keyboard Shortcuts"
 msgstr "快捷键"
 
-#: waydroid_helper/window.ui:298
+#: waydroid_helper/window.ui:360
 msgid "_About waydroid-helper"
 msgstr "关于 waydroid-helper"
 
