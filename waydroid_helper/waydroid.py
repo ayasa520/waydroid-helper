@@ -10,11 +10,10 @@ from waydroid_helper.util.ProcessLauncher import ProcessLauncher
 
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
-CONFIG_DIR = os.environ.get(
-    "WAYDROID_CONFIG", "/var/lib/waydroid/waydroid.cfg")
+CONFIG_DIR = os.environ.get("WAYDROID_CONFIG", "/var/lib/waydroid/waydroid.cfg")
 
 
 class WaydroidState(enum.IntEnum):
@@ -28,24 +27,32 @@ class Waydroid(GObject.Object):
     state: GObject.Property = GObject.Property(type=object)
 
     class PersistProps(GObject.Object):
-        multi_windows:  GObject.Property = GObject.Property(
-            default=False, type=bool, nick="persist.waydroid.multi_windows")
+        multi_windows: GObject.Property = GObject.Property(
+            default=False, type=bool, nick="persist.waydroid.multi_windows"
+        )
         cursor_on_subsurface: GObject.Property = GObject.Property(
-            default=False, type=bool, nick="persist.waydroid.cursor_on_subsurface")
+            default=False, type=bool, nick="persist.waydroid.cursor_on_subsurface"
+        )
         invert_colors: GObject.Property = GObject.Property(
-            default=False, type=bool, nick="persist.waydroid.invert_colors")
+            default=False, type=bool, nick="persist.waydroid.invert_colors"
+        )
         suspend: GObject.Property = GObject.Property(
-            default=False, type=bool, nick="persist.waydroid.suspend")
+            default=False, type=bool, nick="persist.waydroid.suspend"
+        )
         uevent: GObject.Property = GObject.Property(
-            default=False, type=bool, nick="persist.waydroid.uevent")
+            default=False, type=bool, nick="persist.waydroid.uevent"
+        )
         fake_touch: GObject.Property = GObject.Property(
-            default="", type=str, nick="persist.waydroid.fake_touch")
+            default="", type=str, nick="persist.waydroid.fake_touch"
+        )
         fake_wifi: GObject.Property = GObject.Property(
-            default="", type=str, nick="persist.waydroid.fake_wifi")
+            default="", type=str, nick="persist.waydroid.fake_wifi"
+        )
 
     class PrivilegedProps(GObject.Object):
         qemu_hw_mainkeys: GObject.Property = GObject.Property(
-            default=0, type=int, nick="qemu.hw.mainkeys")
+            default=0, type=int, nick="qemu.hw.mainkeys"
+        )
 
     persist_props: PersistProps = PersistProps()
     privileged_props: PrivilegedProps = PrivilegedProps()
@@ -54,7 +61,7 @@ class Waydroid(GObject.Object):
 
     def on_persist_prop_changed(self, w, param):
         if isinstance(param.default_value, str):
-            value = self.persist_props.get_property(param.name) or "\'\'"
+            value = self.persist_props.get_property(param.name) or "''"
         elif isinstance(param.default_value, bool):
             if self.persist_props.get_property(param.name):
                 value = "true"
@@ -154,15 +161,14 @@ class Waydroid(GObject.Object):
             # print(name, output, type(self.persist_props.get_property(name)))
             self.persist_props.set_property(name, value)
             id = self.persist_props.connect(
-                f"notify::{name}",
-                self.on_persist_prop_changed
+                f"notify::{name}", self.on_persist_prop_changed
             )
             self.signals[name] = id
 
         for prop in self.persist_props.list_properties():
             p = ProcessLauncher(
                 ["waydroid", "prop", "get", prop.nick],
-                partial(get_persist_prop, prop.name)
+                partial(get_persist_prop, prop.name),
             )
 
     def __init__(self) -> None:
@@ -183,5 +189,5 @@ class Waydroid(GObject.Object):
         ProcessLauncher(["waydroid", "show-full-ui"])
 
     def upgrade(self, offline: Optional[bool] = None):
-        flag = '-o' if offline else ''
+        flag = "-o" if offline else ""
         ProcessLauncher(["pkexec", "waydroid", "upgrade", flag])

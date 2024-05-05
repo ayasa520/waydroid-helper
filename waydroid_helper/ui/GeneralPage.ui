@@ -1,9 +1,6 @@
-<?xml version='1.0' encoding='UTF-8'?><!-- Created with Cambalache 0.16.0 -->
+<?xml version='1.0' encoding='UTF-8'?>
 <interface>
-  <template class="GeneralPage" parent="GtkBox"><!-- <property name="margin-bottom">12</property>
-    <property name="margin-end">40</property>
-    <property name="margin-start">40</property>
-    <property name="margin-top">12</property> -->
+  <template class="GeneralPage" parent="GtkBox">
     <property name="orientation">1</property>
     <property name="spacing">12</property>
     <child>
@@ -16,8 +13,7 @@
                 <property name="subtitle" translatable="yes"></property>
                 <property name="title" translatable="yes">Loading</property>
                 <child type="prefix">
-                  <object class="GtkImage" id="status-image">
-                  </object>
+                  <object class="GtkImage" id="status-image"></object>
                 </child>
                 <child type="suffix">
                   <object class="GtkMenuButton">
@@ -49,7 +45,7 @@
                   <property name="orientation">1</property>
                   <child>
                     <object class="GtkModelButton" id="start-button">
-                      <property name="text" translatable="yes">Start</property><!-- <property name="sensitive" bind-source="stop-button" bind-property="sensitive" bind-flags="sync-create | invert-boolean">True</property> -->
+                      <property name="text" translatable="yes">Start</property>
                       <property name="sensitive">True</property>
                       <signal name="clicked" handler="on_start_button_clicked"/>
                     </object>

@@ -6,17 +6,17 @@ from waydroid_helper.propspage import PropsPage
 from gi.repository import Gtk, Adw
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 # from waydroid_helper.controller import ControllerWindow
 
 Adw.init()
 
 
-@Gtk.Template(resource_path='/com/jaoushingan/WaydroidHelper/ui/window.ui')
+@Gtk.Template(resource_path="/com/jaoushingan/WaydroidHelper/ui/window.ui")
 class WaydroidHelperWindow(Adw.ApplicationWindow):
-    __gtype_name__ = 'WaydroidHelperWindow'
+    __gtype_name__ = "WaydroidHelperWindow"
     stack: Adw.ViewStack = Gtk.Template.Child()
 
     def __init__(self, **kwargs):
@@ -31,17 +31,17 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
             child=general_page,
             name="page01",
             title=_("Home"),
-            icon_name="user-home-symbolic"
+            icon_name="user-home-symbolic",
         )
         self.stack.add_titled_with_icon(
             child=props_page,
             name="page02",
             title=_("Settings"),
-            icon_name="emblem-system-symbolic"
+            icon_name="emblem-system-symbolic",
         )
         self.stack.add_titled_with_icon(
             child=extensions_page,
             name="page03",
             title=_("Extensions"),
-            icon_name="application-x-addon-symbolic"
+            icon_name="application-x-addon-symbolic",
         )

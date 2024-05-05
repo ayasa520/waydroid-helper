@@ -3,19 +3,22 @@ from gi.repository import Gtk, Gio, Adw
 import sys
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 
 class WaydroidHelperApplication(Adw.Application):
     """The main application singleton class."""
+
     def __init__(self):
-        super().__init__(application_id='com.jaoushingan.WaydroidHelper',
-                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
-        self.create_action('quit', lambda *_: self.quit(), ['<primary>q'])
-        self.create_action('about', self.on_about_action)
-        self.create_action('preferences', self.on_preferences_action)
-        
+        super().__init__(
+            application_id="com.jaoushingan.WaydroidHelper",
+            flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
+        )
+        self.create_action("quit", lambda *_: self.quit(), ["<primary>q"])
+        self.create_action("about", self.on_about_action)
+        self.create_action("preferences", self.on_preferences_action)
+
     def do_activate(self):
         """Called when the application is activated.
 
@@ -29,18 +32,20 @@ class WaydroidHelperApplication(Adw.Application):
 
     def on_about_action(self, widget, _):
         """Callback for the app.about action."""
-        about = Adw.AboutWindow(transient_for=self.props.active_window,
-                                application_name='waydroid-helper',
-                                application_icon='com.jaoushingan.WaydroidHelper',
-                                developer_name='rikka',
-                                version='0.1.0',
-                                developers=['rikka'],
-                                copyright='© 2024 rikka')
+        about = Adw.AboutWindow(
+            transient_for=self.props.active_window,
+            application_name="waydroid-helper",
+            application_icon="com.jaoushingan.WaydroidHelper",
+            developer_name="rikka",
+            version="0.1.0",
+            developers=["rikka"],
+            copyright="© 2024 rikka",
+        )
         about.present()
 
     def on_preferences_action(self, widget, _):
         """Callback for the app.preferences action."""
-        print('app.preferences action activated')
+        print("app.preferences action activated")
 
     def create_action(self, name, callback, shortcuts=None):
         """Add an application action.

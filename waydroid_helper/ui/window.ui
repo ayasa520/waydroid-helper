@@ -1,68 +1,14 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <interface>
-  <!-- interface-name window.ui -->
-  <requires lib="Adw" version="1.0" />
-  <requires lib="gio" version="2.0" />
-  <requires lib="gtk" version="4.0" />
-  <requires lib="libadwaita" version="1.4" />
+  <requires lib="Adw" version="1.0"/>
+  <requires lib="gio" version="2.0"/>
+  <requires lib="gtk" version="4.0"/>
+  <requires lib="libadwaita" version="1.4"/>
   <template class="WaydroidHelperWindow" parent="AdwApplicationWindow">
     <property name="content">
       <object class="AdwToolbarView">
         <property name="content">
-          <object class="AdwViewStack" id="stack">
-            <!-- <child>
-              <object class="AdwViewStackPage" id="general_page">
-                <property name="child">
-                  <object class="GeneralPage" id="general_page"></object>
-                </property>
-                <property name="icon-name">user-home-symbolic</property>
-                <property name="name">page01</property>
-                <property name="title" translatable="yes">Home</property>
-              </object>
-            </child> -->
-            <!-- <child>
-              <object class="AdwViewStackPage" id="props_page">
-                <property name="child">
-                  <object class="PropsPage" id="props_page"></object>
-                </property>
-                <property name="icon-name">emblem-system-symbolic</property>
-                <property name="name">page02</property>
-                <property name="title" translatable="yes">Settings</property>
-              </object>
-            </child> -->
-            <!-- <child>
-              <object class="AdwViewStackPage">
-                <property name="child">
-                  <object class="GtkBox">
-                    <property name="margin-bottom">12</property>
-                    <property name="margin-end">40</property>
-                    <property name="margin-start">40</property>
-                    <property name="margin-top">12</property>
-                    <property name="orientation">1</property>
-                    <property name="spacing">12</property>
-                    <child>
-                      <object class="GtkLabel">
-                        <property name="label">Page 03</property>
-                      </object>
-                    </child>
-                  </object>
-                </property>
-                <property name="icon-name">view-grid-symbolic</property>
-                <property name="name">page03</property>
-                <property name="title" translatable="yes">Applications</property>
-              </object>
-            </child> -->
-            <!-- <child>
-              <object class="AdwViewStackPage" id="extensions_page">
-                <property name="child">
-                  <object class="ExtensionsPage" id="extensions_page"></object>
-                </property>
-                <property name="icon-name">application-x-addon-symbolic</property>
-                <property name="name">page04</property>
-                <property name="title" translatable="yes">Extensions</property>
-              </object>
-            </child> -->
-          </object>
+          <object class="AdwViewStack" id="stack"></object>
         </property>
         <child type="top">
           <object class="AdwHeaderBar" id="header_bar">
@@ -95,10 +41,9 @@
     <property name="width-request">400</property>
     <child>
       <object class="AdwBreakpoint">
-        <!-- Custom fragments -->
         <condition>max-width: 550sp</condition>
         <setter object="switcher_bar" property="reveal">True</setter>
-        <setter object="header_bar" property="title-widget" />
+        <setter object="header_bar" property="title-widget"/>
       </object>
     </child>
   </template>
