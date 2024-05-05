@@ -1,5 +1,4 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!-- Created with Cambalache 0.16.0 -->
 <interface>
   <!-- interface-name window.ui -->
   <requires lib="Adw" version="1.0" />
@@ -11,8 +10,8 @@
       <object class="AdwToolbarView">
         <property name="content">
           <object class="AdwViewStack" id="stack">
-            <child>
-              <object class="AdwViewStackPage">
+            <!-- <child>
+              <object class="AdwViewStackPage" id="general_page">
                 <property name="child">
                   <object class="GeneralPage" id="general_page"></object>
                 </property>
@@ -20,21 +19,18 @@
                 <property name="name">page01</property>
                 <property name="title" translatable="yes">Home</property>
               </object>
-            </child>
-            <!-- 有时间分一下, 这个 xml 文件太大了! -->
-            <child>
-              <object class="AdwViewStackPage">
+            </child> -->
+            <!-- <child>
+              <object class="AdwViewStackPage" id="props_page">
                 <property name="child">
-                  <object class="PropPage" id="prop_page"></object>
+                  <object class="PropsPage" id="props_page"></object>
                 </property>
                 <property name="icon-name">emblem-system-symbolic</property>
                 <property name="name">page02</property>
                 <property name="title" translatable="yes">Settings</property>
               </object>
-            </child>
-            <!-- 2 -->
-            <!-- 3 -->
-            <child>
+            </child> -->
+            <!-- <child>
               <object class="AdwViewStackPage">
                 <property name="child">
                   <object class="GtkBox">
@@ -55,30 +51,17 @@
                 <property name="name">page03</property>
                 <property name="title" translatable="yes">Applications</property>
               </object>
-            </child>
-            <!-- 3 -->
-            <child>
-              <object class="AdwViewStackPage">
+            </child> -->
+            <!-- <child>
+              <object class="AdwViewStackPage" id="extensions_page">
                 <property name="child">
-                  <object class="GtkBox">
-                    <property name="margin-bottom">12</property>
-                    <property name="margin-end">40</property>
-                    <property name="margin-start">40</property>
-                    <property name="margin-top">12</property>
-                    <property name="orientation">1</property>
-                    <property name="spacing">12</property>
-                    <child>
-                      <object class="GtkLabel">
-                        <property name="label">Page 04</property>
-                      </object>
-                    </child>
-                  </object>
+                  <object class="ExtensionsPage" id="extensions_page"></object>
                 </property>
                 <property name="icon-name">application-x-addon-symbolic</property>
                 <property name="name">page04</property>
                 <property name="title" translatable="yes">Extensions</property>
               </object>
-            </child>
+            </child> -->
           </object>
         </property>
         <child type="top">

@@ -20,4 +20,6 @@ meson-private/
 builddir/
 test.py
 test.ui
+test.blp
+test.css
 .flatpak-builder

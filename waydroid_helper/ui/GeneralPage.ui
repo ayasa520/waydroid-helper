@@ -1,70 +1,94 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<!-- Created with Cambalache 0.16.0 -->
+<?xml version='1.0' encoding='UTF-8'?><!-- Created with Cambalache 0.16.0 -->
 <interface>
-  <template class="GeneralPage" parent="GtkBox">
-    <property name="margin-bottom">12</property>
+  <template class="GeneralPage" parent="GtkBox"><!-- <property name="margin-bottom">12</property>
     <property name="margin-end">40</property>
     <property name="margin-start">40</property>
-    <property name="margin-top">12</property>
+    <property name="margin-top">12</property> -->
     <property name="orientation">1</property>
     <property name="spacing">12</property>
     <child>
-      <object class="GtkLabel" id="title-label">
-        <property name="label">Waydroid</property>
-        <property name="xalign">0</property>
-        <style>
-          <class name="title-1" />
-        </style>
-      </object>
-    </child>
-    <child>
-      <!-- <object class="GtkButton" id="informer">
-                        <property name="sensitive">0</property>
-                        <property name="visible">0</property>
-                      </object> -->
-    </child>
-    <child>
-      <object class="GtkListBox">
-        <property name="selection-mode">0</property>
+      <object class="AdwPreferencesPage">
         <child>
-          <object class="AdwActionRow" id="status">
-            <property name="subtitle" translatable="yes">Waydroid session is stopped</property>
-            <property name="title" translatable="yes">Stopped</property>
-            <child type="prefix">
-              <object class="GtkImage" id="status-image">
-                <property name="icon-name">vcs-conflicting</property>
+          <object class="AdwPreferencesGroup">
+            <property name="title">Waydroid</property>
+            <child>
+              <object class="AdwActionRow" id="status">
+                <property name="subtitle" translatable="yes"></property>
+                <property name="title" translatable="yes">Loading</property>
+                <child type="prefix">
+                  <object class="GtkImage" id="status-image">
+                  </object>
+                </child>
+                <child type="suffix">
+                  <object class="GtkMenuButton">
+                    <property name="always-show-arrow">true</property>
+                    <property name="popover">pop_power</property>
+                    <property name="icon-name">system-shutdown-symbolic</property>
+                    <style>
+                      <class name="flat"/>
+                    </style>
+                  </object>
+                </child>
               </object>
             </child>
-            <style>
-              <class name="card" />
-            </style>
           </object>
         </child>
       </object>
     </child>
-    <child>
-      <object class="GtkButton">
-        <property name="label" translatable="yes">Start</property>
-        <property name="sensitive" bind-source="stop-button"
-          bind-property="sensitive"
-          bind-flags="sync-create | invert-boolean">True</property>
-        <signal name="clicked" handler="on_start_button_clicked" />
-      </object>
-    </child>
-    <child>
-      <object class="GtkButton" id="stop-button">
-        <property name="label" translatable="yes">Stop</property>
-        <signal name="clicked" handler="on_stop_button_clicked" />
-        <style>
-          <class name="destructive-action" />
-        </style>
-      </object>
-    </child>
-    <child>
-      <object class="GtkButton" id="updrade_button">
-        <property name="label" translatable="yes">Update configs</property>
-        <signal name="clicked" handler="on_start_upgrade_offline_clicked" />
-      </object>
-    </child>
+    <object class="GtkPopover" id="pop_power">
+      <style>
+        <class name="menu"/>
+      </style>
+      <child>
+        <object class="GtkStack" id="general_button_stack">
+          <child>
+            <object class="GtkStackPage">
+              <property name="name">initialized_menu</property>
+              <property name="child">
+                <object class="GtkBox">
+                  <property name="orientation">1</property>
+                  <child>
+                    <object class="GtkModelButton" id="start-button">
+                      <property name="text" translatable="yes">Start</property><!-- <property name="sensitive" bind-source="stop-button" bind-property="sensitive" bind-flags="sync-create | invert-boolean">True</property> -->
+                      <property name="sensitive">True</property>
+                      <signal name="clicked" handler="on_start_button_clicked"/>
+                    </object>
+                  </child>
+                  <child>
+                    <object class="GtkModelButton" id="stop-button">
+                      <property name="text" translatable="yes">Stop</property>
+                      <signal name="clicked" handler="on_stop_button_clicked"/>
+                    </object>
+                  </child>
+                  <child>
+                    <object class="GtkModelButton" id="updrade_button">
+                      <property name="text" translatable="yes">Reboot(Update configs)</property>
+                      <signal name="clicked" handler="on_start_upgrade_offline_clicked"/>
+                    </object>
+                  </child>
+                </object>
+              </property>
+            </object>
+          </child>
+          <child>
+            <object class="GtkStackPage">
+              <property name="name">uninitialized_menu</property>
+              <property name="child">
+                <object class="GtkBox">
+                  <property name="orientation">1</property>
+                  <child>
+                    <object class="GtkModelButton" id="init-button">
+                      <property name="text" translatable="yes">Initialize</property>
+                      <signal name="clicked" handler="on_init_button_clicked"/>
+                      <property name="sensitive">True</property>
+                    </object>
+                  </child>
+                </object>
+              </property>
+            </object>
+          </child>
+        </object>
+      </child>
+    </object>
   </template>
 </interface>

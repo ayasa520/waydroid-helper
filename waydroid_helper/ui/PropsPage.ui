@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <template class="PropPage" parent="GtkBox">
-    <property name="margin-bottom">12</property>
-    <property name="margin-end">40</property>
-    <property name="margin-start">40</property>
-    <property name="margin-top">12</property>
+  <template class="PropsPage" parent="GtkBox">
     <property name="orientation">1</property>
     <property name="spacing">12</property>
     <child>
@@ -12,7 +8,7 @@
         <child>
           <object class="AdwPreferencesGroup">
             <property name="title">Waydroid Prop Options</property>
-            <property name="description" translatable="true">Most settings require restarting the waydroid session to apply</property>
+            <property name="description" translatable="true">Some settings require restarting the waydroid session to apply</property>
             <child>
               <object class="AdwActionRow">
                 <property name="title-lines">1</property>
@@ -36,9 +32,6 @@
                 <child>
                   <object class="GtkSwitch" id="switch_2">
                     <property name="name">persist.waydroid.cursor_on_subsurface</property>
-                    <property name="sensitive" bind-source="switch_1"
-                      bind-property="sensitive"
-                      bind-flags="sync-create">True</property>
                     <property name="valign">3</property>
                   </object>
                 </child>
@@ -54,9 +47,6 @@
                 <child>
                   <object class="GtkSwitch" id="switch_3">
                     <property name="name">persist.waydroid.invert_colors</property>
-                    <property name="sensitive" bind-source="switch_1"
-                      bind-property="sensitive"
-                      bind-flags="sync-create">True</property>
                     <property name="valign">3</property>
                   </object>
                 </child>
@@ -73,9 +63,6 @@
                 <child>
                   <object class="GtkSwitch" id="switch_4">
                     <property name="name">persist.waydroid.suspend</property>
-                    <property name="sensitive" bind-source="switch_1"
-                      bind-property="sensitive"
-                      bind-flags="sync-create">True</property>
                     <property name="valign">3</property>
                   </object>
                 </child>
@@ -92,9 +79,6 @@
                 <child>
                   <object class="GtkSwitch" id="switch_5">
                     <property name="name">persist.waydroid.uevent</property>
-                    <property name="sensitive" bind-source="switch_1"
-                      bind-property="sensitive"
-                      bind-flags="sync-create">True</property>
                     <property name="valign">3</property>
                   </object>
                 </child>
@@ -111,9 +95,6 @@
                 <child>
                   <object class="GtkEntry" id="switch_6">
                     <property name="name">persist.waydroid.fake_touch</property>
-                    <property name="sensitive" bind-source="switch_1"
-                      bind-property="sensitive"
-                      bind-flags="sync-create"></property>
                     <property name="valign">3</property>
                   </object>
                 </child>
@@ -129,9 +110,6 @@
                 <child>
                   <object class="GtkEntry" id="switch_7">
                     <property name="name">persist.waydroid.fake_wifi</property>
-                    <property name="sensitive" bind-source="switch_1"
-                      bind-property="sensitive"
-                      bind-flags="sync-create"></property>
                     <property name="valign">3</property>
                   </object>
                 </child>

@@ -2,7 +2,8 @@
 <gresources>
   <gresource prefix="/com/jaoushingan/WaydroidHelper">
     <file preprocess="xml-stripblanks">ui/GeneralPage.ui</file>
-    <file preprocess="xml-stripblanks">ui/PropPage.ui</file>
+    <file preprocess="xml-stripblanks">ui/PropsPage.ui</file>
+    <file preprocess="xml-stripblanks">ui/ExtensionsPage.ui</file>
     <file preprocess="xml-stripblanks">ui/window.ui</file>
     <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
   </gresource>

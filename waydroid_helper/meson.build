@@ -34,7 +34,8 @@ waydroid_helper_sources = [
   'window.py',
   'waydroid.py',
   'generalpage.py',
-  'proppage.py'
+  'propspage.py',
+  'extensionspage.py'
 ]
 
 util_sources = ['util/ProcessLauncher.py']

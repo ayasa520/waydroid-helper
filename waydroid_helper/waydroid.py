@@ -1,20 +1,31 @@
 import configparser
+import enum
 import appdirs
 import os
 import threading
-from gi.repository import GObject, GLib, Gtk
+from gi.repository import GObject, GLib
 from typing import Optional
 from functools import partial
 from waydroid_helper.util.ProcessLauncher import ProcessLauncher
+
+import gi
+
+gi.require_version('Gtk', '4.0')
+gi.require_version('Adw', '1')
 
 CONFIG_DIR = os.environ.get(
     "WAYDROID_CONFIG", "/var/lib/waydroid/waydroid.cfg")
 
 
-class Waydroid(GObject.Object):
+class WaydroidState(enum.IntEnum):
+    UNINITIALIZED = 0
+    STOPPED = 1
+    RUNNING = 2
+    LOADING = 3
 
-    subprocesses: list[ProcessLauncher] = []
-    state: GObject.Property = GObject.Property(default=False, type=bool)
+
+class Waydroid(GObject.Object):
+    state: GObject.Property = GObject.Property(type=object)
 
     class PersistProps(GObject.Object):
         multi_windows:  GObject.Property = GObject.Property(
@@ -49,8 +60,7 @@ class Waydroid(GObject.Object):
                 value = "true"
             else:
                 value = "false"
-        self.subprocesses.append(ProcessLauncher(
-            f"waydroid prop set {param.nick} {value}"))
+        ProcessLauncher(["waydroid", "prop", "set", param.nick, value])
 
     def init_privileged_props(self):
         for each in self.privileged_props.list_properties():
@@ -75,11 +85,10 @@ class Waydroid(GObject.Object):
             os.makedirs(cache_path, exist_ok=True)
             with open(cache_config_dir, "w") as f:
                 self.cfg.write(f)
-            self.subprocesses.append(
                 ProcessLauncher(
-                    f"pkexec sh -c 'cp -r {cache_config_dir} {CONFIG_DIR} && waydroid upgrade -o'"
+                    ["pkexec", "sh", "-c", f"cp -r {cache_config_dir} {CONFIG_DIR}"]
                 )
-            )
+                self.upgrade(True)
 
         cache_path = os.path.join(appdirs.user_cache_dir(), "waydroid_helper")
         cache_config_dir = os.path.join(cache_path, "waydroid.cfg")
@@ -88,21 +97,39 @@ class Waydroid(GObject.Object):
         thread.daemon = True
         thread.start()
 
-
     def update_waydroid_status(self):
         def callback(output):
-            running = "Session:\tRUNNING" in output
-            if running != self.get_property("state"):
-                if running:
+            if self.state == WaydroidState.UNINITIALIZED:
+                if "Session:\tRUNNING" in output:
                     self.init_persist_props()
-                else:
+                    self.set_property("state", WaydroidState.RUNNING)
+                elif "Session:\tSTOPPED" in output:
+                    self.set_property("state", WaydroidState.STOPPED)
+            elif self.state == WaydroidState.STOPPED:
+                if "Session:\tRUNNING" in output:
+                    self.init_persist_props()
+                    self.set_property("state", WaydroidState.RUNNING)
+                elif "WayDroid is not initialized" in output:
+                    self.set_property("state", WaydroidState.UNINITIALIZED)
+            elif self.state == WaydroidState.RUNNING:
+                if "Session:\tSTOPPED" in output:
                     self.disconnect_persist_props()
-                self.set_property("state", running)
+                    self.set_property("state", WaydroidState.STOPPED)
+                elif "WayDroid is not initialized" in output:
+                    self.disconnect_persist_props()
+                    self.set_property("state", WaydroidState.UNINITIALIZED)
+            elif self.state == WaydroidState.LOADING:
+                if "Session:\tSTOPPED" in output:
+                    self.disconnect_persist_props()
+                    self.set_property("state", WaydroidState.STOPPED)
+                elif "WayDroid is not initialized" in output:
+                    self.disconnect_persist_props()
+                    self.set_property("state", WaydroidState.UNINITIALIZED)
+                elif "Session:\tRUNNING" in output:
+                    self.init_persist_props()
+                    self.set_property("state", WaydroidState.RUNNING)
 
-        p = ProcessLauncher("waydroid status", callback=callback)
-        self.subprocesses.append(p)
-
-        self.subprocesses = [each for each in self.subprocesses if each.alive]
+        p = ProcessLauncher(["waydroid", "status"], callback=callback)
 
         return True
 
@@ -117,7 +144,6 @@ class Waydroid(GObject.Object):
             output = output.split("\n")[-1]
             if "Failed to get service waydroidplatform, trying again..." in output:
                 output = ""
-            # 重复
             if isinstance(self.persist_props.get_property(name), str):
                 value = output
             elif isinstance(self.persist_props.get_property(name), bool):
@@ -133,31 +159,29 @@ class Waydroid(GObject.Object):
             )
             self.signals[name] = id
 
-        
         for prop in self.persist_props.list_properties():
             p = ProcessLauncher(
-                f"waydroid prop get {prop.nick}",
+                ["waydroid", "prop", "get", prop.nick],
                 partial(get_persist_prop, prop.name)
             )
-            self.subprocesses.append(p)
 
     def __init__(self) -> None:
         super().__init__()
+        self.set_property("state", WaydroidState.LOADING)
         GLib.timeout_add_seconds(2, self.update_waydroid_status)
         self.cfg = configparser.ConfigParser()
         self.cfg.read(CONFIG_DIR)
         self.init_privileged_props()
 
     def start_session(self):
-        self.subprocesses.append(ProcessLauncher("waydroid session start"))
+        ProcessLauncher(["waydroid", "session", "start"])
 
     def stop_session(self):
-        self.subprocesses.append(ProcessLauncher("waydroid session stop"))
+        ProcessLauncher(["waydroid", "session", "stop"])
 
     def show_full_ui(self):
-        self.subprocesses.append(ProcessLauncher(f"waydroid show-full-ui"))
+        ProcessLauncher(["waydroid", "show-full-ui"])
 
     def upgrade(self, offline: Optional[bool] = None):
         flag = '-o' if offline else ''
-        self.subprocesses.append(ProcessLauncher(
-            f"pkexec waydroid upgrade {flag}"))
+        ProcessLauncher(["pkexec", "waydroid", "upgrade", flag])

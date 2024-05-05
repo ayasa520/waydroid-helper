@@ -27,17 +27,20 @@ msgstr "启动"
 msgid "Stop"
 msgstr "停止"
 
+msgid "Initialize"
+msgstr "初始化"
+
 #: waydroid_helper/window.ui:78
-msgid "Update configs"
-msgstr "更新配置"
+msgid "Reboot(Update configs)"
+msgstr "重启（更新配置）"
 
 #: waydroid_helper/window.ui:86
 msgid "Home"
 msgstr "主页"
 
 #: waydroid_helper/window.ui:105
-msgid "Most settings require restarting the waydroid session to apply"
-msgstr "多数设置需要重启 waydroid session 后生效"
+msgid "Some settings require restarting the waydroid session to apply"
+msgstr "部分设置需要重启 waydroid session 后生效"
 
 #: waydroid_helper/window.ui:110
 msgid "Enable window integration with the desktop"
@@ -108,3 +111,9 @@ msgstr "已连接"
 
 msgid "Waydroid session is running"
 msgstr "Waydroid session 正在运行"
+
+msgid "Uninitialized"
+msgstr "未初始化"
+
+msgid "Waydroid is not initialized"
+msgstr "Waydroid 尚未初始化"
