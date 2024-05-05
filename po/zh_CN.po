@@ -63,12 +63,12 @@ msgid "Allow android direct access to hotplugged devices"
 msgstr "允许安卓系统直接访问热插拔设备"
 
 #: waydroid_helper/window.ui:198
-msgid "fake touch"
-msgstr "虚拟触摸"
+msgid "Interpret mouse inputs as touch inputs. Enter the package names separated by \",\". Use the wildcard \"*\" to match all Apps"
+msgstr "将鼠标输入转为触摸输入。以\",\"f分隔输入包名，使用通配符\"*\"匹配所有应用"
 
 #: waydroid_helper/window.ui:216
-msgid "fake WIFI"
-msgstr "虚拟 WIFI"
+msgid "Make the Apps appear as if connected to WiFi. Enter the package names separated by \",\". Use the wildcard \"*\" to match all Apps"
+msgstr "使应用连接虚拟 WiFi。以\",\"f分隔输入包名，使用通配符\"*\"匹配所有应用"
 
 #: waydroid_helper/window.ui:237
 msgid "Click the button on the right to apply the changes to this group's configuration"
@@ -117,3 +117,6 @@ msgstr "未初始化"
 
 msgid "Waydroid is not initialized"
 msgstr "Waydroid 尚未初始化"
+
+msgid "Package names"
+msgstr "包名"

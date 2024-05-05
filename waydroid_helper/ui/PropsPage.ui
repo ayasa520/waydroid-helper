@@ -89,12 +89,14 @@
             <child>
               <object class="AdwActionRow">
                 <property name="title">persist.waydroid.fake_touch</property>
-                <property name="subtitle" translatable="true">fake touch</property>
+                <property name="subtitle" translatable="true">Interpret mouse inputs as touch inputs. Enter the package names separated by ",". Use the wildcard "*" to match all Apps</property>
                 <property name="title-lines">1</property>
                 <property name="activatable-widget">switch_6</property>
                 <child>
                   <object class="GtkEntry" id="switch_6">
                     <property name="name">persist.waydroid.fake_touch</property>
+                    <property name="placeholder-text" translatable="true">Package names</property>
+                    <property name="width-chars">10</property>
                     <property name="valign">3</property>
                   </object>
                 </child>
@@ -104,13 +106,15 @@
             <child>
               <object class="AdwActionRow">
                 <property name="title">persist.waydroid.fake_wifi</property>
-                <property name="subtitle" translatable="true">fake WIFI</property>
+                <property name="subtitle" translatable="true">Make the Apps appear as if connected to WiFi. Enter the package names separated by ",". Use the wildcard "*" to match all Apps</property>
                 <property name="title-lines">1</property>
                 <property name="activatable-widget">switch_7</property>
                 <child>
                   <object class="GtkEntry" id="switch_7">
                     <property name="name">persist.waydroid.fake_wifi</property>
+                    <property name="width-chars">10</property>
                     <property name="valign">3</property>
+                    <property name="placeholder-text" translatable="true">Package names</property>
                   </object>
                 </child>
               </object>
