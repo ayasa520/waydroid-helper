@@ -39,8 +39,8 @@ msgid "Home"
 msgstr "主页"
 
 #: waydroid_helper/window.ui:105
-msgid "Some settings require restarting the waydroid session to apply"
-msgstr "部分设置需要重启 waydroid session 后生效"
+msgid "Effective only while Waydroid session is running. Some settings require restarting the Waydroid session to apply"
+msgstr "仅在 Waydroid session 运行时生效，部分设置需要重启 Waydroid session 才可应用"
 
 #: waydroid_helper/window.ui:110
 msgid "Enable window integration with the desktop"

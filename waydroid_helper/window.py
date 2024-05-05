@@ -3,15 +3,13 @@ from waydroid_helper.extensionspage import ExtensionsPage
 from waydroid_helper.generalpage import GeneralPage
 from waydroid_helper.waydroid import Waydroid
 from waydroid_helper.propspage import PropsPage
-from gi.repository import Gtk, Adw
+from gi.repository import Gtk, Adw, Gio
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
 # from waydroid_helper.controller import ControllerWindow
-
-Adw.init()
 
 
 @Gtk.Template(resource_path="/com/jaoushingan/WaydroidHelper/ui/window.ui")
@@ -21,6 +19,21 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        self.settings = Gio.Settings(schema_id="com.jaoushingan.WaydroidHelper")
+
+        self.settings.bind(
+            "width", self, "default-width", Gio.SettingsBindFlags.DEFAULT
+        )
+        self.settings.bind(
+            "height", self, "default-height", Gio.SettingsBindFlags.DEFAULT
+        )
+        self.settings.bind(
+            "is-maximized", self, "maximized", Gio.SettingsBindFlags.DEFAULT
+        )
+        self.settings.bind(
+            "is-fullscreen", self, "fullscreened", Gio.SettingsBindFlags.DEFAULT
+        )
 
         self.waydroid = Waydroid()
         general_page = GeneralPage(self.waydroid)

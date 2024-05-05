@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="waydroid-helper">
-	<schema id="com.jaoushingan.WaydroidHelper" path="/com/jaoushingan/WaydroidHelper/">
-	</schema>
+  <schema id="com.jaoushingan.WaydroidHelper" path="/com/jaoushingan/WaydroidHelper/">
+    <key name="width" type="i">
+      <default>640</default>
+    </key>
+    <key name="height" type="i">
+      <default>480</default>
+    </key>
+    <key name="is-maximized" type="b">
+      <default>false</default>
+    </key>
+    <key name="is-fullscreen" type="b">
+      <default>false</default>
+    </key>
+  </schema>
 </schemalist>

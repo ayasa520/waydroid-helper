@@ -8,7 +8,7 @@
         <child>
           <object class="AdwPreferencesGroup">
             <property name="title">Waydroid Prop Options</property>
-            <property name="description" translatable="true">Some settings require restarting the waydroid session to apply</property>
+            <property name="description" translatable="true">Effective only while Waydroid session is running. Some settings require restarting the Waydroid session to apply</property>
             <child>
               <object class="AdwActionRow">
                 <property name="title-lines">1</property>
@@ -121,9 +121,9 @@
         </child>
         <child>
           <object class="AdwPreferencesGroup">
-            <property name="title">Waydroid Privileged Configs</property>
-            <property name="description" translatable="true">Click the button on the right to apply the changes to this group's configuration</property>
-            <property name="header-suffix">header_suffix</property>
+            <property name="title">Waydroid Privileged Options</property>
+            <!-- <property name="description" translatable="true">Click the button on the right to apply the changes to this group's configuration</property> -->
+            <!-- <property name="header-suffix">header_suffix</property> -->
             <child>
               <object class="AdwActionRow">
                 <property name="title">qemu.hw.mainkeys</property>
@@ -141,8 +141,8 @@
       </object>
     </child>
   </template>
-  <object class="GtkButton" id="header_suffix">
+  <!-- <object class="GtkButton" id="header_suffix">
     <property name="label">apply</property>
     <signal name="clicked" handler="on_save_privileged_props" />
-  </object>
+  </object> -->
 </interface>

@@ -105,7 +105,7 @@ class PropsPage(Gtk.Box):
             self.switch_7.set_sensitive(False)
             self.switch_21.set_sensitive(False)
 
-    @Gtk.Template.Callback()
-    def on_save_privileged_props(self, button):
-        print("save")
-        self.waydroid.save_privileged_props()
+    # @Gtk.Template.Callback()
+    # def on_save_privileged_props(self, button):
+    #     print("save")
+    #     self.waydroid.save_privileged_props()

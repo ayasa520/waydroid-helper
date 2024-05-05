@@ -1,3 +1,4 @@
+import os
 from .window import WaydroidHelperWindow
 from gi.repository import Gtk, Gio, Adw
 import sys
@@ -5,6 +6,31 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
+
+Adw.init()
+
+
+class Dialog(Adw.MessageDialog):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.set_heading(heading="Error")
+        self.set_body(body="Cannot run as root user!")
+        self.add_response(Gtk.ResponseType.OK.value_nick, "OK")
+        self.set_response_appearance(
+            response=Gtk.ResponseType.OK.value_nick,
+            appearance=Adw.ResponseAppearance.SUGGESTED,
+        )
+        self.connect("response", self.dialog_response)
+        self.connect("close-request", self.dialog_close)
+
+    def dialog_response(self, dialog, response):
+        if response == Gtk.ResponseType.OK.value_nick:
+            sys.exit()
+
+    def dialog_close(self, dialog):
+        sys.exit(0)
 
 
 class WaydroidHelperApplication(Adw.Application):
@@ -25,10 +51,17 @@ class WaydroidHelperApplication(Adw.Application):
         We raise the application's main window, creating it if
         necessary.
         """
-        win = self.props.active_window
-        if not win:
-            win = WaydroidHelperWindow(application=self)
-        win.present()
+
+        uid = os.getuid()
+        if uid == 0:
+            win = Adw.ApplicationWindow(application=self)
+            dialog = Dialog(transient_for=win)
+            dialog.present()
+        else:
+            win = self.props.active_window
+            if not win:
+                win = WaydroidHelperWindow(application=self)
+            win.present()
 
     def on_about_action(self, widget, _):
         """Callback for the app.about action."""

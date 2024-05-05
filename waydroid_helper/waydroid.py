@@ -93,9 +93,13 @@ class Waydroid(GObject.Object):
             with open(cache_config_dir, "w") as f:
                 self.cfg.write(f)
                 ProcessLauncher(
-                    ["pkexec", "sh", "-c", f"cp -r {cache_config_dir} {CONFIG_DIR}"]
+                    [
+                        "pkexec",
+                        "sh",
+                        "-c",
+                        f"cp -r {cache_config_dir} {CONFIG_DIR} && waydroid upgrade -o",
+                    ]
                 )
-                self.upgrade(True)
 
         cache_path = os.path.join(appdirs.user_cache_dir(), "waydroid_helper")
         cache_config_dir = os.path.join(cache_path, "waydroid.cfg")
@@ -189,5 +193,7 @@ class Waydroid(GObject.Object):
         ProcessLauncher(["waydroid", "show-full-ui"])
 
     def upgrade(self, offline: Optional[bool] = None):
-        flag = "-o" if offline else ""
-        ProcessLauncher(["pkexec", "waydroid", "upgrade", flag])
+        if offline:
+            self.save_privileged_props()
+        else:
+            ProcessLauncher(["pkexec", "waydroid", "upgrade"])
