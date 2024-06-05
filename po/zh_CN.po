@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-02-25 01:16+0800\n"
-"PO-Revision-Date: 2024-02-20 15:37+0800\n"
+"PO-Revision-Date: 2024-02-25 15:37+0800\n"
 "Last-Translator: Takanashi Rikka<ayasa0520@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -11,112 +11,168 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: waydroid_helper/window.ui:44
-msgid "Waydroid session is stopped"
-msgstr "Waydroid session 已经停止"
+#: waydroid_helper/ui/GeneralPage.ui:13 waydroid_helper/generalpage.py:49
+msgid "Loading"
+msgstr "加载中"
 
-#: waydroid_helper/window.ui:45
-msgid "Stopped"
-msgstr "已停止"
-
-#: waydroid_helper/window.ui:60
+#: waydroid_helper/ui/GeneralPage.ui:47
 msgid "Start"
 msgstr "启动"
 
-#: waydroid_helper/window.ui:69
+#: waydroid_helper/ui/GeneralPage.ui:54
 msgid "Stop"
 msgstr "停止"
 
+#: waydroid_helper/ui/GeneralPage.ui:61
+msgid "Restart(Update configs)"
+msgstr "重启（更新配置）"
+
+#: waydroid_helper/ui/GeneralPage.ui:78
 msgid "Initialize"
 msgstr "初始化"
 
-#: waydroid_helper/window.ui:78
-msgid "Reboot(Update configs)"
-msgstr "重启（更新配置）"
+#: waydroid_helper/ui/InfoBar.ui:34
+msgid "Cancel"
+msgstr "取消"
 
-#: waydroid_helper/window.ui:86
-msgid "Home"
-msgstr "主页"
+#: waydroid_helper/ui/InfoBar.ui:43
+msgid "Ok"
+msgstr "确认"
 
-#: waydroid_helper/window.ui:105
-msgid "Effective only while Waydroid session is running. Some settings require restarting the Waydroid session to apply"
+#: waydroid_helper/ui/PropsPage.ui:10
+msgid ""
+"Effective only while Waydroid session is running. Some settings require "
+"restarting the Waydroid session to apply"
 msgstr "仅在 Waydroid session 运行时生效，部分设置需要重启 Waydroid session 才可应用"
 
-#: waydroid_helper/window.ui:110
+#: waydroid_helper/ui/PropsPage.ui:15 waydroid_helper/waydroid.py:77
 msgid "Enable window integration with the desktop"
 msgstr "开启多窗口模式"
 
-#: waydroid_helper/window.ui:124
-msgid "Workaround for showing the cursor inmulti_windows mode on some compositors"
+#: waydroid_helper/ui/PropsPage.ui:31 waydroid_helper/waydroid.py:84
+msgid ""
+"Workaround for showing the cursor inmulti_windows mode on some compositors"
 msgstr "在某些合成器上多窗口模式模式显示光标的解决方法"
 
-#: waydroid_helper/window.ui:142
-msgid "Swaps the color space from RGBA to BGRA (only works with our patched mutter so far)"
+#: waydroid_helper/ui/PropsPage.ui:47 waydroid_helper/waydroid.py:92
+msgid ""
+"Swaps the color space from RGBA to BGRA (only works with our patched mutter "
+"so far)"
 msgstr "将色彩空间从 RGBA 切换为 BGRA (目前仅适用于我们修补过的 mutter)"
 
-#: waydroid_helper/window.ui:161
-msgid "Let the Waydroid container sleep (after the display timeout) when no apps are active"
+#: waydroid_helper/ui/PropsPage.ui:63 waydroid_helper/waydroid.py:100
+msgid ""
+"Let the Waydroid container sleep (after the display timeout) when no apps "
+"are active"
 msgstr "当没有应用运行时使 waydroid 容器休眠"
 
-#: waydroid_helper/window.ui:180
+#: waydroid_helper/ui/PropsPage.ui:79 waydroid_helper/waydroid.py:107
 msgid "Allow android direct access to hotplugged devices"
 msgstr "允许安卓系统直接访问热插拔设备"
 
-#: waydroid_helper/window.ui:198
-msgid "Interpret mouse inputs as touch inputs. Enter the package names separated by \",\". Use the wildcard \"*\" to match all Apps"
+#: waydroid_helper/ui/PropsPage.ui:94
+msgid ""
+"Interpret mouse inputs as touch inputs. Enter the package names separated by "
+"\",\". Use the wildcard \"*\" to match all Apps"
 msgstr "将鼠标输入转为触摸输入。以\",\"f分隔输入包名，使用通配符\"*\"匹配所有应用"
 
-#: waydroid_helper/window.ui:216
-msgid "Make the Apps appear as if connected to WiFi. Enter the package names separated by \",\". Use the wildcard \"*\" to match all Apps"
+#: waydroid_helper/ui/PropsPage.ui:101 waydroid_helper/ui/PropsPage.ui:121
+msgid "Package names"
+msgstr "包名"
+
+#: waydroid_helper/ui/PropsPage.ui:112
+msgid ""
+"Make the Apps appear as if connected to WiFi. Enter the package names "
+"separated by \",\". Use the wildcard \"*\" to match all Apps"
 msgstr "使应用连接虚拟 WiFi。以\",\"f分隔输入包名，使用通配符\"*\"匹配所有应用"
 
-#: waydroid_helper/window.ui:237
-msgid "Click the button on the right to apply the changes to this group's configuration"
-msgstr "点击右侧按钮应用本组配置修改"
-
-#: waydroid_helper/window.ui:242
+#: waydroid_helper/ui/PropsPage.ui:135 waydroid_helper/waydroid.py:193
 msgid "hide navbar"
 msgstr "隐藏导航栏"
 
-#: waydroid_helper/window.ui:259
-msgid "Settings"
-msgstr "设置"
+#: waydroid_helper/gtk/help-overlay.ui:11
+msgctxt "shortcut window"
+msgid "General"
+msgstr "通用"
 
-#: waydroid_helper/window.ui:283
-msgid "Applications"
-msgstr "应用"
+#: waydroid_helper/gtk/help-overlay.ui:14
+msgctxt "shortcut window"
+msgid "Show Shortcuts"
+msgstr "显示快捷键"
 
-#: waydroid_helper/window.ui:305
-msgid "Extensions"
-msgstr "扩展"
+#: waydroid_helper/gtk/help-overlay.ui:20
+msgctxt "shortcut window"
+msgid "Quit"
+msgstr "退出"
 
-#: waydroid_helper/window.ui:323
+#: waydroid_helper/ui/window.ui:26
 msgid "Menu"
 msgstr "菜单"
 
-#: waydroid_helper/window.ui:352
+#: waydroid_helper/ui/window.ui:52
 msgid "_Preferences"
 msgstr "首选项"
 
-#: waydroid_helper/window.ui:356
+#: waydroid_helper/ui/window.ui:56
 msgid "_Keyboard Shortcuts"
 msgstr "快捷键"
 
-#: waydroid_helper/window.ui:360
+#: waydroid_helper/ui/window.ui:60
 msgid "_About waydroid-helper"
-msgstr "关于 waydroid-helper"
+msgstr "关于"
 
+#: waydroid_helper/generalpage.py:26
 msgid "Connected"
 msgstr "已连接"
 
+#: waydroid_helper/generalpage.py:27
 msgid "Waydroid session is running"
 msgstr "Waydroid session 正在运行"
 
+#: waydroid_helper/generalpage.py:34
+msgid "Stopped"
+msgstr "已停止"
+
+#: waydroid_helper/generalpage.py:35
+msgid "Waydroid session is stopped"
+msgstr "Waydroid session 已停止"
+
+#: waydroid_helper/generalpage.py:42
 msgid "Uninitialized"
 msgstr "未初始化"
 
+#: waydroid_helper/generalpage.py:43
 msgid "Waydroid is not initialized"
 msgstr "Waydroid 尚未初始化"
 
-msgid "Package names"
-msgstr "包名"
+#: waydroid_helper/propspage.py:134
+msgid "Restart the session to apply the changes"
+msgstr "重启 session 使修改生效"
+
+#: waydroid_helper/propspage.py:139
+msgid "Save and restart the container"
+msgstr "保存并重启 container"
+
+#: waydroid_helper/waydroid.py:114
+msgid ""
+"Interpret mouse inputs as touch inputs. Enter the package names separated by "
+"','. Use the wildcard '*' to match all Apps"
+msgstr "将鼠标输入转为触摸输入。以\",\"f分隔输入包名，使用通配符\"*\"匹配所有应用"
+
+#: waydroid_helper/waydroid.py:122
+msgid ""
+"Make the Apps appear as if connected to WiFi. Enter the package names "
+"separated by ','. Use the wildcard '*' to match all Apps"
+msgstr "使应用连接虚拟 WiFi。以\",\"f分隔输入包名，使用通配符\"*\"匹配所有应用"
+
+#: waydroid_helper/window.py:46
+msgid "Home"
+msgstr "主页"
+
+#: waydroid_helper/window.py:52
+msgid "Settings"
+msgstr "设置"
+
+#: waydroid_helper/window.py:58
+msgid "Extensions"
+msgstr "扩展"

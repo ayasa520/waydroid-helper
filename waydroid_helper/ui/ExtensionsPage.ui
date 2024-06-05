@@ -2,7 +2,6 @@
 <interface>
   <template class="ExtensionsPage" parent="GtkBox">
     <property name="orientation">1</property>
-    <property name="spacing">12</property>
     <child>
       <object class="AdwPreferencesPage">
         <child>

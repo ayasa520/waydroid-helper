@@ -2,7 +2,6 @@
 <interface>
   <template class="GeneralPage" parent="GtkBox">
     <property name="orientation">1</property>
-    <property name="spacing">12</property>
     <child>
       <object class="AdwPreferencesPage">
         <child>
@@ -46,19 +45,21 @@
                   <child>
                     <object class="GtkModelButton" id="start-button">
                       <property name="text" translatable="yes">Start</property>
-                      <property name="sensitive">True</property>
+                      <property name="sensitive">False</property>
                       <signal name="clicked" handler="on_start_button_clicked"/>
                     </object>
                   </child>
                   <child>
                     <object class="GtkModelButton" id="stop-button">
                       <property name="text" translatable="yes">Stop</property>
+                      <property name="sensitive">False</property>
                       <signal name="clicked" handler="on_stop_button_clicked"/>
                     </object>
                   </child>
                   <child>
                     <object class="GtkModelButton" id="updrade_button">
-                      <property name="text" translatable="yes">Reboot(Update configs)</property>
+                      <property name="text" translatable="yes">Restart(Update configs)</property>
+                      <property name="sensitive">False</property>
                       <signal name="clicked" handler="on_start_upgrade_offline_clicked"/>
                     </object>
                   </child>
@@ -76,7 +77,7 @@
                     <object class="GtkModelButton" id="init-button">
                       <property name="text" translatable="yes">Initialize</property>
                       <signal name="clicked" handler="on_init_button_clicked"/>
-                      <property name="sensitive">True</property>
+                      <property name="sensitive">False</property>
                     </object>
                   </child>
                 </object>

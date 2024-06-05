@@ -4,11 +4,11 @@ utildir = moduledir / 'util'
 gnome = import('gnome')
 
 gnome.compile_resources(
-  'waydroid-helper',
-  'waydroid-helper.gresource.xml',
-  gresource_bundle: true,
-  install: true,
-  install_dir: pkgdatadir,
+    'waydroid-helper',
+    'waydroid-helper.gresource.xml',
+    gresource_bundle: true,
+    install: true,
+    install_dir: pkgdatadir,
 )
 
 python = import('python')
@@ -20,24 +20,24 @@ conf.set('localedir', get_option('prefix') / get_option('localedir'))
 conf.set('pkgdatadir', pkgdatadir)
 
 configure_file(
-  input: 'waydroid-helper.in',
-  output: 'waydroid-helper',
-  configuration: conf,
-  install: true,
-  install_dir: get_option('bindir'),
-  install_mode: 'rwxr-xr-x',
+    input: 'waydroid-helper.in',
+    output: 'waydroid-helper',
+    configuration: conf,
+    install: true,
+    install_dir: get_option('bindir'),
+    install_mode: 'rwxr-xr-x',
 )
 
 waydroid_helper_sources = [
-  '__init__.py',
-  'main.py',
-  'window.py',
-  'waydroid.py',
-  'generalpage.py',
-  'propspage.py',
-  'extensionspage.py'
+    '__init__.py',
+    'main.py',
+    'window.py',
+    'waydroid.py',
+    'generalpage.py',
+    'propspage.py',
+    'extensionspage.py',
+    'infobar.py',
+    'util/ProcessLauncher.py',
 ]
 
-util_sources = ['util/ProcessLauncher.py']
 install_data(waydroid_helper_sources, install_dir: moduledir)
-install_data(util_sources, install_dir: utildir)

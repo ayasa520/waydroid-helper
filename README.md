@@ -1,4 +1,4 @@
-# waydroid-helper
+ # waydroid-helper
 
 A GUI application developed with PyGObject and Libadwaita
 

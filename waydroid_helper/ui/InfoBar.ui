@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="InfoBar" parent="GtkRevealer">
+    <property name="visible">true</property>
+    <property name="transition_type">slide_up</property>
+    <property name="valign">end</property>
+    <child>
+      <object class="GtkBox">
+        <style>
+          <class name="info"/>
+        </style>
+        <property name="orientation">horizontal</property>
+        <child>
+          <object class="AdwClamp">
+            <property name="child">
+              <object class="GtkBox">
+                <property name="orientation">horizontal</property>
+                <property name="vexpand">true</property>
+                <property name="hexpand">true</property>
+                <child>
+                  <object class="GtkLabel" id="label">
+                    <property name="margin-start">10</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="cancel_button">
+                    <property name="halign">end</property>
+                    <property name="valign">center</property>
+                    <property name="vexpand">true</property>
+                    <property name="hexpand">true</property>
+                    <property name="margin-top">6</property>
+                    <property name="margin-end">6</property>
+                    <property name="margin-bottom">6</property>
+                    <property name="label" translatable="yes">Cancel</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="ok_button">
+                    <property name="halign">end</property>
+                    <property name="valign">center</property>
+                    <property name="vexpand">true</property>
+                    <property name="margin-end">6</property>
+                    <property name="label" translatable="yes">Ok</property>
+                    <style>
+                      <class name="suggested-action"/>
+                    </style>
+                  </object>
+                </child>
+              </object>
+            </property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

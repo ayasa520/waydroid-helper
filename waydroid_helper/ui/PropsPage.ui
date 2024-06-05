@@ -2,7 +2,6 @@
 <interface>
   <template class="PropsPage" parent="GtkBox">
     <property name="orientation">1</property>
-    <property name="spacing">12</property>
     <child>
       <object class="AdwPreferencesPage">
         <child>
@@ -10,15 +9,17 @@
             <property name="title">Waydroid Prop Options</property>
             <property name="description" translatable="true">Effective only while Waydroid session is running. Some settings require restarting the Waydroid session to apply</property>
             <child>
-              <object class="AdwActionRow">
+              <object class="AdwActionRow" id="actionrow_1">
                 <property name="title-lines">1</property>
                 <property name="title">persist.waydroid.multi_windows</property>
                 <property name="subtitle" translatable="true">Enable window integration with the desktop</property>
                 <property name="activatable-widget">switch_1</property>
+                <property name="sensitive" bind-source="switch_1" bind-property="sensitive" bind-flags="sync-create"/>
                 <child>
                   <object class="GtkSwitch" id="switch_1">
-                    <property name="name">persist.waydroid.multi_windows</property>
+                    <property name="name">multi-windows</property>
                     <property name="valign">3</property>
+                    <property name="sensitive">False</property>
                   </object>
                 </child>
               </object>
@@ -28,114 +29,117 @@
                 <property name="title">persist.waydroid.cursor_on_subsurface</property>
                 <property name="title-lines">1</property>
                 <property name="subtitle" translatable="true">Workaround for showing the cursor inmulti_windows mode on some compositors</property>
+                <property name="sensitive" bind-source="switch_2" bind-property="sensitive" bind-flags="sync-create"/>
                 <property name="activatable-widget">switch_2</property>
                 <child>
                   <object class="GtkSwitch" id="switch_2">
-                    <property name="name">persist.waydroid.cursor_on_subsurface</property>
+                    <property name="name">cursor-on-subsurface</property>
                     <property name="valign">3</property>
+                    <property name="sensitive">False</property>
                   </object>
                 </child>
               </object>
             </child>
-
             <child>
               <object class="AdwActionRow">
                 <property name="title">persist.waydroid.invert_colors</property>
                 <property name="title-lines">1</property>
                 <property name="subtitle" translatable="true">Swaps the color space from RGBA to BGRA (only works with our patched mutter so far)</property>
+                <property name="sensitive" bind-source="switch_3" bind-property="sensitive" bind-flags="sync-create"/>
                 <property name="activatable-widget">switch_3</property>
                 <child>
                   <object class="GtkSwitch" id="switch_3">
-                    <property name="name">persist.waydroid.invert_colors</property>
+                    <property name="name">invert-colors</property>
                     <property name="valign">3</property>
+                    <property name="sensitive">False</property>
                   </object>
                 </child>
               </object>
             </child>
-
-
             <child>
               <object class="AdwActionRow">
                 <property name="title">persist.waydroid.suspend</property>
                 <property name="title-lines">1</property>
                 <property name="subtitle" translatable="true">Let the Waydroid container sleep (after the display timeout) when no apps are active</property>
+                <property name="sensitive" bind-source="switch_4" bind-property="sensitive" bind-flags="sync-create"/>
                 <property name="activatable-widget">switch_4</property>
                 <child>
                   <object class="GtkSwitch" id="switch_4">
-                    <property name="name">persist.waydroid.suspend</property>
+                    <property name="name">suspend</property>
                     <property name="valign">3</property>
+                    <property name="sensitive">False</property>
                   </object>
                 </child>
               </object>
             </child>
-
-
             <child>
               <object class="AdwActionRow">
                 <property name="title">persist.waydroid.uevent </property>
                 <property name="title-lines">1</property>
                 <property name="subtitle" translatable="true">Allow android direct access to hotplugged devices</property>
+                <property name="sensitive" bind-source="switch_5" bind-property="sensitive" bind-flags="sync-create"/>
                 <property name="activatable-widget">switch_5</property>
                 <child>
                   <object class="GtkSwitch" id="switch_5">
-                    <property name="name">persist.waydroid.uevent</property>
+                    <property name="name">uevent</property>
                     <property name="valign">3</property>
+                    <property name="sensitive">False</property>
                   </object>
                 </child>
               </object>
             </child>
-
-
             <child>
               <object class="AdwActionRow">
                 <property name="title">persist.waydroid.fake_touch</property>
-                <property name="subtitle" translatable="true">Interpret mouse inputs as touch inputs. Enter the package names separated by ",". Use the wildcard "*" to match all Apps</property>
+                <property name="subtitle" translatable="true">Interpret mouse inputs as touch inputs. Enter the package names separated by &quot;,&quot;. Use the wildcard &quot;*&quot; to match all Apps</property>
                 <property name="title-lines">1</property>
-                <property name="activatable-widget">switch_6</property>
+                <property name="sensitive" bind-source="entry_1" bind-property="sensitive" bind-flags="sync-create"/>
+                <property name="activatable-widget">entry_1</property>
                 <child>
-                  <object class="GtkEntry" id="switch_6">
-                    <property name="name">persist.waydroid.fake_touch</property>
+                  <object class="GtkEntry" id="entry_1">
+                    <property name="name">fake-touch</property>
                     <property name="placeholder-text" translatable="true">Package names</property>
                     <property name="width-chars">10</property>
                     <property name="valign">3</property>
+                    <property name="sensitive">False</property>
                   </object>
                 </child>
               </object>
             </child>
-
             <child>
               <object class="AdwActionRow">
                 <property name="title">persist.waydroid.fake_wifi</property>
-                <property name="subtitle" translatable="true">Make the Apps appear as if connected to WiFi. Enter the package names separated by ",". Use the wildcard "*" to match all Apps</property>
+                <property name="subtitle" translatable="true">Make the Apps appear as if connected to WiFi. Enter the package names separated by &quot;,&quot;. Use the wildcard &quot;*&quot; to match all Apps</property>
                 <property name="title-lines">1</property>
-                <property name="activatable-widget">switch_7</property>
+                <property name="sensitive" bind-source="entry_2" bind-property="sensitive" bind-flags="sync-create"/>
+                <property name="activatable-widget">entry_2</property>
                 <child>
-                  <object class="GtkEntry" id="switch_7">
-                    <property name="name">persist.waydroid.fake_wifi</property>
+                  <object class="GtkEntry" id="entry_2">
+                    <property name="name">fake-wifi</property>
                     <property name="width-chars">10</property>
                     <property name="valign">3</property>
                     <property name="placeholder-text" translatable="true">Package names</property>
+                    <property name="sensitive">False</property>
                   </object>
                 </child>
               </object>
             </child>
-
           </object>
-
         </child>
         <child>
           <object class="AdwPreferencesGroup">
-            <property name="title">Waydroid Privileged Options</property>
-            <!-- <property name="description" translatable="true">Click the button on the right to apply the changes to this group's configuration</property> -->
-            <!-- <property name="header-suffix">header_suffix</property> -->
+            <property name="title">Waydroid Privileged Options</property><!-- <property name="header-suffix">header_suffix</property> -->
             <child>
               <object class="AdwActionRow">
                 <property name="title">qemu.hw.mainkeys</property>
                 <property name="subtitle" translatable="true">hide navbar</property>
+                <property name="sensitive" bind-source="switch_21" bind-property="sensitive" bind-flags="sync-create"/>
                 <property name="activatable-widget">switch_21</property>
                 <child>
                   <object class="GtkSwitch" id="switch_21">
                     <property name="valign">3</property>
+                    <property name="sensitive">False</property>
+                    <property name="name">qemu-hw-mainkeys</property><!--好处是只要switch状态改变就可以触发, 无论是鼠标点击还是键盘按下, 缺点是初始化数据也会触发--><!-- <signal name="notify::active" handler="on_switch_clicked"></signal> -->
                   </object>
                 </child>
               </object>
@@ -143,10 +147,8 @@
           </object>
         </child>
       </object>
-    </child>
+    </child><!-- <child>
+      <object class="GtkOverlay" id="overlay"></object>
+    </child> -->
   </template>
-  <!-- <object class="GtkButton" id="header_suffix">
-    <property name="label">apply</property>
-    <signal name="clicked" handler="on_save_privileged_props" />
-  </object> -->
 </interface>

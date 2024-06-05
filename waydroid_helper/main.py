@@ -9,9 +9,7 @@ gi.require_version("Adw", "1")
 
 Adw.init()
 
-
 class Dialog(Adw.MessageDialog):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
