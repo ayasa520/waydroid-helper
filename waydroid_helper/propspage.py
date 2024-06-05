@@ -20,6 +20,10 @@ class PropsPage(Gtk.Box):
     switch_5: Gtk.Switch = Gtk.Template.Child()
     entry_1: Gtk.Switch = Gtk.Template.Child()
     entry_2: Gtk.Switch = Gtk.Template.Child()
+    entry_3: Gtk.Switch = Gtk.Template.Child()
+    entry_4: Gtk.Switch = Gtk.Template.Child()
+    entry_5: Gtk.Switch = Gtk.Template.Child()
+    entry_6: Gtk.Switch = Gtk.Template.Child()
     switch_21: Gtk.Switch = Gtk.Template.Child()
     overlay: Gtk.Overlay = None
     waydroid: Waydroid = GObject.Property(default=None, type=Waydroid)
@@ -83,6 +87,32 @@ class PropsPage(Gtk.Box):
             GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
         )
 
+        self.waydroid.persist_props.bind_property(
+            self.entry_3.get_name(),
+            self.entry_3,
+            "text",
+            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        )
+
+        self.waydroid.persist_props.bind_property(
+            self.entry_4.get_name(),
+            self.entry_4,
+            "text",
+            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        )
+
+        self.waydroid.persist_props.bind_property(
+            self.entry_5.get_name(),
+            self.entry_5,
+            "text",
+            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        )
+        self.waydroid.persist_props.bind_property(
+            self.entry_6.get_name(),
+            self.entry_6,
+            "text",
+            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        )
         self.waydroid.privileged_props.bind_property(
             self.switch_21.get_name(),
             self.switch_21,
@@ -124,6 +154,22 @@ class PropsPage(Gtk.Box):
             "notify::text",
             partial(self.on_persist_text_changed, name=self.entry_2.get_name()),
         )
+        self.entry_3.connect(
+            "notify::text",
+            partial(partial(self.on_persist_text_changed, flag=True), name=self.entry_3.get_name()),
+        )
+        self.entry_4.connect(
+            "notify::text",
+            partial(partial(self.on_persist_text_changed, flag=True), name=self.entry_4.get_name()),
+        )
+        self.entry_5.connect(
+            "notify::text",
+            partial(partial(self.on_persist_text_changed, flag=True), name=self.entry_5.get_name()),
+        )
+        self.entry_6.connect(
+            "notify::text",
+            partial(partial(self.on_persist_text_changed, flag=True), name=self.entry_6.get_name()),
+        )
 
         self.switch_21.connect(
             "notify::active",
@@ -156,6 +202,10 @@ class PropsPage(Gtk.Box):
             self.switch_5.set_sensitive(True)
             self.entry_1.set_sensitive(True)
             self.entry_2.set_sensitive(True)
+            self.entry_3.set_sensitive(True)
+            self.entry_4.set_sensitive(True)
+            self.entry_5.set_sensitive(True)
+            self.entry_6.set_sensitive(True)
         else:
             self.switch_1.set_sensitive(False)
             self.switch_2.set_sensitive(False)
@@ -164,6 +214,10 @@ class PropsPage(Gtk.Box):
             self.switch_5.set_sensitive(False)
             self.entry_1.set_sensitive(False)
             self.entry_2.set_sensitive(False)
+            self.entry_3.set_sensitive(False)
+            self.entry_4.set_sensitive(False)
+            self.entry_5.set_sensitive(False)
+            self.entry_6.set_sensitive(False)
 
     def set_reveal(self, widget: InfoBar, reveal_child: bool):
         if (
@@ -193,7 +247,7 @@ class PropsPage(Gtk.Box):
         self.waydroid.set_persist_prop(name)
         self.timeout_id[name] = None
 
-    def on_persist_text_changed(self, a, b, name):
+    def on_persist_text_changed(self, a, b, name, flag=False):
         if self.waydroid.persist_props.get_property("state") != PropsState.READY:
             return
         if self.timeout_id.get(name) is not None:
@@ -202,6 +256,9 @@ class PropsPage(Gtk.Box):
         self.timeout_id[name] = GLib.timeout_add(
             1000, partial(self.__on_persist_text_changed, name)
         )
+        if flag:
+            self.set_reveal(self.save_notification, True)
+
 
     def on_perisit_switch_clicked(self, a: Gtk.Switch, b, name):
         # print(a.get_widget().get_name())

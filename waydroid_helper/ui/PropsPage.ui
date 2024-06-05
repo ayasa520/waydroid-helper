@@ -124,6 +124,78 @@
                 </child>
               </object>
             </child>
+            <child>
+              <object class="AdwActionRow">
+                <property name="title">persist.waydroid.height_padding</property>
+                <property name="subtitle" translatable="true">Adjust height padding</property>
+                <property name="title-lines">1</property>
+                <property name="sensitive" bind-source="entry_3" bind-property="sensitive" bind-flags="sync-create"/>
+                <property name="activatable-widget">entry_3</property>
+                <child>
+                  <object class="GtkEntry" id="entry_3">
+                    <property name="name">height-padding</property>
+                    <property name="width-chars">10</property>
+                    <property name="valign">3</property>
+                    <property name="placeholder-text" translatable="true">empty or 0-9999</property>
+                    <property name="sensitive">False</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="AdwActionRow">
+                <property name="title">persist.waydroid.width_padding</property>
+                <property name="subtitle" translatable="true">Adjust width padding</property>
+                <property name="title-lines">1</property>
+                <property name="sensitive" bind-source="entry_4" bind-property="sensitive" bind-flags="sync-create"/>
+                <property name="activatable-widget">entry_4</property>
+                <child>
+                  <object class="GtkEntry" id="entry_4">
+                    <property name="name">width-padding</property>
+                    <property name="width-chars">10</property>
+                    <property name="valign">3</property>
+                    <property name="placeholder-text" translatable="true">empty or 0-9999</property>
+                    <property name="sensitive">False</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+                     <child>
+              <object class="AdwActionRow">
+                <property name="title">persist.waydroid.width</property>
+                <property name="subtitle" translatable="true">Used for user to override desired resolution</property>
+                <property name="title-lines">1</property>
+                <property name="sensitive" bind-source="entry_5" bind-property="sensitive" bind-flags="sync-create"/>
+                <property name="activatable-widget">entry_5</property>
+                <child>
+                  <object class="GtkEntry" id="entry_5">
+                    <property name="name">width</property>
+                    <property name="width-chars">10</property>
+                    <property name="valign">3</property>
+                    <property name="placeholder-text" translatable="true">empty or 0-9999</property>
+                    <property name="sensitive">False</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="AdwActionRow">
+                <property name="title">persist.waydroid.height</property>
+                <property name="subtitle" translatable="true">Used for user to override desired resolution</property>
+                <property name="title-lines">1</property>
+                <property name="sensitive" bind-source="entry_6" bind-property="sensitive" bind-flags="sync-create"/>
+                <property name="activatable-widget">entry_6</property>
+                <child>
+                  <object class="GtkEntry" id="entry_6">
+                    <property name="name">height</property>
+                    <property name="width-chars">10</property>
+                    <property name="valign">3</property>
+                    <property name="placeholder-text" translatable="true">empty or 0-9999</property>
+                    <property name="sensitive">False</property>
+                  </object>
+                </child>
+              </object>
+            </child>
           </object>
         </child>
         <child>

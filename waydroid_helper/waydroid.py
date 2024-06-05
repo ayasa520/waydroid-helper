@@ -68,6 +68,10 @@ class Waydroid(GObject.Object):
             "uevent": [str_to_bool, partial(bool_to_str, flag=1)],
             "fake-touch": [lambda x: x, lambda x: x],
             "fake-wifi": [lambda x: x, lambda x: x],
+            "height-padding": [lambda x: x, lambda x: x],
+            "width-padding": [lambda x: x, lambda x: x],
+            "height": [lambda x: x, lambda x: x],
+            "width": [lambda x: x, lambda x: x],
         }
         ready_state_list = dict()
         multi_windows: GObject.Property = GObject.Property(
@@ -121,6 +125,31 @@ class Waydroid(GObject.Object):
             blurb=_(
                 "Make the Apps appear as if connected to WiFi. Enter the package names separated by ','. Use the wildcard '*' to match all Apps"
             ),
+        )
+        height_padding: GObject.Property = GObject.Property(
+            default="",
+            type=str,
+            nick="persist.waydroid.height_padding",
+            blurb=_("Adjust height padding"),
+        )
+        width_padding: GObject.Property = GObject.Property(
+            default="",
+            type=str,
+            nick="persist.waydroid.width_padding",
+            blurb=_("Adjust width padding"),
+        )
+        width: GObject.Property = GObject.Property(
+            default="",
+            type=str,
+            nick="persist.waydroid.width",
+            blurb=_("Used for user to override desired resolution"),
+        )
+
+        height: GObject.Property = GObject.Property(
+            default="",
+            type=str,
+            nick="persist.waydroid.height",
+            blurb=_("Used for user to override desired resolution"),
         )
 
         def _list_properties(self):
@@ -278,7 +307,6 @@ class Waydroid(GObject.Object):
 
     # 因为双向绑定了, 所以不需要传入值
     def set_persist_prop(self, name):
-        print(f"name {name} 修改了")
         self.persist_props.save(name)
 
     def update_waydroid_status(self):
