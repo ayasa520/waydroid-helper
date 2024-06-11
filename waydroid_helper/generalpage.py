@@ -1,4 +1,5 @@
 from gettext import gettext as _
+from waydroid_helper.util.Task import Task
 from waydroid_helper.waydroid import Waydroid
 from waydroid_helper.waydroid import WaydroidState
 from gi.repository import Gtk, GObject, Gdk
@@ -11,7 +12,7 @@ gi.require_version("Adw", "1")
 @Gtk.Template(resource_path="/com/jaoushingan/WaydroidHelper/ui/GeneralPage.ui")
 class GeneralPage(Gtk.Box):
     __gtype_name__ = "GeneralPage"
-    waydroid: GObject.Property = GObject.Property(default=None, type=Waydroid)
+    waydroid: Waydroid = GObject.Property(default=None, type=Waydroid)
     status = Gtk.Template.Child()
     status_image = Gtk.Template.Child("status-image")
     stop_button: Gtk.Button = Gtk.Template.Child("stop-button")
@@ -20,8 +21,9 @@ class GeneralPage(Gtk.Box):
     init_button: Gtk.Button = Gtk.Template.Child("init-button")
     updrade_button: Gtk.Button = Gtk.Template.Child()
 
+    _task = Task()
+
     def on_waydroid_state_changed(self, w, param):
-        print("状态改变, 在 general", w.get_property("state"))
         if w.get_property("state") == WaydroidState.RUNNING:
             self.status.set_title(_("Connected"))
             self.status.set_subtitle(_("Waydroid session is running"))
@@ -51,7 +53,6 @@ class GeneralPage(Gtk.Box):
             self.status_image.set_from_icon_name("")
             self._disable_buttons()
 
-
     def __init__(self, waydroid: Waydroid, **kargs):
         super().__init__(**kargs)
         self.set_property("waydroid", waydroid)
@@ -73,16 +74,16 @@ class GeneralPage(Gtk.Box):
     def on_start_button_clicked(self, button: Gtk.Button):
         print("waydroid session start")
         self._disable_buttons()
-        self.waydroid.start_session()
+        self._task.create_task(self.waydroid.start_session())
 
     @Gtk.Template.Callback()
     def on_stop_button_clicked(self, button):
         print("waydroid session stop")
         self._disable_buttons()
-        self.waydroid.stop_session()
+        self._task.create_task(self.waydroid.stop_session())
 
     @Gtk.Template.Callback()
     def on_start_upgrade_offline_clicked(self, button):
         print("sudo waydroid upgrade -o")
         self._disable_buttons()
-        self.waydroid.upgrade(True)
+        self._task.create_task(self.waydroid.upgrade(True))

@@ -3,11 +3,16 @@ from .window import WaydroidHelperWindow
 from gi.repository import Gtk, Gio, Adw
 import sys
 import gi
+import asyncio
+import gbulb
+
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
 Adw.init()
+gbulb.install(gtk=True)
+
 
 class Dialog(Adw.MessageDialog):
     def __init__(self, **kwargs):
@@ -97,4 +102,6 @@ class WaydroidHelperApplication(Adw.Application):
 def main(version):
     """The application's entry point."""
     app = WaydroidHelperApplication()
-    return app.run(sys.argv)
+    # return app.run(sys.argv)
+    loop = asyncio.get_event_loop()
+    loop.run_forever(application=app)

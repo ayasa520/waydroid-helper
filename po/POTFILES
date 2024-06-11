@@ -1,6 +1,6 @@
 waydroid_helper/generalpage.py
 waydroid_helper/propspage.py
-waydroid_helper/util/ProcessLauncher.py
+waydroid_helper/util/SubprocessManager.py
 waydroid_helper/waydroid.py
 waydroid_helper/__init__.py
 waydroid_helper/gtk/help-overlay.ui

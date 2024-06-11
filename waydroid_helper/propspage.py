@@ -1,6 +1,7 @@
 from gettext import gettext as _
 
 from waydroid_helper.infobar import InfoBar
+from waydroid_helper.util.Task import Task
 from waydroid_helper.waydroid import PropsState, Waydroid, WaydroidState
 from gi.repository import Gtk, GObject, Adw, GLib
 from functools import partial
@@ -29,6 +30,8 @@ class PropsPage(Gtk.Box):
     waydroid: Waydroid = GObject.Property(default=None, type=Waydroid)
 
     timeout_id = dict()
+
+    _task = Task()
 
     def __init__(self, waydroid: Waydroid, **kargs):
         super().__init__(**kargs)
@@ -156,19 +159,31 @@ class PropsPage(Gtk.Box):
         )
         self.entry_3.connect(
             "notify::text",
-            partial(partial(self.on_persist_text_changed, flag=True), name=self.entry_3.get_name()),
+            partial(
+                partial(self.on_persist_text_changed, flag=True),
+                name=self.entry_3.get_name(),
+            ),
         )
         self.entry_4.connect(
             "notify::text",
-            partial(partial(self.on_persist_text_changed, flag=True), name=self.entry_4.get_name()),
+            partial(
+                partial(self.on_persist_text_changed, flag=True),
+                name=self.entry_4.get_name(),
+            ),
         )
         self.entry_5.connect(
             "notify::text",
-            partial(partial(self.on_persist_text_changed, flag=True), name=self.entry_5.get_name()),
+            partial(
+                partial(self.on_persist_text_changed, flag=True),
+                name=self.entry_5.get_name(),
+            ),
         )
         self.entry_6.connect(
             "notify::text",
-            partial(partial(self.on_persist_text_changed, flag=True), name=self.entry_6.get_name()),
+            partial(
+                partial(self.on_persist_text_changed, flag=True),
+                name=self.entry_6.get_name(),
+            ),
         )
 
         self.switch_21.connect(
@@ -244,7 +259,7 @@ class PropsPage(Gtk.Box):
         # self.save_privileged_notification.set_reveal_child(True)
 
     def __on_persist_text_changed(self, name):
-        self.waydroid.set_persist_prop(name)
+        self._task.create_task(self.waydroid.save_persist_prop(name))
         self.timeout_id[name] = None
 
     def on_persist_text_changed(self, a, b, name, flag=False):
@@ -259,7 +274,6 @@ class PropsPage(Gtk.Box):
         if flag:
             self.set_reveal(self.save_notification, True)
 
-
     def on_perisit_switch_clicked(self, a: Gtk.Switch, b, name):
         # print(a.get_widget().get_name())
         if self.waydroid.persist_props.get_property("state") != PropsState.READY:
@@ -268,7 +282,7 @@ class PropsPage(Gtk.Box):
         self.set_reveal(self.save_notification, True)
         # self.save_notification.set_reveal_child(True)
         # print("来咯", name, self.waydroid.persist_props.get_property(name))
-        self.waydroid.set_persist_prop(name)
+        self._task.create_task(self.waydroid.save_persist_prop(name))
 
     def on_cancel_button_clicked(self, button):
         self.set_reveal(self.save_notification, False)
@@ -277,7 +291,7 @@ class PropsPage(Gtk.Box):
     def on_restart_button_clicked(self, button):
         self.set_reveal(self.save_notification, False)
         # self.save_notification.set_reveal_child(False)
-        self.waydroid.restart_session()
+        self._task.create_task(self.waydroid.restart_session())
 
     def on_restore_button_clicked(self, button):
         self.set_reveal(self.save_privileged_notification, False)
@@ -287,7 +301,7 @@ class PropsPage(Gtk.Box):
     def on_apply_button_clicked(self, button):
         self.set_reveal(self.save_privileged_notification, False)
         # self.save_privileged_notification.set_reveal_child(False)
-        self.waydroid.save_privileged_props()
+        self._task.create_task(self.waydroid.save_privileged_props())
 
     # @Gtk.Template.Callback()
     # def on_switch_clicked(self, a:Gtk.Switch, b=None, c=None, d=None):

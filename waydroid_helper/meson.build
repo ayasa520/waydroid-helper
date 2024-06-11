@@ -37,7 +37,11 @@ waydroid_helper_sources = [
     'propspage.py',
     'extensionspage.py',
     'infobar.py',
-    'util/ProcessLauncher.py',
+]
+util_sources = [
+    'util/SubprocessManager.py',
+    'util/Task.py',
 ]
 
 install_data(waydroid_helper_sources, install_dir: moduledir)
+install_data(util_sources, install_dir: utildir)
