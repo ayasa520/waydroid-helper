@@ -47,7 +47,7 @@
             "sources": [
                 {
                     "type": "git",
-                    "url": "file:///home/rikka/工程"
+                    "url": "https://github.com/ayasa520/waydroid-helper.git"
                 }
             ]
         }
