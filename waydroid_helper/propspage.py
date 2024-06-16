@@ -1,11 +1,13 @@
 from gettext import gettext as _
-
+import json
+import os
 from waydroid_helper.infobar import InfoBar
 from waydroid_helper.util.Task import Task
-from waydroid_helper.waydroid import PropsState, Waydroid, WaydroidState
+from waydroid_helper.waydroid import PropsState, Waydroid
 from gi.repository import Gtk, GObject, Adw, GLib
 from functools import partial
 import gi
+
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
@@ -14,6 +16,9 @@ gi.require_version("Adw", "1")
 @Gtk.Template(resource_path="/com/jaoushingan/WaydroidHelper/ui/PropsPage.ui")
 class PropsPage(Gtk.Box):
     __gtype_name__ = "PropsPage"
+
+    items = dict()
+
     switch_1: Gtk.Switch = Gtk.Template.Child()
     switch_2: Gtk.Switch = Gtk.Template.Child()
     switch_3: Gtk.Switch = Gtk.Template.Child()
@@ -26,15 +31,27 @@ class PropsPage(Gtk.Box):
     entry_5: Gtk.Switch = Gtk.Template.Child()
     entry_6: Gtk.Switch = Gtk.Template.Child()
     switch_21: Gtk.Switch = Gtk.Template.Child()
+    device_combo: Adw.ComboRow = Gtk.Template.Child()
     overlay: Gtk.Overlay = None
     waydroid: Waydroid = GObject.Property(default=None, type=Waydroid)
 
     timeout_id = dict()
 
     _task = Task()
+    ids = dict()
 
     def __init__(self, waydroid: Waydroid, **kargs):
         super().__init__(**kargs)
+
+        if not os.getenv("container"):
+            data_dir = GLib.get_user_data_dir()
+        else:
+            data_dir = '/app/share'
+
+        with open(
+            os.path.join(data_dir, "waydroid-helper", "data", "devices.json")
+        ) as f:
+            self.items = json.load(f)
 
         self.set_property("waydroid", waydroid)
         self.waydroid.persist_props.connect(
@@ -123,74 +140,6 @@ class PropsPage(Gtk.Box):
             GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
         )
 
-        self.switch_1.connect(
-            "notify::active",
-            partial(self.on_perisit_switch_clicked, name=self.switch_1.get_name()),
-        )
-
-        self.switch_2.connect(
-            "notify::active",
-            partial(self.on_perisit_switch_clicked, name=self.switch_2.get_name()),
-        )
-
-        self.switch_3.connect(
-            "notify::active",
-            partial(self.on_perisit_switch_clicked, name=self.switch_3.get_name()),
-        )
-
-        self.switch_4.connect(
-            "notify::active",
-            partial(self.on_perisit_switch_clicked, name=self.switch_4.get_name()),
-        )
-
-        self.switch_5.connect(
-            "notify::active",
-            partial(self.on_perisit_switch_clicked, name=self.switch_5.get_name()),
-        )
-
-        self.entry_1.connect(
-            "notify::text",
-            partial(self.on_persist_text_changed, name=self.entry_1.get_name()),
-        )
-
-        self.entry_2.connect(
-            "notify::text",
-            partial(self.on_persist_text_changed, name=self.entry_2.get_name()),
-        )
-        self.entry_3.connect(
-            "notify::text",
-            partial(
-                partial(self.on_persist_text_changed, flag=True),
-                name=self.entry_3.get_name(),
-            ),
-        )
-        self.entry_4.connect(
-            "notify::text",
-            partial(
-                partial(self.on_persist_text_changed, flag=True),
-                name=self.entry_4.get_name(),
-            ),
-        )
-        self.entry_5.connect(
-            "notify::text",
-            partial(
-                partial(self.on_persist_text_changed, flag=True),
-                name=self.entry_5.get_name(),
-            ),
-        )
-        self.entry_6.connect(
-            "notify::text",
-            partial(
-                partial(self.on_persist_text_changed, flag=True),
-                name=self.entry_6.get_name(),
-            ),
-        )
-
-        self.switch_21.connect(
-            "notify::active",
-            partial(self.on_privileged_switch_clicked, name=self.switch_21.get_name()),
-        )
-
         self.save_notification: InfoBar = InfoBar(
             label=_("Restart the session to apply the changes"),
             cancel_callback=self.on_cancel_button_clicked,
@@ -202,11 +151,105 @@ class PropsPage(Gtk.Box):
             ok_callback=self.on_apply_button_clicked,
         )
 
+        model = Gtk.StringList.new(strings=list(self.items.keys()))
+        self.device_combo.set_model(model=model)
+
+        # 用 bind 也行？
+        # self.waydroid.privileged_props.bind_property(
+        #     "ro-product-model",
+        #     self.device_combo,
+        #     "selected",
+        #     GObject.BindingFlags.DEFAULT,
+        #     # from the source to target
+        #     self.on_device_info_changed,
+        #     # partial(self.on_adw_combo_row_selected_item,prop_name="ro-product-brand"),
+        # )
+        # self.waydroid.privileged_props.bind_property(
+        #     "ro-product-brand",
+        #     self.device_combo,
+        #     "selected",
+        #     GObject.BindingFlags.DEFAULT,
+        #     self.on_device_info_changed,
+        #     # partial(self.on_adw_combo_row_selected_item,prop_name="ro-product-model"),
+        # )
+        self._model_changed = False
+        self._brand_changed = False
+        self.waydroid.privileged_props.connect(
+            "notify::ro-product-model", self.__on_model_changed
+        )
+        self.waydroid.privileged_props.connect(
+            "notify::ro-product-brand", self.__on_brand_changed
+        )
+
+    def check_both_properties_changed(self):
+        if self._model_changed and self._brand_changed:
+            self._model_changed = False
+            self._brand_changed = False
+            self.on_device_info_changed()
+
+    def __on_model_changed(self, obj, param_spec):
+        self._model_changed = True
+        self.check_both_properties_changed()
+
+    def __on_brand_changed(self, obj, param_spec):
+        self._brand_changed = True
+        self.check_both_properties_changed()
+
+    # waydroid prop to selected
+    def on_device_info_changed(self):
+        product_brand = self.waydroid.privileged_props.get_property("ro-product-brand")
+        product_model = self.waydroid.privileged_props.get_property("ro-product-model")
+        device = f"{product_brand} {product_model}"
+        current: str = self.device_combo.get_selected_item().get_string()
+        if device == current:
+            return
+        if device in self.items.keys():
+            self.device_combo.set_selected(list(self.items.keys()).index(device))
+        else:
+            self.device_combo.set_selected(0)
+
+    # # selected to waydroid prop
+    def on_adw_combo_row_selected_item(self, comborow, GParamObject):
+        self.set_reveal(self.save_privileged_notification, True)
+        selected_item = comborow.get_selected_item()
+        self.waydroid.privileged_props.set_device_info(
+            self.items[selected_item.get_string()]
+        )
+
+    def __connect(self, source: GObject.Object, signal, handler):
+        id = source.connect(signal, handler)
+        self.ids[f"{hash(source)}_{signal}"] = id
+
+    def __disconnect(self, source: GObject.Object, signal):
+        id = self.ids.get(f"{hash(source)}_{signal}", -1)
+        if id == -1:
+            return
+        source.disconnect(id)
+        self.ids.pop(f"{hash(source)}_{signal}")
+
     def on_waydroid_privileged_state_changed(self, w, param):
         if w.get_property("state") == PropsState.READY:
             self.switch_21.set_sensitive(True)
+            self.device_combo.set_sensitive(True)
+
+            self.__connect(
+                self.device_combo,
+                "notify::selected-item",
+                self.on_adw_combo_row_selected_item,
+            )
+            self.__connect(
+                self.switch_21,
+                "notify::active",
+                partial(
+                    self.on_privileged_switch_clicked, name=self.switch_21.get_name()
+                ),
+            )
+
         else:
+            self.__disconnect(self.device_combo, "notify::selected-item")
+            self.__disconnect(self.switch_21, "notify::active")
             self.switch_21.set_sensitive(False)
+            self.device_combo.set_sensitive(False)
 
     def on_waydroid_persist_state_changed(self, w, param):
         if w.get_property("state") == PropsState.READY:
@@ -221,7 +264,92 @@ class PropsPage(Gtk.Box):
             self.entry_4.set_sensitive(True)
             self.entry_5.set_sensitive(True)
             self.entry_6.set_sensitive(True)
+            self.__connect(
+                self.entry_1,
+                "notify::text",
+                partial(self.on_persist_text_changed, name=self.entry_1.get_name()),
+            )
+
+            self.__connect(
+                self.entry_2,
+                "notify::text",
+                partial(self.on_persist_text_changed, name=self.entry_2.get_name()),
+            )
+            self.__connect(
+                self.entry_3,
+                "notify::text",
+                partial(
+                    partial(self.on_persist_text_changed, flag=True),
+                    name=self.entry_3.get_name(),
+                ),
+            )
+            self.__connect(
+                self.entry_4,
+                "notify::text",
+                partial(
+                    partial(self.on_persist_text_changed, flag=True),
+                    name=self.entry_4.get_name(),
+                ),
+            )
+            self.__connect(
+                self.entry_5,
+                "notify::text",
+                partial(
+                    partial(self.on_persist_text_changed, flag=True),
+                    name=self.entry_5.get_name(),
+                ),
+            )
+            self.__connect(
+                self.entry_6,
+                "notify::text",
+                partial(
+                    partial(self.on_persist_text_changed, flag=True),
+                    name=self.entry_6.get_name(),
+                ),
+            )
+
+            self.__connect(
+                self.switch_1,
+                "notify::active",
+                partial(self.on_perisit_switch_clicked, name=self.switch_1.get_name()),
+            )
+
+            self.__connect(
+                self.switch_2,
+                "notify::active",
+                partial(self.on_perisit_switch_clicked, name=self.switch_2.get_name()),
+            )
+
+            self.__connect(
+                self.switch_3,
+                "notify::active",
+                partial(self.on_perisit_switch_clicked, name=self.switch_3.get_name()),
+            )
+
+            self.__connect(
+                self.switch_4,
+                "notify::active",
+                partial(self.on_perisit_switch_clicked, name=self.switch_4.get_name()),
+            )
+
+            self.__connect(
+                self.switch_5,
+                "notify::active",
+                partial(self.on_perisit_switch_clicked, name=self.switch_5.get_name()),
+            )
         else:
+            self.__disconnect(self.switch_1, "notify::active")
+            self.__disconnect(self.switch_2, "notify::active")
+            self.__disconnect(self.switch_3, "notify::active")
+            self.__disconnect(self.switch_4, "notify::active")
+            self.__disconnect(self.switch_5, "notify::active")
+            self.__disconnect(self.entry_1, "notify::text")
+            self.__disconnect(self.entry_2, "notify::text")
+            self.__disconnect(self.entry_3, "notify::text")
+            self.__disconnect(self.entry_3, "notify::text")
+            self.__disconnect(self.entry_4, "notify::text")
+            self.__disconnect(self.entry_5, "notify::text")
+            self.__disconnect(self.entry_6, "notify::text")
             self.switch_1.set_sensitive(False)
             self.switch_2.set_sensitive(False)
             self.switch_3.set_sensitive(False)
@@ -253,8 +381,9 @@ class PropsPage(Gtk.Box):
         widget.set_reveal_child(reveal_child)
 
     def on_privileged_switch_clicked(self, a, b, name):
-        if self.waydroid.privileged_props.get_property("state") != PropsState.READY:
-            return
+        # 这种判断state==ready时再connect, state==uninitialized时候disconnect是不是更好?
+        # if self.waydroid.privileged_props.get_property("state") != PropsState.READY:
+        #     return
         self.set_reveal(self.save_privileged_notification, True)
         # self.save_privileged_notification.set_reveal_child(True)
 
@@ -263,8 +392,8 @@ class PropsPage(Gtk.Box):
         self.timeout_id[name] = None
 
     def on_persist_text_changed(self, a, b, name, flag=False):
-        if self.waydroid.persist_props.get_property("state") != PropsState.READY:
-            return
+        # if self.waydroid.persist_props.get_property("state") != PropsState.READY:
+        #     return
         if self.timeout_id.get(name) is not None:
             GLib.source_remove(self.timeout_id[name])
 
@@ -276,8 +405,8 @@ class PropsPage(Gtk.Box):
 
     def on_perisit_switch_clicked(self, a: Gtk.Switch, b, name):
         # print(a.get_widget().get_name())
-        if self.waydroid.persist_props.get_property("state") != PropsState.READY:
-            return
+        # if self.waydroid.persist_props.get_property("state") != PropsState.READY:
+        #     return
         # print("回调")
         self.set_reveal(self.save_notification, True)
         # self.save_notification.set_reveal_child(True)
@@ -302,6 +431,14 @@ class PropsPage(Gtk.Box):
         self.set_reveal(self.save_privileged_notification, False)
         # self.save_privileged_notification.set_reveal_child(False)
         self._task.create_task(self.waydroid.save_privileged_props())
+
+    @Gtk.Template.Callback()
+    def on_reset_persist_clicked(self, button):
+        self._task.create_task(self.waydroid.reset_persist_props())
+
+    @Gtk.Template.Callback()
+    def on_reset_privileged_clicked(self, button):
+        self._task.create_task(self.waydroid.reset_privileged_props())
 
     # @Gtk.Template.Callback()
     # def on_switch_clicked(self, a:Gtk.Switch, b=None, c=None, d=None):

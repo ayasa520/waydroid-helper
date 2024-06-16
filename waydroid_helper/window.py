@@ -44,17 +44,17 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
             child=general_page,
             name="page01",
             title=_("Home"),
-            icon_name="user-home-symbolic",
+            icon_name="com.jaoushingan.WaydroidHelper-home-symbolic",
         )
         self.stack.add_titled_with_icon(
             child=props_page,
             name="page02",
             title=_("Settings"),
-            icon_name="emblem-system-symbolic",
+            icon_name="com.jaoushingan.WaydroidHelper-system-symbolic",
         )
         self.stack.add_titled_with_icon(
             child=extensions_page,
             name="page03",
             title=_("Extensions"),
-            icon_name="application-x-addon-symbolic",
+            icon_name="com.jaoushingan.WaydroidHelper-addon-symbolic",
         )

@@ -1,6 +1,5 @@
 from gettext import gettext as _
-from gi.repository import Gtk, GObject, Adw, GLib, Gdk
-from functools import partial
+from gi.repository import Gtk
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -19,18 +18,6 @@ class InfoBar(Gtk.Revealer):
         self.label.set_text(label)
         self.cancel_button.connect("clicked", cancel_callback)
         self.ok_button.connect("clicked", ok_callback)
-
-        # style_context = self.get_style_context()
-        # c1, c2 = style_context.lookup_color("accent_bg_color"),style_context.lookup_color("window_bg_color")
-
-        # window_bg_color =c2[1] if c2[0] else Gdk.RGBA()
-        # if color[0]:
-        #     theme_color = color[1].to_string()
-        # else:
-        #     print("没找到")
-        #     theme_color = "rgba(255, 255, 255, 1)"
-
-        # print(theme_color)
 
         css_provider = Gtk.CssProvider()
         css_provider.load_from_data(

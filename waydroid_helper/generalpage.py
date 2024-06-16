@@ -20,6 +20,7 @@ class GeneralPage(Gtk.Box):
     general_button_stack: Gtk.Stack = Gtk.Template.Child()
     init_button: Gtk.Button = Gtk.Template.Child("init-button")
     updrade_button: Gtk.Button = Gtk.Template.Child()
+    show_full_ui_button:Gtk.Button = Gtk.Template.Child("show-full-ui-button")
 
     _task = Task()
 
@@ -27,26 +28,29 @@ class GeneralPage(Gtk.Box):
         if w.get_property("state") == WaydroidState.RUNNING:
             self.status.set_title(_("Connected"))
             self.status.set_subtitle(_("Waydroid session is running"))
-            self.status_image.set_from_icon_name("vcs-normal")
+            self.status_image.set_from_icon_name("com.jaoushingan.WaydroidHelper-normal")
             self.start_button.set_sensitive(False)
             self.stop_button.set_sensitive(True)
             self.general_button_stack.set_visible_child_name("initialized_menu")
             self.updrade_button.set_sensitive(True)
+            self.show_full_ui_button.set_sensitive(True)
         elif w.get_property("state") == WaydroidState.STOPPED:
             self.status.set_title(_("Stopped"))
             self.status.set_subtitle(_("Waydroid session is stopped"))
-            self.status_image.set_from_icon_name("vcs-conflicting")
+            self.status_image.set_from_icon_name("com.jaoushingan.WaydroidHelper-conflicting")
             self.start_button.set_sensitive(True)
             self.stop_button.set_sensitive(False)
             self.general_button_stack.set_visible_child_name("initialized_menu")
             self.updrade_button.set_sensitive(True)
+            self.show_full_ui_button.set_sensitive(True)
         elif w.get_property("state") == WaydroidState.UNINITIALIZED:
             self.status.set_title(_("Uninitialized"))
             self.status.set_subtitle(_("Waydroid is not initialized"))
-            self.status_image.set_from_icon_name("vcs-conflicting")
+            self.status_image.set_from_icon_name("com.jaoushingan.WaydroidHelper-conflicting")
             self.general_button_stack.set_visible_child_name("uninitialized_menu")
             self.init_button.set_sensitive(True)
             self.updrade_button.set_sensitive(False)
+            self.show_full_ui_button.set_sensitive(False)
         elif w.get_property("state") == WaydroidState.LOADING:
             self.status.set_title(_("Loading"))
             self.status.set_subtitle("")
@@ -63,6 +67,7 @@ class GeneralPage(Gtk.Box):
         self.stop_button.set_sensitive(False)
         self.init_button.set_sensitive(False)
         self.updrade_button.set_sensitive(False)
+        self.show_full_ui_button.set_sensitive(False)
 
     @Gtk.Template.Callback()
     def on_init_button_clicked(self, button: Gtk.Button):
@@ -81,6 +86,10 @@ class GeneralPage(Gtk.Box):
         print("waydroid session stop")
         self._disable_buttons()
         self._task.create_task(self.waydroid.stop_session())
+
+    @Gtk.Template.Callback()
+    def on_show_full_ui_button_clicked(self, button):
+        self._task.create_task(self.waydroid.show_full_ui())
 
     @Gtk.Template.Callback()
     def on_start_upgrade_offline_clicked(self, button):

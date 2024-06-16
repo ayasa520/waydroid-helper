@@ -5,6 +5,7 @@
   <requires lib="gtk" version="4.0"/>
   <requires lib="libadwaita" version="1.4"/>
   <template class="WaydroidHelperWindow" parent="AdwApplicationWindow">
+     <property name="title">Waydroid Helper</property>
     <property name="content">
       <object class="AdwToolbarView">
         <property name="content">

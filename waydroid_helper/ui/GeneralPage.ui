@@ -16,9 +16,13 @@
                 </child>
                 <child type="suffix">
                   <object class="GtkMenuButton">
+                    <property name="halign">end</property>
+                    <property name="valign">center</property>
+                    <property name="vexpand">true</property>
+                    <property name="hexpand">true</property>
                     <property name="always-show-arrow">true</property>
                     <property name="popover">pop_power</property>
-                    <property name="icon-name">system-shutdown-symbolic</property>
+                    <property name="icon-name">com.jaoushingan.WaydroidHelper-system-shutdown-symbolic</property>
                     <style>
                       <class name="flat"/>
                     </style>
@@ -54,6 +58,13 @@
                       <property name="text" translatable="yes">Stop</property>
                       <property name="sensitive">False</property>
                       <signal name="clicked" handler="on_stop_button_clicked"/>
+                    </object>
+                  </child>
+                  <child>
+                    <object class="GtkModelButton" id="show-full-ui-button">
+                      <property name="text" translatable="yes">Show full ui</property>
+                      <property name="sensitive">False</property>
+                      <signal name="clicked" handler="on_show_full_ui_button_clicked"/>
                     </object>
                   </child>
                   <child>

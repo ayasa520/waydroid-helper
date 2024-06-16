@@ -1,17 +1,22 @@
 {
-    "app-id" : "com.jaoushingan.WaydroidHelper",
-    "runtime" : "org.gnome.Platform",
-    "runtime-version" : "master",
-    "sdk" : "org.gnome.Sdk",
-    "command" : "waydroid-helper",
-    "finish-args" : [
+    "app-id": "com.jaoushingan.WaydroidHelper",
+    "runtime": "org.gnome.Platform",
+    "runtime-version": "46",
+    "sdk": "org.gnome.Sdk",
+    "command": "waydroid-helper",
+    "finish-args": [
         "--share=network",
         "--share=ipc",
         "--socket=fallback-x11",
         "--device=dri",
-        "--socket=wayland"
+        "--socket=wayland",
+        "--filesystem=/var/lib/waydroid:rw",
+        "--filesystem=xdg-data/waydroid:rw",
+        "--filesystem=xdg-config/fontconfig:ro",
+        "--filesystem=xdg-data/icons",
+        "--talk-name=org.freedesktop.Flatpak"
     ],
-    "cleanup" : [
+    "cleanup": [
         "/include",
         "/lib/pkgconfig",
         "/man",
@@ -22,15 +27,27 @@
         "*.la",
         "*.a"
     ],
-    "modules" : [
+    "modules": [
         {
-            "name" : "waydroid-helper",
-            "builddir" : true,
-            "buildsystem" : "meson",
-            "sources" : [
+            "name": "gbulb",
+            "buildsystem": "simple",
+            "build-options": {
+                "build-args": [
+                    "--share=network"
+                ]
+            },
+            "build-commands": [
+                "pip3 install --prefix=/app --no-cache-dir gbulb"
+            ]
+        },
+        {
+            "name": "waydroid-helper",
+            "builddir": true,
+            "buildsystem": "meson",
+            "sources": [
                 {
-                    "type" : "git",
-                    "url" : "file:///home/rikka/工程"
+                    "type": "git",
+                    "url": "file:///home/rikka/工程"
                 }
             ]
         }
