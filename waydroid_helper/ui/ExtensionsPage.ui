@@ -3,11 +3,11 @@
   <template class="ExtensionsPage" parent="GtkBox">
     <property name="orientation">1</property>
     <child>
-      <object class="AdwPreferencesPage">
-        <child>
+      <object class="AdwPreferencesPage" id="extensions_page">
+        <!-- <child>
           <object class="AdwPreferencesGroup">
-            <property name="title">一些扩展</property>
-            <property name="description">可能包含专有软件</property>
+            <property name="title">ARM translation layer</property>
+            <property name="description"></property>
             <child>
               <object class="GtkListBox">
                 <property name="selection-mode">0</property>
@@ -15,81 +15,21 @@
                   <class name="boxed-list"/>
                 </style>
                 <child>
-                  <object class="AdwExpanderRow">
+                  <object class="AdwExpanderRow" id="houdini_expanderrow">
                     <property name="title">Libhoudini</property>
                     <property name="subtitle">Intel 公司开发的 arm translation</property>
-                    <child>
-                      <object class="AdwActionRow">
-                        <property name="title">版本1</property>
-                        <child type="suffix">
-                          <object class="GtkSwitch">
-                            <property name="valign">3</property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="AdwActionRow">
-                        <property name="title">版本2</property>
-                        <child type="suffix">
-                          <object class="GtkSwitch">
-                            <property name="valign">3</property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
                   </object>
                 </child>
                 <child>
-                  <object class="AdwExpanderRow">
-                    <property name="title">Libndk</property>
-                    <property name="subtitle">Amd 公司开发的 arm translation</property>
-                    <child>
-                      <object class="AdwActionRow">
-                        <property name="title">版本1</property>
-                        <child type="suffix">
-                          <object class="GtkSwitch">
-                            <property name="valign">3</property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="AdwActionRow">
-                        <property name="title">版本2</property>
-                        <child type="suffix">
-                          <object class="GtkSwitch">
-                            <property name="valign">3</property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="AdwActionRow">
-                        <property name="title">版本3</property>
-                        <child type="suffix">
-                          <object class="GtkSwitch">
-                            <property name="valign">3</property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="AdwActionRow">
-                        <property name="title">版本4</property>
-                        <child type="suffix">
-                          <object class="GtkSwitch">
-                            <property name="valign">3</property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
+                  <object class="AdwExpanderRow" id="ndk_expanderrow">
+                    <property name="title">libndk</property>
+                    <property name="subtitle">Amd? 公司开发的 arm translation</property>
                   </object>
                 </child>
               </object>
             </child>
           </object>
-        </child>
+        </child> -->
       </object>
     </child>
   </template>

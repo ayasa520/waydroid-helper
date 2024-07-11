@@ -1,3 +1,8 @@
+import gi
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+
 from gettext import gettext as _
 import json
 import os
@@ -6,11 +11,6 @@ from waydroid_helper.util.Task import Task
 from waydroid_helper.waydroid import PropsState, Waydroid
 from gi.repository import Gtk, GObject, Adw, GLib
 from functools import partial
-import gi
-
-
-gi.require_version("Gtk", "4.0")
-gi.require_version("Adw", "1")
 
 
 @Gtk.Template(resource_path="/com/jaoushingan/WaydroidHelper/ui/PropsPage.ui")
@@ -34,6 +34,8 @@ class PropsPage(Gtk.Box):
     device_combo: Adw.ComboRow = Gtk.Template.Child()
     overlay: Gtk.Overlay = None
     waydroid: Waydroid = GObject.Property(default=None, type=Waydroid)
+    reset_persist_prop_btn: Gtk.Button = Gtk.Template.Child()
+    reset_privileged_prop_btn: Gtk.Button = Gtk.Template.Child()
 
     timeout_id = dict()
 
@@ -43,14 +45,9 @@ class PropsPage(Gtk.Box):
     def __init__(self, waydroid: Waydroid, **kargs):
         super().__init__(**kargs)
 
-        if not os.getenv("container"):
-            data_dir = GLib.get_user_data_dir()
-        else:
-            data_dir = '/app/share'
+        data_dir = os.getenv("PKGDATADIR")
 
-        with open(
-            os.path.join(data_dir, "waydroid-helper", "data", "devices.json")
-        ) as f:
+        with open(os.path.join(data_dir, "data", "devices.json")) as f:
             self.items = json.load(f)
 
         self.set_property("waydroid", waydroid)
@@ -151,7 +148,7 @@ class PropsPage(Gtk.Box):
             ok_callback=self.on_apply_button_clicked,
         )
 
-        model = Gtk.StringList.new(strings=list(self.items.keys()))
+        model = Gtk.StringList.new(strings=list(self.items["index"].keys()))
         self.device_combo.set_model(model=model)
 
         # 用 bind 也行？
@@ -203,8 +200,8 @@ class PropsPage(Gtk.Box):
         current: str = self.device_combo.get_selected_item().get_string()
         if device == current:
             return
-        if device in self.items.keys():
-            self.device_combo.set_selected(list(self.items.keys()).index(device))
+        if device in self.items["index"].keys():
+            self.device_combo.set_selected(self.items["index"][device])
         else:
             self.device_combo.set_selected(0)
 
@@ -213,7 +210,9 @@ class PropsPage(Gtk.Box):
         self.set_reveal(self.save_privileged_notification, True)
         selected_item = comborow.get_selected_item()
         self.waydroid.privileged_props.set_device_info(
-            self.items[selected_item.get_string()]
+            self.items["devices"][self.items["index"][selected_item.get_string()]][
+                "properties"
+            ]
         )
 
     def __connect(self, source: GObject.Object, signal, handler):
@@ -231,6 +230,7 @@ class PropsPage(Gtk.Box):
         if w.get_property("state") == PropsState.READY:
             self.switch_21.set_sensitive(True)
             self.device_combo.set_sensitive(True)
+            self.reset_privileged_prop_btn.set_sensitive(True)
 
             self.__connect(
                 self.device_combo,
@@ -250,6 +250,7 @@ class PropsPage(Gtk.Box):
             self.__disconnect(self.switch_21, "notify::active")
             self.switch_21.set_sensitive(False)
             self.device_combo.set_sensitive(False)
+            self.reset_privileged_prop_btn.set_sensitive(False)
 
     def on_waydroid_persist_state_changed(self, w, param):
         if w.get_property("state") == PropsState.READY:
@@ -264,6 +265,7 @@ class PropsPage(Gtk.Box):
             self.entry_4.set_sensitive(True)
             self.entry_5.set_sensitive(True)
             self.entry_6.set_sensitive(True)
+            self.reset_persist_prop_btn.set_sensitive(True)
             self.__connect(
                 self.entry_1,
                 "notify::text",
@@ -361,6 +363,7 @@ class PropsPage(Gtk.Box):
             self.entry_4.set_sensitive(False)
             self.entry_5.set_sensitive(False)
             self.entry_6.set_sensitive(False)
+            self.reset_persist_prop_btn.set_sensitive(False)
 
     def set_reveal(self, widget: InfoBar, reveal_child: bool):
         if (

@@ -3,6 +3,15 @@ import os
 import asyncio
 
 
+class SubprocessError(Exception):
+    def __init__(self, returncode, stderr):
+        self.returncode = returncode
+        self.stderr = stderr
+        super().__init__(
+            f"Command failed with return code {returncode}: {stderr.decode()}"
+        )
+
+
 class SubprocessManager:
     _instance = None
     _semaphore = None
@@ -16,15 +25,22 @@ class SubprocessManager:
     def is_running_in_flatpak(self):
         return "container" in os.environ
 
-    async def _run_subprocess(self, command, flag=False, key=None):
+    async def run(self, command, flag=False, key=None, env={}):
         async with self._semaphore:
+            command_list = command.split(" ")
             if self.is_running_in_flatpak():
-                command = "flatpak-spawn --host " + command
+                if (
+                    "pkexec" == command_list[0]
+                    or "waydroid" == command_list[0]
+                    or "waydroid" == command_list[1]
+                ):
+                    command = f'flatpak-spawn --host bash -c "{command}"'
 
             process = await asyncio.create_subprocess_shell(
                 command,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
+                env={**os.environ.copy(), **env},
                 preexec_fn=os.setsid if flag else None,
             )
 
@@ -46,5 +62,7 @@ class SubprocessManager:
             #         ensure_ascii=False,
             #     )
             # )
+            if result["returncode"] != 0:
+                raise SubprocessError(result["returncode"], stderr)
 
             return result

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="ExtensionRow" parent="AdwActionRow">
+    <child type="suffix">
+      <object class="GtkButton" id="button">
+        <property name="label" translatable="yes">Show</property>
+        <property name="valign">center</property>
+      </object>
+    </child>
+  </template>
+</interface>

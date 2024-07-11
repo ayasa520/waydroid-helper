@@ -5,10 +5,12 @@ waydroid_helper/waydroid.py
 waydroid_helper/__init__.py
 waydroid_helper/gtk/help-overlay.ui
 waydroid_helper/extensionspage.py
+waydroid_helper/extensionwindow.py
 waydroid_helper/infobar.py
 waydroid_helper/ui/window.ui
 waydroid_helper/ui/PropsPage.ui
 waydroid_helper/ui/ExtensionsPage.ui
+waydroid_helper/ui/ExtensionRow.ui
 waydroid_helper/ui/InfoBar.ui
 waydroid_helper/ui/GeneralPage.ui
 waydroid_helper/main.py

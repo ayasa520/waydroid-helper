@@ -7,6 +7,17 @@ desktop_file = i18n.merge_file(
     install_dir: get_option('datadir') / 'applications',
 )
 
+conf = configuration_data()
+conf.set('package_bindir', get_option('prefix') / get_option('bindir'))
+
+configure_file(
+    input: 'com.jaoushingan.WaydroidHelper.policy.in',
+    output: 'com.jaoushingan.WaydroidHelper.policy',
+    configuration: conf,
+    install: true,
+    install_dir: get_option('datadir') / 'polkit-1' / 'actions',
+)
+
 desktop_utils = find_program('desktop-file-validate', required: false)
 if desktop_utils.found()
     test('Validate desktop file', desktop_utils, args: [desktop_file])
@@ -32,8 +43,9 @@ install_data(
     install_dir: get_option('datadir') / 'glib-2.0' / 'schemas',
 )
 
+data = ['devices.json']
 install_data(
-    'devices.json',
+    data,
     install_dir: get_option('datadir') / meson.project_name() / 'data',
 )
 

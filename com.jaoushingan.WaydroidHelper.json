@@ -41,6 +41,30 @@
             ]
         },
         {
+            "name": "aiofiles",
+            "buildsystem": "simple",
+            "build-options": {
+                "build-args": [
+                    "--share=network"
+                ]
+            },
+            "build-commands": [
+                "pip3 install --prefix=/app --no-cache-dir aiofiles"
+            ]
+        },
+        {
+            "name": "httpx",
+            "buildsystem": "simple",
+            "build-options": {
+                "build-args": [
+                    "--share=network"
+                ]
+            },
+            "build-commands": [
+                "pip3 install --prefix=/app --no-cache-dir httpx"
+            ]
+        },
+        {
             "name": "waydroid-helper",
             "builddir": true,
             "buildsystem": "meson",

@@ -18,10 +18,20 @@ conf.set('PYTHON', python.find_installation('python3').path())
 conf.set('VERSION', meson.project_version())
 conf.set('localedir', get_option('prefix') / get_option('localedir'))
 conf.set('pkgdatadir', pkgdatadir)
+conf.set('project_name',  meson.project_name())
 
 configure_file(
     input: 'waydroid-helper.in',
     output: 'waydroid-helper',
+    configuration: conf,
+    install: true,
+    install_dir: get_option('bindir'),
+    install_mode: 'rwxr-xr-x',
+)
+
+configure_file(
+    input: 'waydroid-cli.in',
+    output: 'waydroid-cli',
     configuration: conf,
     install: true,
     install_dir: get_option('bindir'),
@@ -37,10 +47,14 @@ waydroid_helper_sources = [
     'propspage.py',
     'extensionspage.py',
     'infobar.py',
+    'extensionrow.py',
+    'extensionwindow.py',
 ]
 util_sources = [
     'util/SubprocessManager.py',
     'util/Task.py',
+    'util/ExtentionsManager.py',
+    'util/installer.sh',
 ]
 
 install_data(waydroid_helper_sources, install_dir: moduledir)

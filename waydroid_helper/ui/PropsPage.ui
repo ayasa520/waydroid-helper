@@ -8,7 +8,7 @@
           <object class="AdwPreferencesGroup">
             <property name="title">Waydroid Prop Options</property>
             <property name="description" translatable="true">Effective only while Waydroid session is running. Some settings require restarting the Waydroid session to apply</property>
-            <property name="header-suffix">reset_1</property>
+            <property name="header-suffix">reset_persist_prop_btn</property>
             <child>
               <object class="AdwActionRow" id="actionrow_1">
                 <property name="title-lines">1</property>
@@ -202,7 +202,7 @@
         <child>
           <object class="AdwPreferencesGroup">
             <property name="title">Waydroid Privileged Options</property><!-- <property name="header-suffix">header_suffix</property> -->
-            <property name="header-suffix">reset_2</property>
+            <property name="header-suffix">reset_privileged_prop_btn</property>
             <child>
               <object class="AdwActionRow">
                 <property name="title">qemu.hw.mainkeys</property>
@@ -231,20 +231,22 @@
       <object class="GtkOverlay" id="overlay"></object>
     </child> -->
   </template>
-  <object class="GtkButton" id="reset_1">
+  <object class="GtkButton" id="reset_persist_prop_btn">
     <property name="label" translatable="true">Reset</property>
     <property name="halign">end</property>
     <property name="valign">center</property>
     <property name="vexpand">true</property>
     <property name="hexpand">true</property>
+    <property name="sensitive">False</property>
     <signal name="clicked" handler="on_reset_persist_clicked"/>
   </object>
-  <object class="GtkButton" id="reset_2">
+  <object class="GtkButton" id="reset_privileged_prop_btn">
     <property name="label" translatable="true">Reset</property>
     <signal name="clicked" handler="on_reset_privileged_clicked"/>
     <property name="halign">end</property>
     <property name="valign">center</property>
     <property name="vexpand">true</property>
     <property name="hexpand">true</property>
+    <property name="sensitive">False</property>
   </object>
 </interface>

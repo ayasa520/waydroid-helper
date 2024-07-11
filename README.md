@@ -5,8 +5,7 @@ A GUI application developed with PyGObject and Libadwaita
 ## Install waydroid-helper
 
 ```
-meson setup build 
-ninja -C build install
+meson setup --prefix /usr build && ninja -C build install
 ```
 
 

@@ -1,0 +1,2356 @@
+diff --git a/.gitignore b/.gitignore
+index 465c15f..4699d69 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,4 +22,5 @@ test.py
+ test.ui
+ test.blp
+ test.css
+-.flatpak-builder
+\ No newline at end of file
++.flatpak-builder
++extract_description.py
+\ No newline at end of file
+diff --git a/README.md b/README.md
+index a965c78..8e39fbd 100644
+--- a/README.md
++++ b/README.md
+@@ -5,8 +5,7 @@ A GUI application developed with PyGObject and Libadwaita
+ ## Install waydroid-helper
+ 
+ ```
+-meson setup build 
+-ninja -C build install
++meson setup --prefix /usr build && ninja -C build install
+ ```
+ 
+ 
+diff --git a/com.jaoushingan.WaydroidHelper.json b/com.jaoushingan.WaydroidHelper.json
+index 06414ba..a79612a 100644
+--- a/com.jaoushingan.WaydroidHelper.json
++++ b/com.jaoushingan.WaydroidHelper.json
+@@ -14,7 +14,10 @@
+         "--filesystem=xdg-data/waydroid:rw",
+         "--filesystem=xdg-config/fontconfig:ro",
+         "--filesystem=xdg-data/icons",
+-        "--talk-name=org.freedesktop.Flatpak"
++        "--talk-name=org.freedesktop.Flatpak",
++        	"--env=HTTP_PROXY=http://127.0.0.1:7890",
++        "--env=HTTPS_PROXY=http://127.0.0.1:7890",
++        "--env=NO_PROXY=localhost,127.0.0.1"
+     ],
+     "cleanup": [
+         "/include",
+@@ -40,6 +43,30 @@
+                 "pip3 install --prefix=/app --no-cache-dir gbulb"
+             ]
+         },
++        {
++            "name": "aiofiles",
++            "buildsystem": "simple",
++            "build-options": {
++                "build-args": [
++                    "--share=network"
++                ]
++            },
++            "build-commands": [
++                "pip3 install --prefix=/app --no-cache-dir aiofiles"
++            ]
++        },
++        {
++            "name": "httpx",
++            "buildsystem": "simple",
++            "build-options": {
++                "build-args": [
++                    "--share=network"
++                ]
++            },
++            "build-commands": [
++                "pip3 install --prefix=/app --no-cache-dir httpx"
++            ]
++        },
+         {
+             "name": "waydroid-helper",
+             "builddir": true,
+diff --git a/data/com.jaoushingan.WaydroidHelper.policy.in b/data/com.jaoushingan.WaydroidHelper.policy.in
+new file mode 100644
+index 0000000..243b515
+--- /dev/null
++++ b/data/com.jaoushingan.WaydroidHelper.policy.in
+@@ -0,0 +1,16 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN" "http://www.freedesktop.org/software/polkit/policyconfig-1.dtd">
++<policyconfig>
++
++  <action id="com.jaoushingan.WaydroidHelper.cli">
++    <message>pkexec @package_bindir@/waydroid-cli</message>
++    <defaults>
++      <allow_any>auth_admin</allow_any>
++      <allow_inactive>auth_admin</allow_inactive>
++      <allow_active>auth_admin_keep</allow_active>
++    </defaults>
++    <annotate key="org.freedesktop.policykit.exec.path">@package_bindir@/waydroid-cli</annotate>
++    <annotate key="org.freedesktop.policykit.exec.allow_gui">false</annotate>
++  </action>
++
++</policyconfig>
+\ No newline at end of file
+diff --git a/data/devices.json b/data/devices.json
+index 9948bc8..8194415 100644
+--- a/data/devices.json
++++ b/data/devices.json
+@@ -1,102 +1,126 @@
+ {
+-    "Waydroid": {
+-        "ro.product.brand": "",
+-        "ro.product.manufacturer": "",
+-        "ro.system.build.product": "",
+-        "ro.product.name": "",
+-        "ro.product.device": "",
+-        "ro.product.model": "",
+-        "ro.system.build.flavor": "",
+-        "ro.build.fingerprint": "",
+-        "ro.system.build.description": "",
+-        "ro.bootimage.build.fingerprint": "",
+-        "ro.build.display.id": "",
+-        "ro.build.tags": "",
+-        "ro.build.description": "",
+-        "ro.vendor.build.fingerprint": "",
+-        "ro.vendor.build.id": "",
+-        "ro.vendor.build.tags": "",
+-        "ro.vendor.build.type": "",
+-        "ro.odm.build.tags": ""
+-    },
+-    "HUAWEI VOG-AL10": {
+-        "ro.product.brand": "HUAWEI",
+-        "ro.product.manufacturer": "HUAWEI",
+-        "ro.system.build.product": "VOG-AL10",
+-        "ro.product.name": "VOG-AL10",
+-        "ro.product.device": "HWVOG",
+-        "ro.product.model": "VOG-AL10",
+-        "ro.system.build.flavor": "HWVOG-user",
+-        "ro.build.fingerprint": "HUAWEI/VOG-AL10/HWVOG:10/HUAWEIVOG-AL10/10.1.0.162C00:user/release-keys",
+-        "ro.system.build.description": "VOG-AL10-user 104.0.0 HUAWEIVOG-AL10 121-CHN-LGRP1 release-keys",
+-        "ro.bootimage.build.fingerprint": "kirin980/kirin980/kirin980:10/QP1A.190711.020/root202007081218:user/test-keys",
+-        "ro.build.display.id": "VOG-AL10 10.1.0.162(C00E160R1P8)",
+-        "ro.build.tags": "release-keys",
+-        "ro.build.description": "VOG-AL10-user 104.0.0 HUAWEIVOG-AL10 121-CHN-LGRP1 release-keys",
+-        "ro.vendor.build.fingerprint": "kirin980/kirin980/kirin980:10/QP1A.190711.020/root202007081218:user/test-keys",
+-        "ro.vendor.build.id": "HUAWEIVOG-AL10",
+-        "ro.vendor.build.tags": "test-keys",
+-        "ro.vendor.build.type": "user",
+-        "ro.odm.build.tags": "release-keys"
+-    },
+-    "google Pixel 5": {
+-        "ro.product.brand": "google",
+-        "ro.product.manufacturer": "Google",
+-        "ro.system.build.product": "",
+-        "ro.product.name": "redfin",
+-        "ro.product.device": "redfin",
+-        "ro.product.model": "Pixel 5",
+-        "ro.system.build.flavor": "",
+-        "ro.build.fingerprint": "google/redfin/redfin:11/RQ3A.210905.001/7511028:user/release-keys",
+-        "ro.system.build.description": "",
+-        "ro.bootimage.build.fingerprint": "google/redfin/redfin:11/RQ3A.210905.001/7511028:user/release-keys",
+-        "ro.build.display.id": "RQ3A.210905.001",
+-        "ro.build.tags": "release-keys",
+-        "ro.build.description": "redfin-user 11 RQ3A.210905.001 7511028 release-keys",
+-        "ro.vendor.build.fingerprint": "google/redfin/redfin:11/RQ3A.210905.001/7511028:user/release-keys",
+-        "ro.vendor.build.id": "RQ3A.210905.001",
+-        "ro.vendor.build.tags": "release-keys",
+-        "ro.vendor.build.type": "user",
+-        "ro.odm.build.tags": "release-keys"
+-    },
+-    "vivo V2196A": {
+-        "ro.product.brand": "vivo",
+-        "ro.product.manufacturer": "vivo",
+-        "ro.system.build.product": "",
+-        "ro.product.name": "V2196A",
+-        "ro.product.device": "",
+-        "ro.product.model": "V2196A",
+-        "ro.system.build.flavor": "",
+-        "ro.build.fingerprint": "",
+-        "ro.system.build.description": "",
+-        "ro.bootimage.build.fingerprint": "",
+-        "ro.build.display.id": "",
+-        "ro.build.tags": "",
+-        "ro.build.description": "",
+-        "ro.vendor.build.fingerprint": "",
+-        "ro.vendor.build.id": "",
+-        "ro.vendor.build.tags": "",
+-        "ro.vendor.build.type": "",
+-        "ro.odm.build.tags": ""
+-    },
+-    "samsung SM-G9860": {
+-        "ro.product.brand": "samsung",
+-        "ro.product.manufacturer": "samsung",
+-        "ro.system.build.product": "",
+-        "ro.product.name": "SM-G9860",
+-        "ro.product.device": "",
+-        "ro.product.model": "SM-G9860",
+-        "ro.system.build.flavor": "",
+-        "ro.build.fingerprint": "",
+-        "ro.system.build.description": "",
+-        "ro.bootimage.build.fingerprint": "",
+-        "ro.build.display.id": "",
+-        "ro.build.tags": "",
+-        "ro.build.description": "",
+-        "ro.vendor.build.fingerprint": "",
+-        "ro.vendor.build.id": "",
+-        "ro.vendor.build.tags": "",
+-        "ro.vendor.build.type": "",
+-        "ro.odm.build.tags": ""
++    "devices": [
++        {
++            "name": "Waydroid",
++            "properties": {
++                "ro.product.brand": "",
++                "ro.product.manufacturer": "",
++                "ro.system.build.product": "",
++                "ro.product.name": "",
++                "ro.product.device": "",
++                "ro.product.model": "",
++                "ro.system.build.flavor": "",
++                "ro.build.fingerprint": "",
++                "ro.system.build.description": "",
++                "ro.bootimage.build.fingerprint": "",
++                "ro.build.display.id": "",
++                "ro.build.tags": "",
++                "ro.build.description": "",
++                "ro.vendor.build.fingerprint": "",
++                "ro.vendor.build.id": "",
++                "ro.vendor.build.tags": "",
++                "ro.vendor.build.type": "",
++                "ro.odm.build.tags": ""
++            }
++        },
++        {
++            "name": "HUAWEI VOG-AL10",
++            "properties": {
++                "ro.product.brand": "HUAWEI",
++                "ro.product.manufacturer": "HUAWEI",
++                "ro.system.build.product": "VOG-AL10",
++                "ro.product.name": "VOG-AL10",
++                "ro.product.device": "HWVOG",
++                "ro.product.model": "VOG-AL10",
++                "ro.system.build.flavor": "HWVOG-user",
++                "ro.build.fingerprint": "HUAWEI/VOG-AL10/HWVOG:10/HUAWEIVOG-AL10/10.1.0.162C00:user/release-keys",
++                "ro.system.build.description": "VOG-AL10-user 104.0.0 HUAWEIVOG-AL10 121-CHN-LGRP1 release-keys",
++                "ro.bootimage.build.fingerprint": "kirin980/kirin980/kirin980:10/QP1A.190711.020/root202007081218:user/test-keys",
++                "ro.build.display.id": "VOG-AL10 10.1.0.162(C00E160R1P8)",
++                "ro.build.tags": "release-keys",
++                "ro.build.description": "VOG-AL10-user 104.0.0 HUAWEIVOG-AL10 121-CHN-LGRP1 release-keys",
++                "ro.vendor.build.fingerprint": "kirin980/kirin980/kirin980:10/QP1A.190711.020/root202007081218:user/test-keys",
++                "ro.vendor.build.id": "HUAWEIVOG-AL10",
++                "ro.vendor.build.tags": "test-keys",
++                "ro.vendor.build.type": "user",
++                "ro.odm.build.tags": "release-keys"
++            }
++        },
++        {
++            "name": "google Pixel 5",
++            "properties": {
++                "ro.product.brand": "google",
++                "ro.product.manufacturer": "Google",
++                "ro.system.build.product": "",
++                "ro.product.name": "redfin",
++                "ro.product.device": "redfin",
++                "ro.product.model": "Pixel 5",
++                "ro.system.build.flavor": "",
++                "ro.build.fingerprint": "google/redfin/redfin:11/RQ3A.210905.001/7511028:user/release-keys",
++                "ro.system.build.description": "",
++                "ro.bootimage.build.fingerprint": "google/redfin/redfin:11/RQ3A.210905.001/7511028:user/release-keys",
++                "ro.build.display.id": "RQ3A.210905.001",
++                "ro.build.tags": "release-keys",
++                "ro.build.description": "redfin-user 11 RQ3A.210905.001 7511028 release-keys",
++                "ro.vendor.build.fingerprint": "google/redfin/redfin:11/RQ3A.210905.001/7511028:user/release-keys",
++                "ro.vendor.build.id": "RQ3A.210905.001",
++                "ro.vendor.build.tags": "release-keys",
++                "ro.vendor.build.type": "user",
++                "ro.odm.build.tags": "release-keys"
++            }
++        },
++        {
++            "name": "vivo V2196A",
++            "properties": {
++                "ro.product.brand": "vivo",
++                "ro.product.manufacturer": "vivo",
++                "ro.system.build.product": "",
++                "ro.product.name": "V2196A",
++                "ro.product.device": "",
++                "ro.product.model": "V2196A",
++                "ro.system.build.flavor": "",
++                "ro.build.fingerprint": "",
++                "ro.system.build.description": "",
++                "ro.bootimage.build.fingerprint": "",
++                "ro.build.display.id": "",
++                "ro.build.tags": "",
++                "ro.build.description": "",
++                "ro.vendor.build.fingerprint": "",
++                "ro.vendor.build.id": "",
++                "ro.vendor.build.tags": "",
++                "ro.vendor.build.type": "",
++                "ro.odm.build.tags": ""
++            }
++        },
++        {
++            "name": "samsung SM-G9860",
++            "properties": {
++                "ro.product.brand": "samsung",
++                "ro.product.manufacturer": "samsung",
++                "ro.system.build.product": "",
++                "ro.product.name": "SM-G9860",
++                "ro.product.device": "",
++                "ro.product.model": "SM-G9860",
++                "ro.system.build.flavor": "",
++                "ro.build.fingerprint": "",
++                "ro.system.build.description": "",
++                "ro.bootimage.build.fingerprint": "",
++                "ro.build.display.id": "",
++                "ro.build.tags": "",
++                "ro.build.description": "",
++                "ro.vendor.build.fingerprint": "",
++                "ro.vendor.build.id": "",
++                "ro.vendor.build.tags": "",
++                "ro.vendor.build.type": "",
++                "ro.odm.build.tags": ""
++            }
++        }
++    ],
++    "index": {
++        "Waydroid": 0,
++        "HUAWEI VOG-AL10": 1,
++        "google Pixel 5": 2,
++        "vivo V2196A": 3,
++        "samsung SM-G9860": 4
+     }
+ }
+\ No newline at end of file
+diff --git a/data/meson.build b/data/meson.build
+index 46c9b1d..db87ecb 100644
+--- a/data/meson.build
++++ b/data/meson.build
+@@ -7,6 +7,17 @@ desktop_file = i18n.merge_file(
+     install_dir: get_option('datadir') / 'applications',
+ )
+ 
++conf = configuration_data()
++conf.set('package_bindir', get_option('prefix') / get_option('bindir'))
++
++configure_file(
++    input: 'com.jaoushingan.WaydroidHelper.policy.in',
++    output: 'com.jaoushingan.WaydroidHelper.policy',
++    configuration: conf,
++    install: true,
++    install_dir: get_option('datadir') / 'polkit-1' / 'actions',
++)
++
+ desktop_utils = find_program('desktop-file-validate', required: false)
+ if desktop_utils.found()
+     test('Validate desktop file', desktop_utils, args: [desktop_file])
+@@ -32,8 +43,9 @@ install_data(
+     install_dir: get_option('datadir') / 'glib-2.0' / 'schemas',
+ )
+ 
++data = ['devices.json']
+ install_data(
+-    'devices.json',
++    data,
+     install_dir: get_option('datadir') / meson.project_name() / 'data',
+ )
+ 
+diff --git a/data/scripton.sh b/data/scripton.sh
+new file mode 100644
+index 0000000..48115ad
+--- /dev/null
++++ b/data/scripton.sh
+@@ -0,0 +1,49 @@
++#!/bin/bash
++
++
++function CheckHex {
++    #file path, Ghidra offset, Hex to check
++    commandoutput="$(od $1 --skip-bytes=$(($2-0x100000)) --read-bytes=$((${#3} / 2)) --endian=little -t x1 -An file | sed 's/ //g')"
++    if [ "$commandoutput" = "$3" ]; then
++        echo "1"
++    else
++        echo "0"
++    fi
++}
++
++function PatchHex {
++    #file path, ghidra offset, original hex, new hex
++    file_offset=$(($2-0x100000))
++    if [ $(CheckHex $1 $2 $3) = "1" ]; then
++        hexinbin=$(printf $4 | xxd -r -p)
++        echo -n $hexinbin | dd of=$1 seek=$file_offset bs=1 conv=notrunc;
++        tmp="Patched $1 at $file_offset with new hex $4"
++        echo $tmp
++        elif [ $(CheckHex $1 $2 $4) = "1" ]; then
++        echo "Already patched"
++    else
++        echo "Hex mismatch!"
++    fi
++}
++
++houdini_path="/var/lib/waydroid/overlay/system/lib64/libhoudini.so"
++
++if [ -f $houdini_path ]; then
++    if [ -w houdini_path ] || [ "$EUID" = 0 ]; then
++        PatchHex $houdini_path 0x4062a5 48b8fbffffff 48b8ffffffff
++        PatchHex $houdini_path 0x4099d6 83e0fb 83e0ff
++        PatchHex $houdini_path 0x409b42 e8892feeff 9090909090
++    else
++        echo "Libhoudini is not writeable. Please run with sudo"
++    fi
++else
++    echo "Libhoudini not found. Please install it first."
++fi
++
++
++
++
++
++
++
++
+diff --git a/data/scripton_ndk.sh b/data/scripton_ndk.sh
+new file mode 100644
+index 0000000..1b589d0
+--- /dev/null
++++ b/data/scripton_ndk.sh
+@@ -0,0 +1,42 @@
++#!/bin/bash 
++
++
++function CheckHex {
++#file path, Ghidra offset, Hex to check
++commandoutput="$(od $1 --skip-bytes=$(($2-0x101000)) --read-bytes=$((${#3} / 2)) --endian=little -t x1 -An file | sed 's/ //g')"
++if [ "$commandoutput" = "$3" ]; then
++echo "1"
++else
++echo "0"
++fi
++}
++
++function PatchHex {
++#file path, ghidra offset, original hex, new hex
++file_offset=$(($2-0x101000))
++if [ $(CheckHex $1 $2 $3) = "1" ]; then
++    hexinbin=$(printf $4 | xxd -r -p)
++    echo -n $hexinbin | dd of=$1 seek=$file_offset bs=1 conv=notrunc;
++    tmp="Patched $1 at $file_offset with new hex $4"
++    echo $tmp
++elif [ $(CheckHex $1 $2 $4) = "1" ]; then
++    echo "Already patched"
++else
++    echo "Hex mismatch!"
++fi
++}
++
++
++ndk_path="/var/lib/waydroid/overlay/system/lib64/libndk_translation.so"
++
++if [ -f $ndk_path ]; then
++    if [ -w ndk_path ] || [ "$EUID" = 0 ]; then
++        PatchHex $ndk_path 0x307dd1 83e2fa 83e2ff
++        PatchHex $ndk_path 0x307cd6 83e2fa 83e2ff
++
++    else
++        echo "libndk_translation is not writeable. Please run with sudo"
++    fi
++else
++    echo "libndk_translation not found. Please install it first."
++fi
+diff --git a/po/POTFILES b/po/POTFILES
+index 16842e5..8190ffa 100644
+--- a/po/POTFILES
++++ b/po/POTFILES
+@@ -5,10 +5,12 @@ waydroid_helper/waydroid.py
+ waydroid_helper/__init__.py
+ waydroid_helper/gtk/help-overlay.ui
+ waydroid_helper/extensionspage.py
++waydroid_helper/extensionwindow.py
+ waydroid_helper/infobar.py
+ waydroid_helper/ui/window.ui
+ waydroid_helper/ui/PropsPage.ui
+ waydroid_helper/ui/ExtensionsPage.ui
++waydroid_helper/ui/ExtensionRow.ui
+ waydroid_helper/ui/InfoBar.ui
+ waydroid_helper/ui/GeneralPage.ui
+ waydroid_helper/main.py
+diff --git a/po/zh_CN.po b/po/zh_CN.po
+index abd1605..c0eadf2 100644
+--- a/po/zh_CN.po
++++ b/po/zh_CN.po
+@@ -44,12 +44,17 @@ msgstr "重置"
+ msgid "spoof device"
+ msgstr "伪装机型"
+ 
++
++#: waydroid_helper/ui/ExtensionRow.ui:6
++msgid "Show"
++msgstr "查看"
++
+ #: waydroid_helper/ui/InfoBar.ui:34
+ msgid "Cancel"
+ msgstr "取消"
+ 
+ #: waydroid_helper/ui/InfoBar.ui:43
+-msgid "Ok"
++msgid "OK"
+ msgstr "确认"
+ 
+ #: waydroid_helper/ui/PropsPage.ui:10
+@@ -131,6 +136,10 @@ msgctxt "shortcut window"
+ msgid "Quit"
+ msgstr "退出"
+ 
++#: waydroid_helper/extensionwindow.py:22
++msgid "Available Versions"
++msgstr "可用版本"
++
+ #: waydroid_helper/ui/window.ui:26
+ msgid "Menu"
+ msgstr "菜单"
+@@ -202,3 +211,27 @@ msgstr "设置"
+ #: waydroid_helper/window.py:58
+ msgid "Extensions"
+ msgstr "扩展"
++
++#: waydroid_helper/extensionwindow.py:123
++msgid "Extension Conflict"
++msgstr "扩展冲突"
++
++#: waydroid_helper/extensionwindow.py:140
++msgid "Uninstall Confirmation"
++msgstr "卸载确认"
++
++#: waydroid_helper/extensionwindow.py:124
++msgid "Do you want to uninstall the conflicting extensions"
++msgstr "是否卸载以下冲突的扩展"
++
++#: waydroid_helper/extensionwindow.py:141
++msgid "Do you want to uninstall"
++msgstr "是否要卸载"
++
++#: waydroid_helper/extensionwindow.py:131
++msgid "Extension Installation"
++msgstr "安装扩展"
++
++#: waydroid_helper/extensionwindow.py:132
++msgid "Do you want to install"
++msgstr "是否要安装"
+\ No newline at end of file
+diff --git a/waydroid_helper/extensionrow.py b/waydroid_helper/extensionrow.py
+new file mode 100644
+index 0000000..feb540b
+--- /dev/null
++++ b/waydroid_helper/extensionrow.py
+@@ -0,0 +1,41 @@
++import gi
++
++gi.require_version("Gtk", "4.0")
++gi.require_version("Adw", "1")
++
++from gettext import gettext as _
++from waydroid_helper.extensionwindow import AvailableVersionPage
++from gi.repository import Gtk, Adw
++
++
++@Gtk.Template(resource_path="/com/jaoushingan/WaydroidHelper/ui/ExtensionRow.ui")
++class ExtensionRow(Adw.ActionRow):
++    __gtype_name__ = "ExtensionRow"
++    button: Gtk.Button = Gtk.Template.Child()
++    info: list = []
++    extension_manager = ...
++
++    def __init__(self, title=..., subtitle=..., info=...):
++        super().__init__()
++        if title is not ...:
++            self.set_title(title)
++        if subtitle is not ...:
++            self.set_subtitle(subtitle)
++        if info is not ...:
++            self.info = info
++        self.button.connect("clicked", self.on_button_clicked)
++
++    def set_info(self, versions):
++        self.info = versions
++
++    def set_manager(self, extension_manager):
++        self.extension_manager = extension_manager
++
++    @classmethod
++    def new(cls):
++        return ExtensionRow()
++
++    def on_button_clicked(self, button):
++        view: Adw.NavigationView = self.get_root().navigation_view
++        page = AvailableVersionPage(self.info, self.extension_manager)
++        view.push(page)
+diff --git a/waydroid_helper/extensionspage.py b/waydroid_helper/extensionspage.py
+index ede14f5..c4e1851 100644
+--- a/waydroid_helper/extensionspage.py
++++ b/waydroid_helper/extensionspage.py
+@@ -1,17 +1,67 @@
+-from gettext import gettext as _
+-from waydroid_helper.waydroid import Waydroid
+-from gi.repository import Gtk, GObject
++import json
++import os
+ import gi
+ 
++from waydroid_helper.util.ExtentionsManager import PackageManager, ExtentionManagerState
++
+ gi.require_version("Gtk", "4.0")
+ gi.require_version("Adw", "1")
+ 
++from gettext import gettext as _
++from waydroid_helper.extensionrow import ExtensionRow
++from waydroid_helper.waydroid import Waydroid
++from gi.repository import Gtk, GObject, Adw
++
+ 
+ @Gtk.Template(resource_path="/com/jaoushingan/WaydroidHelper/ui/ExtensionsPage.ui")
+ class ExtensionsPage(Gtk.Box):
+     __gtype_name__ = "ExtensionsPage"
+     waydroid: GObject.Property = GObject.Property(default=None, type=Waydroid)
++    extensions_page: Adw.PreferencesPage = Gtk.Template.Child()
++    extension_manager = ...
++    extensions = []
++
++    # houdini_expanderrow: Adw.ExpanderRow = Gtk.Template.Child()
++    # ndk_expanderrow: Adw.ExpanderRow = Gtk.Template.Child()
+ 
+     def __init__(self, waydroid: Waydroid, **kargs):
+         super().__init__(**kargs)
+         self.set_property("waydroid", waydroid)
++        self.extension_manager = PackageManager()
++        self.extension_manager.set_property("waydroid", self.waydroid)
++        self.extension_manager.connect("notify::state", self.init_page)
++
++    def init_page(self, w, param):
++        if self.extension_manager.get_property("state") != ExtentionManagerState.READY:
++            return
++        self.extensions = self.extension_manager.get_data()
++
++        for each_group in self.extensions:
++            title = each_group["name"]
++            description = each_group["description"]
++            group = Adw.PreferencesGroup.new()
++            group.set_title(title)
++            group.set_description(_(description))
++            listbox = Gtk.ListBox.new()
++            listbox.get_style_context().add_class("boxed-list")
++            group.add(child=listbox)
++
++            for expander_row in sorted(each_group["list"], key=lambda x: x["name"]):
++                title = expander_row["name"]
++                subtitle = expander_row["description"]
++                expanderrow = Adw.ExpanderRow.new()
++                expanderrow.set_title(title)
++                expanderrow.set_subtitle(_(subtitle))
++
++                for each_row in sorted(expander_row["list"], key=lambda x: x["path"]):
++                    # 直接读了一个具体版本的名字和描述, 不太好
++                    title = each_row["list"][0]["name"]
++                    subtitle = each_row["list"][0]["description"]
++                    row = ExtensionRow.new()
++                    row.set_title(title)
++                    row.set_subtitle(_(subtitle))
++                    row.set_info(each_row["list"])
++                    row.set_manager(self.extension_manager)
++                    expanderrow.add_row(row)
++                group.add(child=expanderrow)
++            self.extensions_page.add(group=group)
+diff --git a/waydroid_helper/extensionwindow.py b/waydroid_helper/extensionwindow.py
+new file mode 100644
+index 0000000..8d6f750
+--- /dev/null
++++ b/waydroid_helper/extensionwindow.py
+@@ -0,0 +1,132 @@
++from functools import partial
++import gi
++
++gi.require_version("Gtk", "4.0")
++gi.require_version("Adw", "1")
++
++from waydroid_helper.util.ExtentionsManager import PackageManager
++from waydroid_helper.util.SubprocessManager import SubprocessError
++from waydroid_helper.util.Task import Task
++from gi.repository import Gtk, Adw
++from gettext import gettext as _
++
++
++class Dialog(Adw.MessageDialog):
++
++    def __init__(self, **kwargs):
++        super().__init__(**kwargs)
++
++        self.set_heading(heading=kwargs["heading"])
++        self.set_body(body=kwargs["body"])
++        self.add_response(Gtk.ResponseType.CANCEL.value_nick, _("Cancel"))
++        self.set_response_appearance(
++            response=Gtk.ResponseType.CANCEL.value_nick,
++            appearance=Adw.ResponseAppearance.DESTRUCTIVE,
++        )
++        self.add_response(Gtk.ResponseType.OK.value_nick, _("OK"))
++        self.set_response_appearance(
++            response=Gtk.ResponseType.OK.value_nick,
++            appearance=Adw.ResponseAppearance.SUGGESTED,
++        )
++
++
++@Gtk.Template(resource_path="/com/jaoushingan/WaydroidHelper/ui/AvailableVersionPage.ui")
++class AvailableVersionPage(Adw.NavigationPage):
++    __gtype_name__ = "AvailableVersionPage"
++    extension_manager: PackageManager = ...
++    _task = Task()
++    page = Gtk.Template.Child()
++    
++
++    def __init__(self, ext_versions, extension_manager):
++        super().__init__(title=_("Available Versions"))
++        self.extension_manager = extension_manager
++
++        adw_preferences_group = Adw.PreferencesGroup.new()
++        self.page.add(group=adw_preferences_group)
++
++        for version in ext_versions:
++            adw_action_row = Adw.ActionRow.new()
++            adw_action_row.set_title(title=f'{version["name"]}-{version["version"]}')
++            if version.get("description", "") != "":
++                adw_action_row.set_subtitle(subtitle=_(version["description"]))
++                adw_action_row.set_subtitle_selectable(True)
++            adw_preferences_group.add(child=adw_action_row)
++
++            install_button = Gtk.Button.new()
++            install_button.set_valign(align=Gtk.Align.CENTER)
++            install_button.add_css_class("flat")
++            install_button.set_icon_name("document-save-symbolic")
++            install_button.connect(
++                "clicked",
++                partial(
++                    self.on_install_button_clicked,
++                    name=version["name"],
++                    version=version["version"],
++                ),
++            )
++            adw_action_row.add_suffix(install_button)
++
++            if self.extension_manager.is_installed(version["name"]):
++                delete_button = Gtk.Button.new()
++                delete_button.set_valign(align=Gtk.Align.CENTER)
++                delete_button.add_css_class("flat")
++                delete_button.set_icon_name("edit-delete-symbolic")
++                delete_button.connect(
++                    "clicked",
++                    partial(self.on_delete_button_clicked, name=version["name"]),
++                )
++                adw_action_row.add_suffix(delete_button)
++
++    async def __install(self, name, version):
++        try:
++            await self.extension_manager.install_package(
++                name=name, version=version, remove_conflicts=True
++            )
++        except SubprocessError as e:
++            print(e)
++
++    async def __uninstall(self, name):
++        try:
++            await self.extension_manager.remove_package(name)
++        except SubprocessError as e:
++            print(e)
++
++    def on_install_button_clicked(self, button: Gtk.Button, name, version):
++        conflicts = self.extension_manager.check_conflicts(name=name, version=version)
++        if len(conflicts) != 0:
++            dialog = Dialog(
++                heading=_("Extension Conflict"),
++                body=_("Do you want to uninstall the conflicting extensions")
++                + " "
++                + ", ".join(conflicts),
++                transient_for=self.get_root(),
++            )
++
++        else:
++            dialog = Dialog(
++                heading=_("Extension Installation"),
++                body=_("Do you want to install") + " " + name,
++                transient_for=self.get_root(),
++            )
++
++        def dialog_response(dialog, response):
++            if response == Gtk.ResponseType.OK.value_nick:
++                self._task.create_task(self.__install(name, version))
++
++        dialog.connect("response", dialog_response)
++        dialog.present()
++
++    def on_delete_button_clicked(self, button: Gtk.Button, name):
++        dialog = Dialog(
++            heading=_("Uninstall Confirmation"),
++            body=_("Do you want to uninstall") + " " + name,
++            transient_for=self.get_root(),
++        )
++
++        def dialog_response(dialog, response):
++            if response == Gtk.ResponseType.OK.value_nick:
++                self._task.create_task(self.__uninstall(name))
++
++        dialog.connect("response", dialog_response)
++        dialog.present()
+diff --git a/waydroid_helper/generalpage.py b/waydroid_helper/generalpage.py
+index a0c6c57..b11e49b 100644
+--- a/waydroid_helper/generalpage.py
++++ b/waydroid_helper/generalpage.py
+@@ -1,8 +1,9 @@
+-from gettext import gettext as _
+-from waydroid_helper.util.Task import Task
+-from waydroid_helper.waydroid import Waydroid
+-from waydroid_helper.waydroid import WaydroidState
+ from gi.repository import Gtk, GObject, Gdk
++from waydroid_helper.waydroid import WaydroidState
++from waydroid_helper.waydroid import Waydroid
++from waydroid_helper.util.Task import Task
++from gettext import gettext as _
++import asyncio
+ import gi
+ 
+ gi.require_version("Gtk", "4.0")
+@@ -20,43 +21,53 @@ class GeneralPage(Gtk.Box):
+     general_button_stack: Gtk.Stack = Gtk.Template.Child()
+     init_button: Gtk.Button = Gtk.Template.Child("init-button")
+     updrade_button: Gtk.Button = Gtk.Template.Child()
+-    show_full_ui_button:Gtk.Button = Gtk.Template.Child("show-full-ui-button")
++    show_full_ui_button: Gtk.Button = Gtk.Template.Child("show-full-ui-button")
+ 
+     _task = Task()
+ 
+-    def on_waydroid_state_changed(self, w, param):
+-        if w.get_property("state") == WaydroidState.RUNNING:
++    def update_menu(self, state):
++        if state == WaydroidState.RUNNING:
+             self.status.set_title(_("Connected"))
+             self.status.set_subtitle(_("Waydroid session is running"))
+-            self.status_image.set_from_icon_name("com.jaoushingan.WaydroidHelper-normal")
++            self.status_image.set_from_icon_name(
++                "com.jaoushingan.WaydroidHelper-normal"
++            )
+             self.start_button.set_sensitive(False)
+             self.stop_button.set_sensitive(True)
+             self.general_button_stack.set_visible_child_name("initialized_menu")
+             self.updrade_button.set_sensitive(True)
+             self.show_full_ui_button.set_sensitive(True)
+-        elif w.get_property("state") == WaydroidState.STOPPED:
++        elif state == WaydroidState.STOPPED:
+             self.status.set_title(_("Stopped"))
+             self.status.set_subtitle(_("Waydroid session is stopped"))
+-            self.status_image.set_from_icon_name("com.jaoushingan.WaydroidHelper-conflicting")
++            self.status_image.set_from_icon_name(
++                "com.jaoushingan.WaydroidHelper-conflicting"
++            )
+             self.start_button.set_sensitive(True)
+             self.stop_button.set_sensitive(False)
+             self.general_button_stack.set_visible_child_name("initialized_menu")
+             self.updrade_button.set_sensitive(True)
+             self.show_full_ui_button.set_sensitive(True)
+-        elif w.get_property("state") == WaydroidState.UNINITIALIZED:
++
++        elif state == WaydroidState.UNINITIALIZED:
+             self.status.set_title(_("Uninitialized"))
+             self.status.set_subtitle(_("Waydroid is not initialized"))
+-            self.status_image.set_from_icon_name("com.jaoushingan.WaydroidHelper-conflicting")
++            self.status_image.set_from_icon_name(
++                "com.jaoushingan.WaydroidHelper-conflicting"
++            )
+             self.general_button_stack.set_visible_child_name("uninitialized_menu")
+             self.init_button.set_sensitive(True)
+             self.updrade_button.set_sensitive(False)
+             self.show_full_ui_button.set_sensitive(False)
+-        elif w.get_property("state") == WaydroidState.LOADING:
++        elif state == WaydroidState.LOADING:
+             self.status.set_title(_("Loading"))
+             self.status.set_subtitle("")
+             self.status_image.set_from_icon_name("")
+             self._disable_buttons()
+ 
++    def on_waydroid_state_changed(self, w, param):
++        self.update_menu(w.get_property(param.name))
++
+     def __init__(self, waydroid: Waydroid, **kargs):
+         super().__init__(**kargs)
+         self.set_property("waydroid", waydroid)
+@@ -75,24 +86,45 @@ class GeneralPage(Gtk.Box):
+         print("waydroid init")
+         # TODO
+ 
++
++    async def __on_start_button_clicked(self):
++        old = self.waydroid.state
++        self._disable_buttons()
++        await self.waydroid.start_session()
++        if old == self.waydroid.state:
++            self.update_menu(self.waydroid.state)
++
+     @Gtk.Template.Callback()
+     def on_start_button_clicked(self, button: Gtk.Button):
+         print("waydroid session start")
++        self._task.create_task(self.__on_start_button_clicked())
++
++
++    async def __on_stop_button_clicked(self):
++        old = self.waydroid.state
+         self._disable_buttons()
+-        self._task.create_task(self.waydroid.start_session())
++        await self.waydroid.stop_session()
++        if old == self.waydroid.state:
++            self.update_menu(self.waydroid.state)
+ 
+     @Gtk.Template.Callback()
+     def on_stop_button_clicked(self, button):
+         print("waydroid session stop")
+-        self._disable_buttons()
+-        self._task.create_task(self.waydroid.stop_session())
++        self._task.create_task(self.__on_stop_button_clicked())
+ 
+     @Gtk.Template.Callback()
+     def on_show_full_ui_button_clicked(self, button):
++        print("waydroid show-full-ui")
+         self._task.create_task(self.waydroid.show_full_ui())
+ 
++    async def __on_start_upgrade_offline_clicked(self):
++        old = self.waydroid.state
++        self._disable_buttons()
++        await self.waydroid.upgrade(True)
++        if old == self.waydroid.state:
++            self.update_menu(self.waydroid.state)
++
+     @Gtk.Template.Callback()
+     def on_start_upgrade_offline_clicked(self, button):
+         print("sudo waydroid upgrade -o")
+-        self._disable_buttons()
+-        self._task.create_task(self.waydroid.upgrade(True))
++        self._task.create_task(self.__on_start_upgrade_offline_clicked())
+diff --git a/waydroid_helper/infobar.py b/waydroid_helper/infobar.py
+index 6673623..24a6c99 100644
+--- a/waydroid_helper/infobar.py
++++ b/waydroid_helper/infobar.py
+@@ -1,10 +1,11 @@
+-from gettext import gettext as _
+-from gi.repository import Gtk
+ import gi
+ 
+ gi.require_version("Gtk", "4.0")
+ gi.require_version("Adw", "1")
+ 
++from gettext import gettext as _
++from gi.repository import Gtk
++
+ 
+ @Gtk.Template(resource_path="/com/jaoushingan/WaydroidHelper/ui/InfoBar.ui")
+ class InfoBar(Gtk.Revealer):
+diff --git a/waydroid_helper/main.py b/waydroid_helper/main.py
+index ab289b6..9b7b297 100644
+--- a/waydroid_helper/main.py
++++ b/waydroid_helper/main.py
+@@ -1,15 +1,16 @@
++import gi
++
++gi.require_version("Gtk", "4.0")
++gi.require_version("Adw", "1")
++
+ import os
+ from .window import WaydroidHelperWindow
+ from gi.repository import Gtk, Gio, Adw
+ import sys
+-import gi
+ import asyncio
+ import gbulb
+ 
+ 
+-gi.require_version("Gtk", "4.0")
+-gi.require_version("Adw", "1")
+-
+ Adw.init()
+ gbulb.install(gtk=True)
+ 
+diff --git a/waydroid_helper/meson.build b/waydroid_helper/meson.build
+index 75b395a..aa969e8 100644
+--- a/waydroid_helper/meson.build
++++ b/waydroid_helper/meson.build
+@@ -18,6 +18,7 @@ conf.set('PYTHON', python.find_installation('python3').path())
+ conf.set('VERSION', meson.project_version())
+ conf.set('localedir', get_option('prefix') / get_option('localedir'))
+ conf.set('pkgdatadir', pkgdatadir)
++conf.set('project_name',  meson.project_name())
+ 
+ configure_file(
+     input: 'waydroid-helper.in',
+@@ -28,6 +29,15 @@ configure_file(
+     install_mode: 'rwxr-xr-x',
+ )
+ 
++configure_file(
++    input: 'waydroid-cli.in',
++    output: 'waydroid-cli',
++    configuration: conf,
++    install: true,
++    install_dir: get_option('bindir'),
++    install_mode: 'rwxr-xr-x',
++)
++
+ waydroid_helper_sources = [
+     '__init__.py',
+     'main.py',
+@@ -37,10 +47,14 @@ waydroid_helper_sources = [
+     'propspage.py',
+     'extensionspage.py',
+     'infobar.py',
++    'extensionrow.py',
++    'extensionwindow.py',
+ ]
+ util_sources = [
+     'util/SubprocessManager.py',
+     'util/Task.py',
++    'util/ExtentionsManager.py',
++    'util/installer.sh',
+ ]
+ 
+ install_data(waydroid_helper_sources, install_dir: moduledir)
+diff --git a/waydroid_helper/propspage.py b/waydroid_helper/propspage.py
+index 1c0da14..147144b 100644
+--- a/waydroid_helper/propspage.py
++++ b/waydroid_helper/propspage.py
+@@ -1,3 +1,8 @@
++import gi
++
++gi.require_version("Gtk", "4.0")
++gi.require_version("Adw", "1")
++
+ from gettext import gettext as _
+ import json
+ import os
+@@ -6,11 +11,6 @@ from waydroid_helper.util.Task import Task
+ from waydroid_helper.waydroid import PropsState, Waydroid
+ from gi.repository import Gtk, GObject, Adw, GLib
+ from functools import partial
+-import gi
+-
+-
+-gi.require_version("Gtk", "4.0")
+-gi.require_version("Adw", "1")
+ 
+ 
+ @Gtk.Template(resource_path="/com/jaoushingan/WaydroidHelper/ui/PropsPage.ui")
+@@ -34,6 +34,8 @@ class PropsPage(Gtk.Box):
+     device_combo: Adw.ComboRow = Gtk.Template.Child()
+     overlay: Gtk.Overlay = None
+     waydroid: Waydroid = GObject.Property(default=None, type=Waydroid)
++    reset_persist_prop_btn: Gtk.Button = Gtk.Template.Child()
++    reset_privileged_prop_btn: Gtk.Button = Gtk.Template.Child()
+ 
+     timeout_id = dict()
+ 
+@@ -43,14 +45,9 @@ class PropsPage(Gtk.Box):
+     def __init__(self, waydroid: Waydroid, **kargs):
+         super().__init__(**kargs)
+ 
+-        if not os.getenv("container"):
+-            data_dir = GLib.get_user_data_dir()
+-        else:
+-            data_dir = '/app/share'
++        data_dir = os.getenv("PKGDATADIR")
+ 
+-        with open(
+-            os.path.join(data_dir, "waydroid-helper", "data", "devices.json")
+-        ) as f:
++        with open(os.path.join(data_dir, "data", "devices.json")) as f:
+             self.items = json.load(f)
+ 
+         self.set_property("waydroid", waydroid)
+@@ -151,7 +148,7 @@ class PropsPage(Gtk.Box):
+             ok_callback=self.on_apply_button_clicked,
+         )
+ 
+-        model = Gtk.StringList.new(strings=list(self.items.keys()))
++        model = Gtk.StringList.new(strings=list(self.items["index"].keys()))
+         self.device_combo.set_model(model=model)
+ 
+         # 用 bind 也行？
+@@ -203,8 +200,8 @@ class PropsPage(Gtk.Box):
+         current: str = self.device_combo.get_selected_item().get_string()
+         if device == current:
+             return
+-        if device in self.items.keys():
+-            self.device_combo.set_selected(list(self.items.keys()).index(device))
++        if device in self.items["index"].keys():
++            self.device_combo.set_selected(self.items["index"][device])
+         else:
+             self.device_combo.set_selected(0)
+ 
+@@ -213,7 +210,9 @@ class PropsPage(Gtk.Box):
+         self.set_reveal(self.save_privileged_notification, True)
+         selected_item = comborow.get_selected_item()
+         self.waydroid.privileged_props.set_device_info(
+-            self.items[selected_item.get_string()]
++            self.items["devices"][self.items["index"][selected_item.get_string()]][
++                "properties"
++            ]
+         )
+ 
+     def __connect(self, source: GObject.Object, signal, handler):
+@@ -231,6 +230,7 @@ class PropsPage(Gtk.Box):
+         if w.get_property("state") == PropsState.READY:
+             self.switch_21.set_sensitive(True)
+             self.device_combo.set_sensitive(True)
++            self.reset_privileged_prop_btn.set_sensitive(True)
+ 
+             self.__connect(
+                 self.device_combo,
+@@ -250,6 +250,7 @@ class PropsPage(Gtk.Box):
+             self.__disconnect(self.switch_21, "notify::active")
+             self.switch_21.set_sensitive(False)
+             self.device_combo.set_sensitive(False)
++            self.reset_privileged_prop_btn.set_sensitive(False)
+ 
+     def on_waydroid_persist_state_changed(self, w, param):
+         if w.get_property("state") == PropsState.READY:
+@@ -264,6 +265,7 @@ class PropsPage(Gtk.Box):
+             self.entry_4.set_sensitive(True)
+             self.entry_5.set_sensitive(True)
+             self.entry_6.set_sensitive(True)
++            self.reset_persist_prop_btn.set_sensitive(True)
+             self.__connect(
+                 self.entry_1,
+                 "notify::text",
+@@ -361,6 +363,7 @@ class PropsPage(Gtk.Box):
+             self.entry_4.set_sensitive(False)
+             self.entry_5.set_sensitive(False)
+             self.entry_6.set_sensitive(False)
++            self.reset_persist_prop_btn.set_sensitive(False)
+ 
+     def set_reveal(self, widget: InfoBar, reveal_child: bool):
+         if (
+diff --git a/waydroid_helper/server/README.md b/waydroid_helper/server/README.md
+new file mode 100644
+index 0000000..035ef33
+--- /dev/null
++++ b/waydroid_helper/server/README.md
+@@ -0,0 +1 @@
++网络意义上的服务端, 实际上是客户端
+diff --git a/waydroid_helper/ui/AvailableVersionPage.ui b/waydroid_helper/ui/AvailableVersionPage.ui
+new file mode 100644
+index 0000000..431fef7
+--- /dev/null
++++ b/waydroid_helper/ui/AvailableVersionPage.ui
+@@ -0,0 +1,20 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<interface>
++  <template class="AvailableVersionPage" parent="AdwNavigationPage">
++    <child>
++      <object class="AdwToolbarView">
++        <child type="top">
++          <object class="AdwHeaderBar"/>
++        </child>
++        <property name="content">
++          <object class="GtkBox">
++            <property name="orientation">1</property>
++            <child>
++              <object class="AdwPreferencesPage" id="page"></object>
++            </child>
++          </object>
++        </property>
++      </object>
++    </child>
++  </template>
++</interface>
+\ No newline at end of file
+diff --git a/waydroid_helper/ui/ExtensionRow.ui b/waydroid_helper/ui/ExtensionRow.ui
+new file mode 100644
+index 0000000..8c45c81
+--- /dev/null
++++ b/waydroid_helper/ui/ExtensionRow.ui
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<interface>
++  <template class="ExtensionRow" parent="AdwActionRow">
++    <child type="suffix">
++      <object class="GtkButton" id="button">
++        <property name="label" translatable="yes">Show</property>
++        <property name="valign">center</property>
++      </object>
++    </child>
++  </template>
++</interface>
+\ No newline at end of file
+diff --git a/waydroid_helper/ui/ExtensionsPage.ui b/waydroid_helper/ui/ExtensionsPage.ui
+index 4a831f7..ab8312c 100644
+--- a/waydroid_helper/ui/ExtensionsPage.ui
++++ b/waydroid_helper/ui/ExtensionsPage.ui
+@@ -3,11 +3,11 @@
+   <template class="ExtensionsPage" parent="GtkBox">
+     <property name="orientation">1</property>
+     <child>
+-      <object class="AdwPreferencesPage">
+-        <child>
++      <object class="AdwPreferencesPage" id="extensions_page">
++        <!-- <child>
+           <object class="AdwPreferencesGroup">
+-            <property name="title">一些扩展</property>
+-            <property name="description">可能包含专有软件</property>
++            <property name="title">ARM translation layer</property>
++            <property name="description"></property>
+             <child>
+               <object class="GtkListBox">
+                 <property name="selection-mode">0</property>
+@@ -15,81 +15,21 @@
+                   <class name="boxed-list"/>
+                 </style>
+                 <child>
+-                  <object class="AdwExpanderRow">
++                  <object class="AdwExpanderRow" id="houdini_expanderrow">
+                     <property name="title">Libhoudini</property>
+                     <property name="subtitle">Intel 公司开发的 arm translation</property>
+-                    <child>
+-                      <object class="AdwActionRow">
+-                        <property name="title">版本1</property>
+-                        <child type="suffix">
+-                          <object class="GtkSwitch">
+-                            <property name="valign">3</property>
+-                          </object>
+-                        </child>
+-                      </object>
+-                    </child>
+-                    <child>
+-                      <object class="AdwActionRow">
+-                        <property name="title">版本2</property>
+-                        <child type="suffix">
+-                          <object class="GtkSwitch">
+-                            <property name="valign">3</property>
+-                          </object>
+-                        </child>
+-                      </object>
+-                    </child>
+                   </object>
+                 </child>
+                 <child>
+-                  <object class="AdwExpanderRow">
+-                    <property name="title">Libndk</property>
+-                    <property name="subtitle">Amd 公司开发的 arm translation</property>
+-                    <child>
+-                      <object class="AdwActionRow">
+-                        <property name="title">版本1</property>
+-                        <child type="suffix">
+-                          <object class="GtkSwitch">
+-                            <property name="valign">3</property>
+-                          </object>
+-                        </child>
+-                      </object>
+-                    </child>
+-                    <child>
+-                      <object class="AdwActionRow">
+-                        <property name="title">版本2</property>
+-                        <child type="suffix">
+-                          <object class="GtkSwitch">
+-                            <property name="valign">3</property>
+-                          </object>
+-                        </child>
+-                      </object>
+-                    </child>
+-                    <child>
+-                      <object class="AdwActionRow">
+-                        <property name="title">版本3</property>
+-                        <child type="suffix">
+-                          <object class="GtkSwitch">
+-                            <property name="valign">3</property>
+-                          </object>
+-                        </child>
+-                      </object>
+-                    </child>
+-                    <child>
+-                      <object class="AdwActionRow">
+-                        <property name="title">版本4</property>
+-                        <child type="suffix">
+-                          <object class="GtkSwitch">
+-                            <property name="valign">3</property>
+-                          </object>
+-                        </child>
+-                      </object>
+-                    </child>
++                  <object class="AdwExpanderRow" id="ndk_expanderrow">
++                    <property name="title">libndk</property>
++                    <property name="subtitle">Amd? 公司开发的 arm translation</property>
+                   </object>
+                 </child>
+               </object>
+             </child>
+           </object>
+-        </child>
++        </child> -->
+       </object>
+     </child>
+   </template>
+diff --git a/waydroid_helper/ui/InfoBar.ui b/waydroid_helper/ui/InfoBar.ui
+index 6639c82..9c6333b 100644
+--- a/waydroid_helper/ui/InfoBar.ui
++++ b/waydroid_helper/ui/InfoBar.ui
+@@ -2,7 +2,7 @@
+ <interface>
+   <template class="InfoBar" parent="GtkRevealer">
+     <property name="visible">true</property>
+-    <property name="transition_type">slide_up</property>
++    <property name="transition_type">4</property>
+     <property name="valign">end</property>
+     <child>
+       <object class="GtkBox">
+@@ -40,7 +40,7 @@
+                     <property name="valign">center</property>
+                     <property name="vexpand">true</property>
+                     <property name="margin-end">6</property>
+-                    <property name="label" translatable="yes">Ok</property>
++                    <property name="label" translatable="yes">OK</property>
+                     <style>
+                       <class name="suggested-action"/>
+                     </style>
+diff --git a/waydroid_helper/ui/PropsPage.ui b/waydroid_helper/ui/PropsPage.ui
+index 8579dad..38ba894 100644
+--- a/waydroid_helper/ui/PropsPage.ui
++++ b/waydroid_helper/ui/PropsPage.ui
+@@ -8,7 +8,7 @@
+           <object class="AdwPreferencesGroup">
+             <property name="title">Waydroid Prop Options</property>
+             <property name="description" translatable="true">Effective only while Waydroid session is running. Some settings require restarting the Waydroid session to apply</property>
+-            <property name="header-suffix">reset_1</property>
++            <property name="header-suffix">reset_persist_prop_btn</property>
+             <child>
+               <object class="AdwActionRow" id="actionrow_1">
+                 <property name="title-lines">1</property>
+@@ -202,7 +202,7 @@
+         <child>
+           <object class="AdwPreferencesGroup">
+             <property name="title">Waydroid Privileged Options</property><!-- <property name="header-suffix">header_suffix</property> -->
+-            <property name="header-suffix">reset_2</property>
++            <property name="header-suffix">reset_privileged_prop_btn</property>
+             <child>
+               <object class="AdwActionRow">
+                 <property name="title">qemu.hw.mainkeys</property>
+@@ -231,20 +231,22 @@
+       <object class="GtkOverlay" id="overlay"></object>
+     </child> -->
+   </template>
+-  <object class="GtkButton" id="reset_1">
++  <object class="GtkButton" id="reset_persist_prop_btn">
+     <property name="label" translatable="true">Reset</property>
+     <property name="halign">end</property>
+     <property name="valign">center</property>
+     <property name="vexpand">true</property>
+     <property name="hexpand">true</property>
++    <property name="sensitive">False</property>
+     <signal name="clicked" handler="on_reset_persist_clicked"/>
+   </object>
+-  <object class="GtkButton" id="reset_2">
++  <object class="GtkButton" id="reset_privileged_prop_btn">
+     <property name="label" translatable="true">Reset</property>
+     <signal name="clicked" handler="on_reset_privileged_clicked"/>
+     <property name="halign">end</property>
+     <property name="valign">center</property>
+     <property name="vexpand">true</property>
+     <property name="hexpand">true</property>
++    <property name="sensitive">False</property>
+   </object>
+ </interface>
+\ No newline at end of file
+diff --git a/waydroid_helper/ui/window.ui b/waydroid_helper/ui/window.ui
+index 3348cd1..10fb6a8 100644
+--- a/waydroid_helper/ui/window.ui
++++ b/waydroid_helper/ui/window.ui
+@@ -5,35 +5,47 @@
+   <requires lib="gtk" version="4.0"/>
+   <requires lib="libadwaita" version="1.4"/>
+   <template class="WaydroidHelperWindow" parent="AdwApplicationWindow">
+-     <property name="title">Waydroid Helper</property>
+     <property name="content">
+-      <object class="AdwToolbarView">
+-        <property name="content">
+-          <object class="AdwViewStack" id="stack"></object>
+-        </property>
+-        <child type="top">
+-          <object class="AdwHeaderBar" id="header_bar">
+-            <property name="title-widget">
+-              <object class="AdwViewSwitcher">
+-                <property name="policy">wide</property>
+-                <property name="stack">stack</property>
+-              </object>
+-            </property>
+-            <child type="end">
+-              <object class="GtkMenuButton">
+-                <property name="icon-name">open-menu-symbolic</property>
+-                <property name="menu-model">primary_menu</property>
+-                <property name="primary">True</property>
+-                <property name="tooltip-text" translatable="yes">Menu</property>
++      <object class="AdwToastOverlay">
++        <property name="child">
++          <object class="AdwNavigationView" id="navigation_view">
++            <child>
++              <object class="AdwNavigationPage">
++                <property name="title" translatable="yes">Waydroid Helper</property>
++                <property name="child">
++                  <object class="AdwToolbarView">
++                    <property name="content">
++                      <object class="AdwViewStack" id="stack"></object>
++                    </property>
++                    <child type="top">
++                      <object class="AdwHeaderBar" id="header_bar">
++                        <property name="title-widget">
++                          <object class="AdwViewSwitcher">
++                            <property name="policy">wide</property>
++                            <property name="stack">stack</property>
++                          </object>
++                        </property>
++                        <child type="end">
++                          <object class="GtkMenuButton">
++                            <property name="icon-name">open-menu-symbolic</property>
++                            <property name="menu-model">primary_menu</property>
++                            <property name="primary">True</property>
++                            <property name="tooltip-text" translatable="yes">Menu</property>
++                          </object>
++                        </child>
++                      </object>
++                    </child>
++                    <child type="bottom">
++                      <object class="AdwViewSwitcherBar" id="switcher_bar">
++                        <property name="stack">stack</property>
++                      </object>
++                    </child>
++                  </object>
++                </property>
+               </object>
+             </child>
+           </object>
+-        </child>
+-        <child type="bottom">
+-          <object class="AdwViewSwitcherBar" id="switcher_bar">
+-            <property name="stack">stack</property>
+-          </object>
+-        </child>
++        </property>
+       </object>
+     </property>
+     <property name="height-request">400</property>
+diff --git a/waydroid_helper/util/ExtentionsManager.py b/waydroid_helper/util/ExtentionsManager.py
+new file mode 100644
+index 0000000..36a1a70
+--- /dev/null
++++ b/waydroid_helper/util/ExtentionsManager.py
+@@ -0,0 +1,348 @@
++import asyncio
++import json
++import aiofiles
++import os
++import httpx
++
++from gi.repository import GLib, GObject
++from waydroid_helper.util.SubprocessManager import SubprocessManager
++from waydroid_helper.util.Task import Task
++from waydroid_helper.waydroid import Waydroid
++from enum import IntEnum
++
++
++class ExtentionManagerState(IntEnum):
++    UNINITIALIZED = 0
++    READY = 1
++
++
++class PackageManager(GObject.Object):
++    state = GObject.Property(type=object)
++    waydroid: Waydroid = GObject.Property(type=object)
++    available_extensions = {}
++    installed_packages = {}
++    remote = "https://github.com/ayasa520/extensions/raw/master/"
++    extensions_json = []
++    storage_dir = os.path.join(GLib.get_user_data_dir(), os.getenv("PROJECT_NAME"))
++    cache_dir = os.path.join(GLib.get_user_cache_dir(), os.getenv("PROJECT_NAME"))
++    _task = Task()
++    _subprocess = SubprocessManager()
++    # TODO 同时安装多个扩展的问题, 最好做到可以并发下载, 串行安装
++    _semaphore_1 = asyncio.Semaphore(1)
++    _semaphore_2 = asyncio.Semaphore(1)
++
++    async def fetch_snapshot(self, name, version):
++        print(self.available_extensions[f"{name}-{version}"])
++
++    async def fetch_extension_json(self):
++        async with httpx.AsyncClient(follow_redirects=True) as client:
++            try:
++                response = await client.get(self.remote + "extensions.json")
++                if response.status_code == 200:
++                    return response.json()
++                else:
++                    print(
++                        f"Failed to fetch JSON from, status code: {response.status_code}"
++                    )
++                    return None
++            except AssertionError as e:
++                pass
++
++    async def save_extension_json(self):
++        json_path = os.path.join(self.storage_dir, "extensions.json")
++        # json_cache_path = os.path.join(self.cache_dir, "extensions.json")
++        os.makedirs(os.path.dirname(json_path), exist_ok=True)
++        async with aiofiles.open(json_path, "w") as f:
++            json_str = json.dumps(self.extensions_json, ensure_ascii=False, indent=4)
++            await f.write(json_str)
++
++        # await self._subprocess.run(
++        #     f"pkexec waydroid-cli mkdir  {os.path.dirname(json_path)}"
++        # )
++
++        # await self._subprocess.run(
++        #     f"pkexec waydroid-cli copy {json_cache_path} {json_path}"
++        # )
++
++    async def update_extension_json(self):
++        extensions = await self.fetch_extension_json()
++        self.extensions_json = extensions
++        if extensions:
++            self._task.create_task(self.save_extension_json())
++
++    def is_installed(self, name):
++        return name in self.installed_packages.keys()
++
++    async def init_manager(self):
++        json_path = os.path.join(self.storage_dir, "extensions.json")
++        if not os.path.exists(json_path):
++            await self.update_extension_json()
++        else:
++            async with aiofiles.open(json_path, "r") as f:
++                self.extensions_json = json.loads(await f.read())
++        self.grab_meta()
++        await self.load_installed()
++        self.state = ExtentionManagerState.READY
++
++    def __init__(self):
++        super().__init__()
++        self.state = ExtentionManagerState.UNINITIALIZED
++        self._task.create_task(self.init_manager())
++        os.makedirs(self.storage_dir, exist_ok=True)
++
++    async def load_installed(self):
++        directory = os.path.join(self.storage_dir, "local")
++        if not os.path.exists(directory):
++            return
++        for folder_name in os.listdir(directory):
++            folder_path = os.path.join(directory, folder_name)
++
++            # 检查是否是文件夹
++            if os.path.isdir(folder_path):
++                # 指定 desc.json 的路径
++                desc_path = os.path.join(folder_path, "desc")
++
++                # 检查 desc.json 文件是否存在
++                if os.path.isfile(desc_path):
++                    # 读取 desc.json 文件
++                    async with aiofiles.open(desc_path, "r") as f:
++                        content = await f.read()
++                        desc_data = json.loads(content)
++                        self.installed_packages[desc_data["name"]] = desc_data
++
++    def get_data(self):
++        return self.extensions_json
++
++    def grab_meta(self):
++        for item1 in self.extensions_json:
++            for item2 in item1["list"]:
++                for item3 in item2["list"]:
++                    path = f'{item1["path"]}/{item2["path"]}/{item3["path"]}'
++                    extension = item3["list"]
++                    extension = {
++                        f'{each["name"]}-{each["version"]}': {
++                            **each,
++                            **{"path": f"{path}/{each['path']}"},
++                        }
++                        for each in extension
++                    }
++                    self.available_extensions.update(extension)
++
++    def get_package_info(self, name, version=None):
++        if version is not None:
++            package = self.available_extensions.get(f"{name}-{version}")
++            return package
++        for package in self.available_extensions.values():
++            if name in package.get("provides", []):
++                return package
++        return None
++
++    def check_conflicts(self, package_info=None, name=None, version=None):
++        conflicts = set()
++        if package_info is None:
++            package_info = self.get_package_info(name=name, version=version)
++        for installed_package in self.installed_packages.values():
++            # 检查 package_info 的 conflicts 列表
++            for conflict in package_info.get("conflicts", []):
++                if conflict == installed_package[
++                    "name"
++                ] or conflict in installed_package.get("provides", []):
++                    conflicts.add(installed_package["name"])
++            # 检查已安装包的 conflicts 列表
++            for conflict in installed_package.get("conflicts", []):
++                if conflict == package_info["name"] or conflict in package_info.get(
++                    "provides", []
++                ):
++                    conflicts.add(installed_package["name"])
++        return conflicts
++
++    def list_installed(self):
++        return self.installed_packages
++
++    # def check_dependencies(self, package_info):
++    #     """检查包的依赖"""
++    #     missing_dependencies = []
++    #     for dependency in package_info.get("dependencies", []):
++    #         if dependency not in self.installed_packages.keys() and not any(
++    #             dependency in pkg.get("provides", [])
++    #             for pkg in self.installed_packages.values()
++    #         ):
++    #             missing_dependencies.append(dependency)
++    #     return missing_dependencies
++
++    async def download_file(self, client, url, dest_path):
++        try:
++            response = await client.get(url)
++            assert response.content, "Downloaded content is empty"
++
++            if not os.path.exists(os.path.dirname(dest_path)):
++                os.makedirs(os.path.dirname(dest_path))
++
++            async with aiofiles.open(dest_path, mode="wb") as f:
++                await f.write(response.content)
++
++            print(f"File downloaded and saved to {dest_path}")
++
++        except AssertionError as e:
++            print(f"AssertionError caught: {e} {url}")
++        except httpx.RequestError as e:
++            print(f"RequestError caught: {e} {url}")
++
++    def get_all_files_relative(self, directory):
++        all_files = []
++        for root, dirs, files in os.walk(directory):
++            for file in files:
++                file_path = os.path.relpath(os.path.join(root, file), directory)
++                all_files.append(file_path)
++        return all_files
++
++    async def download(self, package_info):
++        async with httpx.AsyncClient(follow_redirects=True) as client:
++            tasks = []
++            for file in package_info["files"]:
++                url = f'{self.remote}{package_info["path"]}/{file}'
++                dest = f'{self.cache_dir}/extensions/{package_info["name"]}/{file}'
++                tasks.append(self.download_file(client, url, dest))
++
++            for source, md5 in zip(package_info["source"], package_info["md5sums"]):
++                file_name = os.path.basename(source)
++                file_path = os.path.join(
++                    self.cache_dir, "extensions", package_info["name"], file_name
++                )
++                if os.path.exists(file_path):
++                    result = await self._subprocess.run(f"md5sum {file_path}")
++                    actual_md5 = result["stdout"].split()[0]
++                    if actual_md5 == md5:
++                        continue
++                    else:
++                        tasks.append(self.download_file(client, source, file_path))
++                else:
++                    tasks.append(self.download_file(client, source, file_path))
++
++            await asyncio.gather(*tasks)
++
++    async def install_package(
++        self, name, version, remove_conflicts=False, install_dependencies=False
++    ):
++        async with self._semaphore_1:
++            package_info = self.get_package_info(name, version)
++            if package_info is None:
++                print(f"Package {name} not found.")
++                return
++            # 检查冲突
++            conflicts = self.check_conflicts(package_info)
++            if conflicts:
++                if remove_conflicts:
++                    await self.remove_packages(conflicts)
++                else:
++                    print(
++                        f"Package {package_info['name']} conflicts with installed packages: {', '.join(conflicts)}."
++                    )
++                    return
++
++        # 检查依赖
++        # missing_dependencies = self.check_dependencies(package_info)
++        # if missing_dependencies:
++        #     if install_dependencies:
++        #         for dependency in missing_dependencies:
++        #             self.install_package(
++        #                 dependency, remove_conflicts, install_dependencies
++        #             )
++        #     else:
++        #         print(
++        #             f"Package {package_info['name']} is missing dependencies: {', '.join(missing_dependencies)}."
++        #         )
++        #         return
++
++        # 下载
++        await self.download(package_info)
++
++        async with self._semaphore_2:
++            # 调用 installer
++            startdir = os.path.join(self.cache_dir, "extensions", package_info["name"])
++            pkgdir = os.path.join(startdir, "pkg")
++            srcdir = os.path.join(startdir, "src")
++            env = {}
++            env["startdir"] = startdir
++            env["pkgdir"] = pkgdir
++            env["srcdir"] = srcdir
++
++            installer_path = os.path.join(
++                os.getenv("PKGDATADIR"), "waydroid_helper", "util", "installer.sh"
++            )
++
++            await self._subprocess.run(
++                f"source {installer_path} && call_pre_install", env=env
++            )
++            await self._subprocess.run(
++                f'pkexec waydroid-cli copy {pkgdir} {"/var/lib/waydroid/overlay"} --contents-only'
++            )
++            await self._subprocess.run(
++                f"source {installer_path} && call_post_install", env=env
++            )
++
++            installed_files = self.get_all_files_relative(pkgdir)
++
++            # 应用 prop
++            if os.path.exists(os.path.join(startdir, "prop.json")):
++                async with aiofiles.open(
++                    os.path.join(startdir, "prop.json"), mode="r"
++                ) as f:
++                    content = await f.read()
++                    props = json.loads(content)
++                    await self.waydroid.set_extension_props(props)
++
++            # desc_cache_path = os.path.join(startdir, "desc")
++            local_dir = os.path.join(
++                self.storage_dir, "local", f"{package_info['name']}"
++            )
++            desc_path = os.path.join(local_dir, "desc")
++            package_info = {
++                **package_info,
++                **{"installed_files": installed_files},
++                **{"props": list(props.keys())},
++            }
++
++            os.makedirs(local_dir, exist_ok=True)
++            async with aiofiles.open(desc_path, mode="w") as f:
++                content = json.dumps(package_info)
++                await f.write(content)
++
++            # 标记已安装包
++            # await self._subprocess.run(f"pkexec waydroid-cli mkdir {local_dir}")
++            # await self._subprocess.run(
++            #     f"pkexec waydroid-cli copy {desc_cache_path} {local_dir}"
++            # )
++
++            self.installed_packages[package_info["name"]] = package_info
++            print(f"Package {package_info['name']} installed successfully.")
++
++    async def remove_package(self, package_name):
++        """移除包"""
++        if package_name in self.installed_packages:
++            file_paths = [
++                os.path.join("/var/lib/waydroid/overlay", file)
++                for file in self.installed_packages[package_name]["installed_files"]
++            ]
++            # TODO 这边看怎么改成同时
++            await self._subprocess.run(f'pkexec waydroid-cli rm {" ".join(file_paths)}')
++            # await self._subprocess.run(
++            #     f"pkexec waydroid-cli rm {os.path.join(self.storage_dir, 'local', package_name)}"
++            # )
++            await self.waydroid.remove_extension_props(
++                self.installed_packages[package_name]["props"]
++            )
++            await self._subprocess.run(
++                f"rm -rf {os.path.join(self.storage_dir, 'local', package_name)}"
++            )
++            # await asyncio.gather(coro1, coro2, coro3)
++
++            del self.installed_packages[package_name]
++            print(f"Package {package_name} removed successfully.")
++        else:
++            print(f"Package {package_name} is not installed.")
++
++    async def remove_packages(self, package_names):
++        for pkg in package_names:
++            print("remove", pkg)
++            await self.remove_package(pkg)
+diff --git a/waydroid_helper/util/SubprocessManager.py b/waydroid_helper/util/SubprocessManager.py
+index 7a77712..b1276b7 100644
+--- a/waydroid_helper/util/SubprocessManager.py
++++ b/waydroid_helper/util/SubprocessManager.py
+@@ -3,6 +3,15 @@ import os
+ import asyncio
+ 
+ 
++class SubprocessError(Exception):
++    def __init__(self, returncode, stderr):
++        self.returncode = returncode
++        self.stderr = stderr
++        super().__init__(
++            f"Command failed with return code {returncode}: {stderr.decode()}"
++        )
++
++
+ class SubprocessManager:
+     _instance = None
+     _semaphore = None
+@@ -16,15 +25,22 @@ class SubprocessManager:
+     def is_running_in_flatpak(self):
+         return "container" in os.environ
+ 
+-    async def _run_subprocess(self, command, flag=False, key=None):
++    async def run(self, command, flag=False, key=None, env={}):
+         async with self._semaphore:
++            command_list = command.split(" ")
+             if self.is_running_in_flatpak():
+-                command = "flatpak-spawn --host " + command
++                if (
++                    "pkexec" == command_list[0]
++                    or "waydroid" == command_list[0]
++                    or "waydroid" == command_list[1]
++                ):
++                    command = f'flatpak-spawn --host bash -c "{command}"'
+ 
+             process = await asyncio.create_subprocess_shell(
+                 command,
+                 stdout=asyncio.subprocess.PIPE,
+                 stderr=asyncio.subprocess.PIPE,
++                env={**os.environ.copy(), **env},
+                 preexec_fn=os.setsid if flag else None,
+             )
+ 
+@@ -46,5 +62,7 @@ class SubprocessManager:
+             #         ensure_ascii=False,
+             #     )
+             # )
++            if result["returncode"] != 0:
++                raise SubprocessError(result["returncode"], stderr)
+ 
+             return result
+diff --git a/waydroid_helper/util/installer.sh b/waydroid_helper/util/installer.sh
+new file mode 100644
+index 0000000..b01a6ac
+--- /dev/null
++++ b/waydroid_helper/util/installer.sh
+@@ -0,0 +1,18 @@
++#!/bin/bash
++
++cd $startdir
++source ./EXTENSION
++
++
++# call pre_install
++call_pre_install(){
++    rm -rf $srcdir && mkdir -p $srcdir
++    rm -rf $pkgdir && mkdir -p $pkgdir
++    pre_install
++}
++
++call_post_install(){
++    if type post_install 2>/dev/null | grep -q 'function'; then
++        post_install
++    fi
++}
+\ No newline at end of file
+diff --git a/waydroid_helper/waydroid-cli.in b/waydroid_helper/waydroid-cli.in
+new file mode 100644
+index 0000000..bb3cd87
+--- /dev/null
++++ b/waydroid_helper/waydroid-cli.in
+@@ -0,0 +1,175 @@
++#!@PYTHON@
++
++import argparse
++import subprocess
++import shutil
++import os
++import sys
++
++
++def run_waydroid_upgrade(option=None):
++    """Run the waydroid upgrade command with or without the -o option."""
++    command = ["waydroid", "upgrade"]
++    if option:
++        command.append(option)
++    subprocess.run(command, check=True)
++
++
++def copy_directory_contents(src, dest):
++    try:
++        if not os.path.exists(dest):
++            os.makedirs(dest)
++        items = os.listdir(src)
++        for item in items:
++            src_path = os.path.join(src, item)
++            dest_path = os.path.join(dest, item)
++            if os.path.isdir(src_path):
++                shutil.copytree(src_path, dest_path, dirs_exist_ok=True)
++            else:
++                shutil.copy2(src_path, dest_path)
++        print(f"Contents of directory {src} copied to {dest}")
++    except Exception as e:
++        print(f"Error copying contents of directory {src} to {dest}: {e}")
++
++
++def copy(src, dest, contents_only):
++    if os.path.isfile(src):
++        copy_file(src, dest)
++    elif os.path.isdir(src):
++        if contents_only:
++            copy_directory_contents(src, dest)
++        else:
++            copy_directory(src, dest)
++
++
++def copy_directory(src, dest):
++    try:
++        if not os.path.exists(dest):
++            os.makedirs(dest)
++        dest = os.path.join(dest, os.path.basename(src))
++        shutil.copytree(src, dest, dirs_exist_ok=True)
++        print(f"Directory {src} copied to {dest}")
++    except Exception as e:
++        print(f"Error copying directory {src} to {dest}: {e}")
++
++
++def copy_file(src, dest):
++    try:
++        if not os.path.exists(os.path.dirname(dest)):
++            os.makedirs(os.path.dirname(dest))
++        shutil.copy2(src, dest)
++        print(f"File {src} copied to {dest}")
++    except Exception as e:
++        print(f"Error copying file {src} to {dest}: {e}")
++
++
++def mkdir(dir):
++    if not os.path.exists(dir):
++        os.makedirs(dir)
++
++
++def run_shell(shell_args):
++    """Run the specific lxc-attach command with additional arguments."""
++    base_command = [
++        "lxc-attach",
++        "-P",
++        "/var/lib/waydroid/lxc",
++        "-n",
++        "waydroid",
++        "--clear-env",
++        "--",
++    ]
++    if shell_args != None:
++        command = base_command + shell_args
++    else:
++        command = base_command + "/system/bin/sh"
++    subprocess.run(command, check=True)
++
++
++def remove_files_and_directories(paths):
++    for path in paths:
++        try:
++            if os.path.isfile(path):
++                os.remove(path)
++                print(f"Removed file: {path}")
++            elif os.path.isdir(path):
++                shutil.rmtree(path)
++                print(f"Removed directory: {path}")
++            else:
++                print(f"Path does not exist: {path}")
++        except Exception as e:
++            print(f"Error removing {path}: {e}")
++
++
++
++def execute_shell_command(command):
++    """Execute a shell command passed as a string."""
++    subprocess.run(command, shell=True, check=True)
++
++
++def main():
++    parser = argparse.ArgumentParser(
++        description="Manage Waydroid and perform file operations."
++    )
++    subparsers = parser.add_subparsers(dest="action", help="Action to perform")
++
++    # Subparser for the upgrade action
++    upgrade_parser = subparsers.add_parser("upgrade", help="Run waydroid upgrade")
++    upgrade_parser.add_argument(
++        "-o",
++        action="store_const",
++        const="-o",
++        help="Run waydroid upgrade with the -o option",
++    )
++
++    # Subparser for the copy action
++    copy_parser = subparsers.add_parser("copy", help="Copy a file")
++    copy_parser.add_argument("source", help="Source file to copy")
++    copy_parser.add_argument("destination", help="Destination path")
++    copy_parser.add_argument(
++        "--contents-only",
++        action="store_true",
++        help="Copy only the contents of the directory, not the directory itself",
++    )
++
++    # Subparser for the exec action
++    exec_parser = subparsers.add_parser("exec", help="Execute a shell command")
++    exec_parser.add_argument(
++        "command", nargs=argparse.REMAINDER, help="Shell command to execute"
++    )
++
++    # Subparser for the shell action
++    shell_parser = subparsers.add_parser(
++        "shell", help="Run the specific lxc-attach shell command"
++    )
++    shell_parser.add_argument(
++        "shell_args", nargs=argparse.REMAINDER, help="Arguments for the shell command"
++    )
++
++    mkdir_parser = subparsers.add_parser("mkdir", help="mkdir")
++    mkdir_parser.add_argument("directory", help="dest dir")
++
++    rm_parser = subparsers.add_parser("rm", help="Remove files")
++    rm_parser.add_argument("files", nargs="+", help="List of files to remove")
++
++    args = parser.parse_args()
++
++    if args.action == "upgrade":
++        run_waydroid_upgrade(args.o)
++    elif args.action == "copy":
++        copy(args.source, args.destination, args.contents_only)
++    # elif args.action == "exec":
++    #     execute_shell_command(" ".join(args.command))
++    # elif args.action == "shell":
++    #     run_shell(args.shell_args)
++    elif args.action == "mkdir":
++        mkdir(args.directory)
++    elif args.action == "rm":
++        remove_files_and_directories(args.files)
++    else:
++        parser.print_help()
++        sys.exit(1)
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/waydroid_helper/waydroid-helper.gresource.xml b/waydroid_helper/waydroid-helper.gresource.xml
+index 860b801..c103de9 100644
+--- a/waydroid_helper/waydroid-helper.gresource.xml
++++ b/waydroid_helper/waydroid-helper.gresource.xml
+@@ -6,6 +6,8 @@
+     <file preprocess="xml-stripblanks">ui/ExtensionsPage.ui</file>
+     <file preprocess="xml-stripblanks">ui/InfoBar.ui</file>
+     <file preprocess="xml-stripblanks">ui/window.ui</file>
++    <file preprocess="xml-stripblanks">ui/ExtensionRow.ui</file>
++    <file preprocess="xml-stripblanks">ui/AvailableVersionPage.ui</file>
+     <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
+   </gresource>
+ </gresources>
+diff --git a/waydroid_helper/waydroid-helper.in b/waydroid_helper/waydroid-helper.in
+index d695055..aeb071b 100755
+--- a/waydroid_helper/waydroid-helper.in
++++ b/waydroid_helper/waydroid-helper.in
+@@ -28,8 +28,11 @@ import gettext
+ VERSION = '@VERSION@'
+ pkgdatadir = '@pkgdatadir@'
+ localedir = '@localedir@'
++project_name = '@project_name@'
+ 
+ sys.path.insert(1, pkgdatadir)
++os.environ['PKGDATADIR'] = pkgdatadir
++os.environ['PROJECT_NAME'] = project_name
+ signal.signal(signal.SIGINT, signal.SIG_DFL)
+ locale.bindtextdomain('waydroid-helper', localedir)
+ locale.textdomain('waydroid-helper')
+diff --git a/waydroid_helper/waydroid.py b/waydroid_helper/waydroid.py
+index 05aa296..b9ababa 100644
+--- a/waydroid_helper/waydroid.py
++++ b/waydroid_helper/waydroid.py
+@@ -1,3 +1,8 @@
++import gi
++
++gi.require_version("Gtk", "4.0")
++gi.require_version("Adw", "1")
++
+ import configparser
+ import copy
+ import enum
+@@ -7,23 +12,22 @@ from gi.repository import GObject, GLib
+ import asyncio
+ from typing import Optional
+ from functools import partial
+-from waydroid_helper.util.SubprocessManager import SubprocessManager
+-
+-import gi
+-
++from waydroid_helper.util.SubprocessManager import SubprocessError, SubprocessManager
+ from waydroid_helper.util.Task import Task
+ 
+-gi.require_version("Gtk", "4.0")
+-gi.require_version("Adw", "1")
+ 
+-CONFIG_DIR = os.environ.get("WAYDROID_CONFIG", "/var/lib/waydroid/waydroid.cfg")
++CONFIG_PATH = os.environ.get("WAYDROID_CONFIG", "/var/lib/waydroid/waydroid.cfg")
+ 
+ 
++# TODO 异常处理
+ class WaydroidState(enum.IntEnum):
+     LOADING = 1
+     UNINITIALIZED = 2
+     STOPPED = 4
++    # waydroid session is running
+     RUNNING = 8
++    # connected to app
++    CONNECTED = 16
+ 
+ 
+ def bool_to_str(b, flag=0) -> str:
+@@ -189,7 +193,7 @@ class Waydroid(GObject.Object):
+             self.state = PropsState.UNINITIALIZED
+             tasks = set()
+             for prop in self._list_properties():
+-                coro = self._subprocess._run_subprocess(
++                coro = self._subprocess.run(
+                     f"waydroid prop get {prop.nick}", key=prop.name
+                 )
+                 tasks.add(coro)
+@@ -202,7 +206,7 @@ class Waydroid(GObject.Object):
+         async def save(self, name):
+             key = self.find_property(name).nick
+             value = self.transform[name][1](self.get_property(name))
+-            await self._subprocess._run_subprocess(f'waydroid prop set {key} "{value}"')
++            await self._subprocess.run(f'waydroid prop set {key} "{value}"')
+ 
+         def reset_state(self):
+             self.state = PropsState.UNINITIALIZED
+@@ -320,7 +324,7 @@ class Waydroid(GObject.Object):
+         def __init__(self) -> None:
+             super().__init__()
+             self.state = PropsState.UNINITIALIZED
+-            self.cfg.read(CONFIG_DIR)
++            self.cfg.read(CONFIG_PATH)
+             self.cfg_old = copy.deepcopy(self.cfg)
+             # self.cfg_all = copy.deepcopy(self.cfg)
+ 
+@@ -330,14 +334,36 @@ class Waydroid(GObject.Object):
+         def reset_state(self):
+             self.state = PropsState.UNINITIALIZED
+ 
++        async def set_extension_props(self, pairs: dict):
++            self.state = PropsState.UNINITIALIZED
++            for k, v in pairs.items():
++                name = k.replace(".", "-")
++                if self.find_property(name):
++                    self.set_property(name)
++                else:
++                    self.cfg.set("properties", k, v)
++            self.state = PropsState.READY
++
++        async def remove_extension_props(self, keys: list):
++            self.state = PropsState.UNINITIALIZED
++            for k in keys:
++                name = k.replace(".", "-")
++                if self.find_property(name):
++                    self.set_property(name, self.transform[name][0](""))
++                else:
++                    self.cfg.remove_option("properties", k)
++            self.state = PropsState.READY
++
+         async def reset(self):
+             self.state = PropsState.UNINITIALIZED
+             for each in self._list_properties():
+                 self.cfg.remove_option("properties", each.nick)
+                 self.set_property(each.name, each.default_value)
+             self.state = PropsState.READY
+-            result = await self.save()
+-            if int(result["returncode"]) == 126:
++            try:
++                await self.save()
++            except SubprocessError as e:
++                print(e)
+                 self.restore()
+ 
+         def fetch(self):
+@@ -403,20 +429,19 @@ class Waydroid(GObject.Object):
+                 # ):
+                 #     self.cfg.set("properties", each.nick, value)
+ 
+-            cache_path = os.path.join(GLib.get_user_cache_dir(), "waydroid-helper")
+-            cache_config_dir = os.path.join(cache_path, "waydroid.cfg")
++            cache_dir = os.path.join(GLib.get_user_cache_dir(), "waydroid-helper")
++            cache_config_path = os.path.join(cache_dir, "waydroid.cfg")
+ 
+-            os.makedirs(cache_path, exist_ok=True)
+-            with open(cache_config_dir, "w") as f:
++            os.makedirs(cache_dir, exist_ok=True)
++            with open(cache_config_path, "w") as f:
+                 self.cfg.write(f)
+-            cmd = f"pkexec sh -c \"cp -r '{cache_config_dir}' '{CONFIG_DIR}' && waydroid upgrade -o\""
+-            result = await self._subprocess._run_subprocess(
+-                cmd,
+-                flag=True,
+-            )
+-            if int(result["returncode"]) == 0:
++            cmd = f"pkexec waydroid-cli copy {cache_config_path} {CONFIG_PATH}"
++
++            try:
++                await self._subprocess.run(cmd, flag=True)
+                 self.cfg_old = copy.deepcopy(self.cfg)
+-            return result
++            except SubprocessError as e:
++                print(e)
+ 
+     persist_props: PersistProps = PersistProps()
+     privileged_props: PrivilegedProps = PrivilegedProps()
+@@ -452,19 +477,25 @@ class Waydroid(GObject.Object):
+         self.privileged_props.reset_state()
+ 
+     async def save_privileged_props(self):
+-        result = await self.privileged_props.save()
+-        if int(result["returncode"]) == 126:
+-            self.privileged_props.restore()
++        await self.upgrade(offline=True)
+ 
+     def restore_privileged_props(self):
+         self.privileged_props.restore()
+ 
++    async def set_extension_props(self, pairs):
++        await self.privileged_props.set_extension_props(pairs)
++        await self.upgrade(offline=True)
++
++    async def remove_extension_props(self, keys):
++        await self.privileged_props.remove_extension_props(keys)
++        await self.upgrade(offline=True)
++
+     # 因为双向绑定了, 所以不需要传入值
+     async def save_persist_prop(self, name):
+         await self.persist_props.save(name)
+ 
+     async def update_waydroid_status(self):
+-        result = await self._subprocess._run_subprocess("waydroid status")
++        result = await self._subprocess.run("waydroid status")
+         output = result["stdout"]
+         if self.state == WaydroidState.UNINITIALIZED:
+             if "Session:\tRUNNING" in output:
+@@ -511,16 +542,18 @@ class Waydroid(GObject.Object):
+         GLib.timeout_add_seconds(2, self.__update_waydroid_status)
+ 
+     async def start_session(self):
+-        result = await self._subprocess._run_subprocess(
+-            command="waydroid session start", flag=True
+-        )
+-        # await self.update_waydroid_status()
+-        return result
++        try:
++            result = await self._subprocess.run(
++                command="waydroid session start", flag=True
++            )
++            # await self.update_waydroid_status()
++        except GLib.GError:
++            pass
++        finally:
++            return result
+ 
+     async def stop_session(self):
+-        result = await self._subprocess._run_subprocess(
+-            command="waydroid session stop", flag=True
+-        )
++        result = await self._subprocess.run(command="waydroid session stop", flag=True)
+         await self.update_waydroid_status()
+         return result
+ 
+@@ -529,17 +562,31 @@ class Waydroid(GObject.Object):
+         await self.start_session()
+ 
+     async def show_full_ui(self):
+-        result = await self._subprocess._run_subprocess(
+-            command="waydroid show-full-ui", flag=True
+-        )
+-        # await self.update_waydroid_status()
+-        return result
+-
+-    async def upgrade(self, offline: Optional[bool] = None):
+-        if offline:
+-            await self.save_privileged_props()
+-        else:
+-            await self._subprocess._run_subprocess(
+-                command="pkexec waydroid upgrade", flag=True
++        try:
++            result = await self._subprocess.run(
++                command="waydroid show-full-ui", flag=True
+             )
++            # await self.update_waydroid_status()
++        except GLib.GError:
++            pass
++        finally:
++            return result
++
++    async def upgrade(self, offline: Optional[bool] = None) -> bool:
++        try:
++            if offline:
++                try:
++                    await self.privileged_props.save()
++                    await self._subprocess.run(
++                        command="pkexec waydroid-cli upgrade -o", flag=True
++                    )
++                except SubprocessError as e:
++                    self.privileged_props.restore()
++                    print(e)
++            else:
++                await self._subprocess.run(
++                    command="pkexec waydroid-cli upgrade", flag=True
++                )
++            return True
++        finally:
+             await self.update_waydroid_status()
+diff --git a/waydroid_helper/window.py b/waydroid_helper/window.py
+index 746870c..6c0fbb1 100644
+--- a/waydroid_helper/window.py
++++ b/waydroid_helper/window.py
+@@ -1,13 +1,14 @@
++import gi
++
++gi.require_version("Gtk", "4.0")
++gi.require_version("Adw", "1")
++
+ from gettext import gettext as _
+ from waydroid_helper.extensionspage import ExtensionsPage
+ from waydroid_helper.generalpage import GeneralPage
+ from waydroid_helper.waydroid import Waydroid
+ from waydroid_helper.propspage import PropsPage
+ from gi.repository import Gtk, Adw, Gio
+-import gi
+-
+-gi.require_version("Gtk", "4.0")
+-gi.require_version("Adw", "1")
+ 
+ # from waydroid_helper.controller import ControllerWindow
+ 
+@@ -16,6 +17,7 @@ gi.require_version("Adw", "1")
+ class WaydroidHelperWindow(Adw.ApplicationWindow):
+     __gtype_name__ = "WaydroidHelperWindow"
+     stack: Adw.ViewStack = Gtk.Template.Child()
++    navigation_view: Adw.NavigationView = Gtk.Template.Child()
+ 
+     def __init__(self, **kwargs):
+         super().__init__(**kwargs)

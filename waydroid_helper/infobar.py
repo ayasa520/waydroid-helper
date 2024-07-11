@@ -1,9 +1,10 @@
-from gettext import gettext as _
-from gi.repository import Gtk
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
+
+from gettext import gettext as _
+from gi.repository import Gtk
 
 
 @Gtk.Template(resource_path="/com/jaoushingan/WaydroidHelper/ui/InfoBar.ui")

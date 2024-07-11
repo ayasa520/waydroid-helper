@@ -1,13 +1,14 @@
+import gi
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+
 from gettext import gettext as _
 from waydroid_helper.extensionspage import ExtensionsPage
 from waydroid_helper.generalpage import GeneralPage
 from waydroid_helper.waydroid import Waydroid
 from waydroid_helper.propspage import PropsPage
 from gi.repository import Gtk, Adw, Gio
-import gi
-
-gi.require_version("Gtk", "4.0")
-gi.require_version("Adw", "1")
 
 # from waydroid_helper.controller import ControllerWindow
 
@@ -16,6 +17,7 @@ gi.require_version("Adw", "1")
 class WaydroidHelperWindow(Adw.ApplicationWindow):
     __gtype_name__ = "WaydroidHelperWindow"
     stack: Adw.ViewStack = Gtk.Template.Child()
+    navigation_view: Adw.NavigationView = Gtk.Template.Child()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

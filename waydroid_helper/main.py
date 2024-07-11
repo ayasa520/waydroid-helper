@@ -1,14 +1,15 @@
+import gi
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+
 import os
 from .window import WaydroidHelperWindow
 from gi.repository import Gtk, Gio, Adw
 import sys
-import gi
 import asyncio
 import gbulb
 
-
-gi.require_version("Gtk", "4.0")
-gi.require_version("Adw", "1")
 
 Adw.init()
 gbulb.install(gtk=True)

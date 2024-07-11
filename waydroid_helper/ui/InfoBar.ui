@@ -2,7 +2,7 @@
 <interface>
   <template class="InfoBar" parent="GtkRevealer">
     <property name="visible">true</property>
-    <property name="transition_type">slide_up</property>
+    <property name="transition_type">4</property>
     <property name="valign">end</property>
     <child>
       <object class="GtkBox">
@@ -40,7 +40,7 @@
                     <property name="valign">center</property>
                     <property name="vexpand">true</property>
                     <property name="margin-end">6</property>
-                    <property name="label" translatable="yes">Ok</property>
+                    <property name="label" translatable="yes">OK</property>
                     <style>
                       <class name="suggested-action"/>
                     </style>

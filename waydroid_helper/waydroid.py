@@ -1,3 +1,8 @@
+import gi
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+
 import configparser
 import copy
 import enum
@@ -7,23 +12,22 @@ from gi.repository import GObject, GLib
 import asyncio
 from typing import Optional
 from functools import partial
-from waydroid_helper.util.SubprocessManager import SubprocessManager
-
-import gi
-
+from waydroid_helper.util.SubprocessManager import SubprocessError, SubprocessManager
 from waydroid_helper.util.Task import Task
 
-gi.require_version("Gtk", "4.0")
-gi.require_version("Adw", "1")
 
-CONFIG_DIR = os.environ.get("WAYDROID_CONFIG", "/var/lib/waydroid/waydroid.cfg")
+CONFIG_PATH = os.environ.get("WAYDROID_CONFIG", "/var/lib/waydroid/waydroid.cfg")
 
 
+# TODO 异常处理
 class WaydroidState(enum.IntEnum):
     LOADING = 1
     UNINITIALIZED = 2
     STOPPED = 4
+    # waydroid session is running
     RUNNING = 8
+    # connected to app
+    CONNECTED = 16
 
 
 def bool_to_str(b, flag=0) -> str:
@@ -189,7 +193,7 @@ class Waydroid(GObject.Object):
             self.state = PropsState.UNINITIALIZED
             tasks = set()
             for prop in self._list_properties():
-                coro = self._subprocess._run_subprocess(
+                coro = self._subprocess.run(
                     f"waydroid prop get {prop.nick}", key=prop.name
                 )
                 tasks.add(coro)
@@ -202,7 +206,7 @@ class Waydroid(GObject.Object):
         async def save(self, name):
             key = self.find_property(name).nick
             value = self.transform[name][1](self.get_property(name))
-            await self._subprocess._run_subprocess(f'waydroid prop set {key} "{value}"')
+            await self._subprocess.run(f'waydroid prop set {key} "{value}"')
 
         def reset_state(self):
             self.state = PropsState.UNINITIALIZED
@@ -320,7 +324,7 @@ class Waydroid(GObject.Object):
         def __init__(self) -> None:
             super().__init__()
             self.state = PropsState.UNINITIALIZED
-            self.cfg.read(CONFIG_DIR)
+            self.cfg.read(CONFIG_PATH)
             self.cfg_old = copy.deepcopy(self.cfg)
             # self.cfg_all = copy.deepcopy(self.cfg)
 
@@ -330,14 +334,36 @@ class Waydroid(GObject.Object):
         def reset_state(self):
             self.state = PropsState.UNINITIALIZED
 
+        async def set_extension_props(self, pairs: dict):
+            self.state = PropsState.UNINITIALIZED
+            for k, v in pairs.items():
+                name = k.replace(".", "-")
+                if self.find_property(name):
+                    self.set_property(name)
+                else:
+                    self.cfg.set("properties", k, v)
+            self.state = PropsState.READY
+
+        async def remove_extension_props(self, keys: list):
+            self.state = PropsState.UNINITIALIZED
+            for k in keys:
+                name = k.replace(".", "-")
+                if self.find_property(name):
+                    self.set_property(name, self.transform[name][0](""))
+                else:
+                    self.cfg.remove_option("properties", k)
+            self.state = PropsState.READY
+
         async def reset(self):
             self.state = PropsState.UNINITIALIZED
             for each in self._list_properties():
                 self.cfg.remove_option("properties", each.nick)
                 self.set_property(each.name, each.default_value)
             self.state = PropsState.READY
-            result = await self.save()
-            if int(result["returncode"]) == 126:
+            try:
+                await self.save()
+            except SubprocessError as e:
+                print(e)
                 self.restore()
 
         def fetch(self):
@@ -403,20 +429,19 @@ class Waydroid(GObject.Object):
                 # ):
                 #     self.cfg.set("properties", each.nick, value)
 
-            cache_path = os.path.join(GLib.get_user_cache_dir(), "waydroid-helper")
-            cache_config_dir = os.path.join(cache_path, "waydroid.cfg")
+            cache_dir = os.path.join(GLib.get_user_cache_dir(), "waydroid-helper")
+            cache_config_path = os.path.join(cache_dir, "waydroid.cfg")
 
-            os.makedirs(cache_path, exist_ok=True)
-            with open(cache_config_dir, "w") as f:
+            os.makedirs(cache_dir, exist_ok=True)
+            with open(cache_config_path, "w") as f:
                 self.cfg.write(f)
-            cmd = f"pkexec sh -c \"cp -r '{cache_config_dir}' '{CONFIG_DIR}' && waydroid upgrade -o\""
-            result = await self._subprocess._run_subprocess(
-                cmd,
-                flag=True,
-            )
-            if int(result["returncode"]) == 0:
+            cmd = f"pkexec waydroid-cli copy {cache_config_path} {CONFIG_PATH}"
+
+            try:
+                await self._subprocess.run(cmd, flag=True)
                 self.cfg_old = copy.deepcopy(self.cfg)
-            return result
+            except SubprocessError as e:
+                print(e)
 
     persist_props: PersistProps = PersistProps()
     privileged_props: PrivilegedProps = PrivilegedProps()
@@ -452,19 +477,25 @@ class Waydroid(GObject.Object):
         self.privileged_props.reset_state()
 
     async def save_privileged_props(self):
-        result = await self.privileged_props.save()
-        if int(result["returncode"]) == 126:
-            self.privileged_props.restore()
+        await self.upgrade(offline=True)
 
     def restore_privileged_props(self):
         self.privileged_props.restore()
+
+    async def set_extension_props(self, pairs):
+        await self.privileged_props.set_extension_props(pairs)
+        await self.upgrade(offline=True)
+
+    async def remove_extension_props(self, keys):
+        await self.privileged_props.remove_extension_props(keys)
+        await self.upgrade(offline=True)
 
     # 因为双向绑定了, 所以不需要传入值
     async def save_persist_prop(self, name):
         await self.persist_props.save(name)
 
     async def update_waydroid_status(self):
-        result = await self._subprocess._run_subprocess("waydroid status")
+        result = await self._subprocess.run("waydroid status")
         output = result["stdout"]
         if self.state == WaydroidState.UNINITIALIZED:
             if "Session:\tRUNNING" in output:
@@ -511,16 +542,18 @@ class Waydroid(GObject.Object):
         GLib.timeout_add_seconds(2, self.__update_waydroid_status)
 
     async def start_session(self):
-        result = await self._subprocess._run_subprocess(
-            command="waydroid session start", flag=True
-        )
-        # await self.update_waydroid_status()
-        return result
+        try:
+            result = await self._subprocess.run(
+                command="waydroid session start", flag=True
+            )
+            # await self.update_waydroid_status()
+        except GLib.GError:
+            pass
+        finally:
+            return result
 
     async def stop_session(self):
-        result = await self._subprocess._run_subprocess(
-            command="waydroid session stop", flag=True
-        )
+        result = await self._subprocess.run(command="waydroid session stop", flag=True)
         await self.update_waydroid_status()
         return result
 
@@ -529,17 +562,31 @@ class Waydroid(GObject.Object):
         await self.start_session()
 
     async def show_full_ui(self):
-        result = await self._subprocess._run_subprocess(
-            command="waydroid show-full-ui", flag=True
-        )
-        # await self.update_waydroid_status()
-        return result
-
-    async def upgrade(self, offline: Optional[bool] = None):
-        if offline:
-            await self.save_privileged_props()
-        else:
-            await self._subprocess._run_subprocess(
-                command="pkexec waydroid upgrade", flag=True
+        try:
+            result = await self._subprocess.run(
+                command="waydroid show-full-ui", flag=True
             )
+            # await self.update_waydroid_status()
+        except GLib.GError:
+            pass
+        finally:
+            return result
+
+    async def upgrade(self, offline: Optional[bool] = None) -> bool:
+        try:
+            if offline:
+                try:
+                    await self.privileged_props.save()
+                    await self._subprocess.run(
+                        command="pkexec waydroid-cli upgrade -o", flag=True
+                    )
+                except SubprocessError as e:
+                    self.privileged_props.restore()
+                    print(e)
+            else:
+                await self._subprocess.run(
+                    command="pkexec waydroid-cli upgrade", flag=True
+                )
+            return True
+        finally:
             await self.update_waydroid_status()
