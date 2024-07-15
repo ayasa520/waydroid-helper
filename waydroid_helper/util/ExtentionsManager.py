@@ -3,6 +3,7 @@ import json
 import aiofiles
 import os
 import httpx
+import yaml
 
 from gi.repository import GLib, GObject
 from waydroid_helper.util.SubprocessManager import SubprocessManager
@@ -117,15 +118,24 @@ class PackageManager(GObject.Object):
         for item1 in self.extensions_json:
             for item2 in item1["list"]:
                 for item3 in item2["list"]:
-                    path = f'{item1["path"]}/{item2["path"]}/{item3["path"]}'
-                    extension = item3["list"]
-                    extension = {
-                        f'{each["name"]}-{each["version"]}': {
-                            **each,
-                            **{"path": f"{path}/{each['path']}"},
+                    if "list" in item3.keys():
+                        path = f'{item1["path"]}/{item2["path"]}/{item3["path"]}'
+                        extension = item3["list"]
+                        extension = {
+                            f'{each["name"]}-{each["version"]}': {
+                                **each,
+                                **{"path": f"{path}/{each['path']}"},
+                            }
+                            for each in extension
                         }
-                        for each in extension
-                    }
+                    else:
+                        path = f'{item1["path"]}/{item2["path"]}/{item3["path"]}'
+                        extension = {
+                            f'{item3["name"]}-{item3["version"]}': {
+                                **item3,
+                                **{"path": path},
+                            }
+                        }
                     self.available_extensions.update(extension)
 
     def get_package_info(self, name, version=None):
@@ -170,23 +180,46 @@ class PackageManager(GObject.Object):
     #             missing_dependencies.append(dependency)
     #     return missing_dependencies
 
-    async def download_file(self, client, url, dest_path):
-        try:
-            response = await client.get(url)
-            assert response.content, "Downloaded content is empty"
+    async def download_file(self, client, url, dest_path, md5=None, retries=3, delay=2):
+        attempt = 0
+        while attempt < retries:
+            try:
+                response = await client.get(url)
+                assert response.content, "Downloaded content is empty"
 
-            if not os.path.exists(os.path.dirname(dest_path)):
-                os.makedirs(os.path.dirname(dest_path))
+                if not os.path.exists(os.path.dirname(dest_path)):
+                    os.makedirs(os.path.dirname(dest_path))
 
-            async with aiofiles.open(dest_path, mode="wb") as f:
-                await f.write(response.content)
+                async with aiofiles.open(dest_path, mode="wb") as f:
+                    await f.write(response.content)
 
-            print(f"File downloaded and saved to {dest_path}")
+                if md5 is not None:
+                    result = await self._subprocess.run(f'md5sum "{dest_path}"')
+                    actual_md5 = result["stdout"].split()[0]
+                    if actual_md5 != md5:
+                        raise ValueError(
+                            f"MD5 mismatch: expected {md5}, got {actual_md5}"
+                        )
 
-        except AssertionError as e:
-            print(f"AssertionError caught: {e} {url}")
-        except httpx.RequestError as e:
-            print(f"RequestError caught: {e} {url}")
+                print(f"File downloaded and saved to {dest_path}")
+                return
+            except (
+                httpx.HTTPStatusError,
+                httpx.RequestError,
+                AssertionError,
+                ValueError,
+            ) as e:
+                attempt += 1
+                if attempt < retries:
+                    print(
+                        f"Attempt {attempt} failed: {e}. Retrying in {delay} seconds..."
+                    )
+                    await asyncio.sleep(delay)
+                else:
+                    print(
+                        f"All {retries} attempts failed. Could not download the file."
+                    )
+                    raise
 
     def get_all_files_relative(self, directory):
         all_files = []
@@ -205,19 +238,20 @@ class PackageManager(GObject.Object):
                 tasks.append(self.download_file(client, url, dest))
 
             for source, md5 in zip(package_info["source"], package_info["md5sums"]):
-                file_name = os.path.basename(source)
+                file_name = source.split("::")[0]
+                url = source.split("::")[1]
                 file_path = os.path.join(
                     self.cache_dir, "extensions", package_info["name"], file_name
                 )
                 if os.path.exists(file_path):
-                    result = await self._subprocess.run(f"md5sum {file_path}")
+                    result = await self._subprocess.run(f'md5sum "{file_path}"')
                     actual_md5 = result["stdout"].split()[0]
                     if actual_md5 == md5:
                         continue
                     else:
-                        tasks.append(self.download_file(client, source, file_path))
+                        tasks.append(self.download_file(client, url, file_path))
                 else:
-                    tasks.append(self.download_file(client, source, file_path))
+                    tasks.append(self.download_file(client, url, file_path))
 
             await asyncio.gather(*tasks)
 
@@ -261,36 +295,15 @@ class PackageManager(GObject.Object):
             # 调用 installer
             startdir = os.path.join(self.cache_dir, "extensions", package_info["name"])
             pkgdir = os.path.join(startdir, "pkg")
-            srcdir = os.path.join(startdir, "src")
-            env = {}
-            env["startdir"] = startdir
-            env["pkgdir"] = pkgdir
-            env["srcdir"] = srcdir
-
-            installer_path = os.path.join(
-                os.getenv("PKGDATADIR"), "waydroid_helper", "util", "installer.sh"
-            )
-
-            await self._subprocess.run(
-                f"source {installer_path} && call_pre_install", env=env
+            package = (
+                f'{startdir}/{package_info["name"]}-{package_info["version"]}.tar.gz'
             )
             await self._subprocess.run(
-                f'pkexec waydroid-cli copy {pkgdir} {"/var/lib/waydroid/overlay"} --contents-only'
+                f'waydroid-cli call_package "{startdir}" "{package_info['name']}" "{package_info['version']}"'
             )
-            await self._subprocess.run(
-                f"source {installer_path} && call_post_install", env=env
-            )
+            await self._subprocess.run(f'pkexec waydroid-cli install "{package}"')
 
             installed_files = self.get_all_files_relative(pkgdir)
-
-            # 应用 prop
-            if os.path.exists(os.path.join(startdir, "prop.json")):
-                async with aiofiles.open(
-                    os.path.join(startdir, "prop.json"), mode="r"
-                ) as f:
-                    content = await f.read()
-                    props = json.loads(content)
-                    await self.waydroid.set_extension_props(props)
 
             # desc_cache_path = os.path.join(startdir, "desc")
             local_dir = os.path.join(
@@ -300,13 +313,32 @@ class PackageManager(GObject.Object):
             package_info = {
                 **package_info,
                 **{"installed_files": installed_files},
-                **{"props": list(props.keys())},
             }
+            # 应用 prop
+            if os.path.exists(os.path.join(startdir, "prop.json")):
+                async with aiofiles.open(
+                    os.path.join(startdir, "prop.json"), mode="r"
+                ) as f:
+                    content = await f.read()
+                    props = json.loads(content)
+                    await self.waydroid.set_extension_props(props)
+
+                package_info = {
+                    **package_info,
+                    **{"props": list(props.keys())},
+                }
 
             os.makedirs(local_dir, exist_ok=True)
             async with aiofiles.open(desc_path, mode="w") as f:
                 content = json.dumps(package_info)
                 await f.write(content)
+
+            if "install" in package_info.keys():
+                cache_install = os.path.join(startdir, package_info["install"])
+                local_install = os.path.join(local_dir, "install")
+                await self._subprocess.run(
+                    f"install -Dm 755 {cache_install} {local_install}"
+                )
 
             # 标记已安装包
             # await self._subprocess.run(f"pkexec waydroid-cli mkdir {local_dir}")
@@ -317,21 +349,75 @@ class PackageManager(GObject.Object):
             self.installed_packages[package_info["name"]] = package_info
             print(f"Package {package_info['name']} installed successfully.")
 
+            # post_install
+            if "install" in package_info.keys():
+                await self.post_install(package_info)
+
+    async def execute_post_operations(self, info, operation_key):
+        install_path = os.path.join(self.storage_dir, "local", info["name"], "install")
+        async with aiofiles.open(install_path, "r") as f:
+            content = await f.read()
+            yml = yaml.safe_load(content)
+
+        if operation_key not in yml:
+            return
+
+        operations = yml[operation_key]
+        for operation in operations:
+            for func_name, args in operation.items():
+                command = self.generate_command(func_name, args)
+                if command:
+                    await self._subprocess.run(
+                        command,
+                        env={
+                            "pkgdir": os.path.join(
+                                self.cache_dir, "extensions", info["name"], "pkg"
+                            )
+                        },
+                    )
+                else:
+                    print(f"Unsupported function: {func_name}")
+
+    def generate_command(self, func_name, args):
+        command_map = {
+            "rm_overlay_rw": "pkexec waydroid-cli rm_overlay_rw {paths}",
+            "rm_data": "pkexec waydroid-cli rm_data {paths}",
+            "cp_to_data": "pkexec waydroid-cli cp_to_data {src} {dest}",
+        }
+
+        if func_name in command_map:
+            if func_name == "cp_to_data":
+                src = args.get("src")
+                dest = args.get("dest")
+                if src and dest:
+                    return command_map[func_name].format(src=src, dest=dest)
+            else:
+                paths = " ".join(args)
+                return command_map[func_name].format(paths=paths)
+
+        return None
+
+    async def post_install(self, info):
+        await self.execute_post_operations(info, "post_install")
+
+    async def post_remove(self, info):
+        await self.execute_post_operations(info, "post_remove")
+
     async def remove_package(self, package_name):
         """移除包"""
         if package_name in self.installed_packages:
-            file_paths = [
-                os.path.join("/var/lib/waydroid/overlay", file)
-                for file in self.installed_packages[package_name]["installed_files"]
-            ]
-            # TODO 这边看怎么改成同时
-            await self._subprocess.run(f'pkexec waydroid-cli rm {" ".join(file_paths)}')
+            await self._subprocess.run(
+                f'pkexec waydroid-cli rm_overlay {" ".join(self.installed_packages[package_name]["installed_files"])}'
+            )
             # await self._subprocess.run(
             #     f"pkexec waydroid-cli rm {os.path.join(self.storage_dir, 'local', package_name)}"
             # )
-            await self.waydroid.remove_extension_props(
-                self.installed_packages[package_name]["props"]
-            )
+            if "props" in self.installed_packages[package_name].keys():
+                await self.waydroid.remove_extension_props(
+                    self.installed_packages[package_name]["props"]
+                )
+            if "install" in self.installed_packages[package_name].keys():
+                await self.post_remove(self.installed_packages[package_name])
             await self._subprocess.run(
                 f"rm -rf {os.path.join(self.storage_dir, 'local', package_name)}"
             )

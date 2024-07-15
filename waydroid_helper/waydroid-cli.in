@@ -1,175 +1,212 @@
-#!@PYTHON@
+#!/bin/bash
 
-import argparse
-import subprocess
-import shutil
-import os
-import sys
+# /var/lib/waydroid
+# ~/.local/share/waydroid/data
+# user=$(logname)
+DATA_DIR="/home/$(logname)/.local/share/waydroid/data"
+VAR_DIR="/var/lib/waydroid"
+OVERLAY_DIR="$VAR_DIR/overlay"
+OVERLAY_RW_DIR="$VAR_DIR/overlay_rw"
 
+function run_waydroid_upgrade {
+    local o_option=$1
+    if [ "$o_option" == "-o" ]; then
+        waydroid upgrade -o
+    else
+        waydroid upgrade
+    fi
+}
 
-def run_waydroid_upgrade(option=None):
-    """Run the waydroid upgrade command with or without the -o option."""
-    command = ["waydroid", "upgrade"]
-    if option:
-        command.append(option)
-    subprocess.run(command, check=True)
+# $1: source
+# $2: /var/lib/waydroid/$2
+function copy_to_var() {
+    dest_path=$(realpath -m "$VAR_DIR/$2")
+    if [[ "$dest_path" == "$VAR_DIR"/* ]]; then
+        # copy -rf "$1" "$dest_path"
+        if [ ! -e "$dest_path" ]; then
+            if [[ "${2: -1}" == "/" ]]; then
+                mkdir -p "$dest_path"
+                cp -rf "$1" "$dest_path/"
+            else
+                mkdir -p $(dirname "$dest_path")
+                cp -rf "$1" "$dest_path"
+            fi
+        else
+            cp -rf "$1" "$dest_path"
+        fi
+    else
+        exit 1
+    fi
+    
+}
 
+function rm_var() {
+    dest_path=$(realpath -m "$VAR_DIR/$1")
+    if [[ "$dest_path" == "$VAR_DIR"/* ]]; then
+        rm -rf "$dest_path"
+    else
+        exit 1
+    fi
+    
+}
 
-def copy_directory_contents(src, dest):
-    try:
-        if not os.path.exists(dest):
-            os.makedirs(dest)
-        items = os.listdir(src)
-        for item in items:
-            src_path = os.path.join(src, item)
-            dest_path = os.path.join(dest, item)
-            if os.path.isdir(src_path):
-                shutil.copytree(src_path, dest_path, dirs_exist_ok=True)
-            else:
-                shutil.copy2(src_path, dest_path)
-        print(f"Contents of directory {src} copied to {dest}")
-    except Exception as e:
-        print(f"Error copying contents of directory {src} to {dest}: {e}")
+function rm_overlay() {
+    local files=("$@")
+    for file in "${files[@]}"; do
+        rm_var "overlay/$file"
+    done
+}
 
-
-def copy(src, dest, contents_only):
-    if os.path.isfile(src):
-        copy_file(src, dest)
-    elif os.path.isdir(src):
-        if contents_only:
-            copy_directory_contents(src, dest)
-        else:
-            copy_directory(src, dest)
-
-
-def copy_directory(src, dest):
-    try:
-        if not os.path.exists(dest):
-            os.makedirs(dest)
-        dest = os.path.join(dest, os.path.basename(src))
-        shutil.copytree(src, dest, dirs_exist_ok=True)
-        print(f"Directory {src} copied to {dest}")
-    except Exception as e:
-        print(f"Error copying directory {src} to {dest}: {e}")
-
-
-def copy_file(src, dest):
-    try:
-        if not os.path.exists(os.path.dirname(dest)):
-            os.makedirs(os.path.dirname(dest))
-        shutil.copy2(src, dest)
-        print(f"File {src} copied to {dest}")
-    except Exception as e:
-        print(f"Error copying file {src} to {dest}: {e}")
-
-
-def mkdir(dir):
-    if not os.path.exists(dir):
-        os.makedirs(dir)
+function rm_overlay_rw() {
+    local files=("$@")
+    for file in "${files[@]}"; do
+        rm_var "overlay_rw/$file"
+    done
+}
 
 
-def run_shell(shell_args):
-    """Run the specific lxc-attach command with additional arguments."""
-    base_command = [
-        "lxc-attach",
-        "-P",
-        "/var/lib/waydroid/lxc",
-        "-n",
-        "waydroid",
-        "--clear-env",
-        "--",
-    ]
-    if shell_args != None:
-        command = base_command + shell_args
-    else:
-        command = base_command + "/system/bin/sh"
-    subprocess.run(command, check=True)
+# $1 startdir
+# $2 name
+# $3 version
+function call_package() {
+    startdir=$1
+    name=$2
+    version=$3
+    echo $name $version
+    srcdir="$startdir/src"
+    pkgdir="$startdir/pkg"
+    rm -rf $srcdir && mkdir -p $srcdir
+    rm -rf $pkgdir && mkdir -p $pkgdir
+    fakeroot sh -c "startdir=$startdir srcdir=$srcdir pkgdir=$pkgdir;cd $startdir;source $startdir/EXTENSION && package && tar -czpf \"${name}-${version}.tar.gz\" -C pkg ."
+}
 
+function install_tar_gz() {
+    tar -xzpf "$1" -C "$OVERLAY_DIR"
+}
 
-def remove_files_and_directories(paths):
-    for path in paths:
-        try:
-            if os.path.isfile(path):
-                os.remove(path)
-                print(f"Removed file: {path}")
-            elif os.path.isdir(path):
-                shutil.rmtree(path)
-                print(f"Removed directory: {path}")
-            else:
-                print(f"Path does not exist: {path}")
-        except Exception as e:
-            print(f"Error removing {path}: {e}")
+function cp_to_data() {
+    eval "src_path=\"$1\""
+    dest_path=$(realpath -m "$DATA_DIR/$2")
+    if [[ "$dest_path" == "$DATA_DIR"/* ]]; then
+        # copy -rf "$1" "$dest_path"
+        if [ ! -e "$dest_path" ]; then
+            if [[ "${2: -1}" == "/" ]]; then
+                mkdir -p "$dest_path"
+                cp -rf "$src_path" "$dest_path/"
+            else
+                mkdir -p $(dirname "$dest_path")
+                cp -rf "$src_path" "$dest_path"
+            fi
+        else
+            cp -rf "$src_path" "$dest_path"
+        fi
+    else
+        exit 1
+    fi
+    
+}
 
+function rm_data(){
+    local files=("$@")
+    for file in "${files[@]}"; do
+        dest_path=$(realpath -m "$DATA_DIR/$file")
+        if [[ "$dest_path" == "$DATA_DIR"/* ]]; then
+            rm -rf "$dest_path"
+        else
+            exit 1
+        fi
+    done
+}
 
+action=$1
+shift
 
-def execute_shell_command(command):
-    """Execute a shell command passed as a string."""
-    subprocess.run(command, shell=True, check=True)
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description="Manage Waydroid and perform file operations."
-    )
-    subparsers = parser.add_subparsers(dest="action", help="Action to perform")
-
-    # Subparser for the upgrade action
-    upgrade_parser = subparsers.add_parser("upgrade", help="Run waydroid upgrade")
-    upgrade_parser.add_argument(
-        "-o",
-        action="store_const",
-        const="-o",
-        help="Run waydroid upgrade with the -o option",
-    )
-
-    # Subparser for the copy action
-    copy_parser = subparsers.add_parser("copy", help="Copy a file")
-    copy_parser.add_argument("source", help="Source file to copy")
-    copy_parser.add_argument("destination", help="Destination path")
-    copy_parser.add_argument(
-        "--contents-only",
-        action="store_true",
-        help="Copy only the contents of the directory, not the directory itself",
-    )
-
-    # Subparser for the exec action
-    exec_parser = subparsers.add_parser("exec", help="Execute a shell command")
-    exec_parser.add_argument(
-        "command", nargs=argparse.REMAINDER, help="Shell command to execute"
-    )
-
-    # Subparser for the shell action
-    shell_parser = subparsers.add_parser(
-        "shell", help="Run the specific lxc-attach shell command"
-    )
-    shell_parser.add_argument(
-        "shell_args", nargs=argparse.REMAINDER, help="Arguments for the shell command"
-    )
-
-    mkdir_parser = subparsers.add_parser("mkdir", help="mkdir")
-    mkdir_parser.add_argument("directory", help="dest dir")
-
-    rm_parser = subparsers.add_parser("rm", help="Remove files")
-    rm_parser.add_argument("files", nargs="+", help="List of files to remove")
-
-    args = parser.parse_args()
-
-    if args.action == "upgrade":
-        run_waydroid_upgrade(args.o)
-    elif args.action == "copy":
-        copy(args.source, args.destination, args.contents_only)
-    # elif args.action == "exec":
-    #     execute_shell_command(" ".join(args.command))
-    # elif args.action == "shell":
-    #     run_shell(args.shell_args)
-    elif args.action == "mkdir":
-        mkdir(args.directory)
-    elif args.action == "rm":
-        remove_files_and_directories(args.files)
-    else:
-        parser.print_help()
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
+case "$action" in
+    upgrade)
+        o_option=""
+        while getopts ":o" opt; do
+            case $opt in
+                o) o_option="-o" ;;
+            esac
+        done
+        run_waydroid_upgrade "$o_option"
+    ;;
+    # copy)
+    #     if [ $# -lt 2 ]; then
+    #         echo "Usage: $0 copy <source> <destination> [--contents-only]"
+    #         exit 1
+    #     fi
+    #     source=$1
+    #     destination=$2
+    #     contents_only="false"
+    #     if [ "$3" == "--contents-only" ]; then
+    #         contents_only="true"
+    #     fi
+    #     copy "$source" "$destination" "$contents_only"
+    # ;;
+    rm)
+        if [ $# -lt 1 ]; then
+            echo "Usage: $0 rm <files>"
+            exit 1
+        fi
+        remove_files_and_directories "$@"
+    ;;
+    rm_overlay)
+        if [ $# -lt 1 ]; then
+            echo "Usage: $0 rm_overlay <files>"
+            exit 1
+        fi
+        rm_overlay "$@"
+    ;;
+    rm_overlay_rw)
+        if [ $# -lt 1 ]; then
+            echo "Usage: $0 rm_overlay_rw <files>"
+            exit 1
+        fi
+        rm_overlay_rw "$@"
+    ;;
+    rm_data)
+        if [ $# -lt 1 ]; then
+            echo "Usage: $0 rm_data <files>"
+            exit 1
+        fi
+        rm_data "$@"
+    ;;
+    install)
+        if [ $# -lt 1 ]; then
+            echo "Usage: $0 install <package>"
+            exit 1
+        fi
+        install_tar_gz "$1"
+    ;;
+    call_package)
+        if [ $# -lt 1 ]; then
+            echo "Usage: $0 call_package <startdir>"
+            exit 1
+        fi
+        call_package "$1" "$2" "$3"
+    ;;
+    copy_to_var)
+        if [ $# -lt 2 ]; then
+            echo "Usage: $0 copy_to_var <source> <destination>"
+            exit 1
+        fi
+        source=$1
+        destination=$2
+        copy_to_var "$source" "$destination"
+    ;;
+    cp_to_data)
+        if [ $# -lt 2 ]; then
+            echo "Usage: $0 cp_to_data <source> <destination>"
+            exit 1
+        fi
+        source=$1
+        destination=$2
+        cp_to_data "$source" "$destination"
+    ;;
+    *)
+        echo "Unknown action: $action"
+        echo "Usage: $0 <action> [options]"
+        exit 1
+    ;;
+esac

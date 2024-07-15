@@ -435,7 +435,7 @@ class Waydroid(GObject.Object):
             os.makedirs(cache_dir, exist_ok=True)
             with open(cache_config_path, "w") as f:
                 self.cfg.write(f)
-            cmd = f"pkexec waydroid-cli copy {cache_config_path} {CONFIG_PATH}"
+            cmd = f"pkexec waydroid-cli copy_to_var {cache_config_path} waydroid.cfg"
 
             try:
                 await self._subprocess.run(cmd, flag=True)

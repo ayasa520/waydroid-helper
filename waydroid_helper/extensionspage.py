@@ -1,5 +1,3 @@
-import json
-import os
 import gi
 
 from waydroid_helper.util.ExtentionsManager import PackageManager, ExtentionManagerState
@@ -42,26 +40,34 @@ class ExtensionsPage(Gtk.Box):
             group = Adw.PreferencesGroup.new()
             group.set_title(title)
             group.set_description(_(description))
-            listbox = Gtk.ListBox.new()
-            listbox.get_style_context().add_class("boxed-list")
-            group.add(child=listbox)
+            # TODO 想想怎么做更好
+            for expander_row in sorted(each_group["list"], key=lambda x: x["path"]):
+                if "name" in expander_row.keys():
+                    title = expander_row["name"]
+                    subtitle = expander_row["description"]
+                    expanderrow = Adw.ExpanderRow.new()
+                    expanderrow.set_title(title)
+                    expanderrow.set_subtitle(_(subtitle))
 
-            for expander_row in sorted(each_group["list"], key=lambda x: x["name"]):
-                title = expander_row["name"]
-                subtitle = expander_row["description"]
-                expanderrow = Adw.ExpanderRow.new()
-                expanderrow.set_title(title)
-                expanderrow.set_subtitle(_(subtitle))
-
-                for each_row in sorted(expander_row["list"], key=lambda x: x["path"]):
-                    # 直接读了一个具体版本的名字和描述, 不太好
-                    title = each_row["list"][0]["name"]
-                    subtitle = each_row["list"][0]["description"]
+                    for each_row in sorted(expander_row["list"], key=lambda x: x["path"]):
+                        # 直接读了一个具体版本的名字和描述, 不太好
+                        title = each_row["list"][0]["name"]
+                        subtitle = each_row["list"][0]["description"]
+                        row = ExtensionRow.new()
+                        row.set_title(title)
+                        row.set_subtitle(_(subtitle))
+                        row.set_info(each_row["list"])
+                        row.set_manager(self.extension_manager)
+                        expanderrow.add_row(row)
+                    group.add(child=expanderrow)
+                else:
+                    title = expander_row["list"][0]["name"]
+                    subtitle = expander_row["list"][0]["description"]
                     row = ExtensionRow.new()
                     row.set_title(title)
                     row.set_subtitle(_(subtitle))
-                    row.set_info(each_row["list"])
+                    row.set_info(expander_row["list"])
                     row.set_manager(self.extension_manager)
-                    expanderrow.add_row(row)
-                group.add(child=expanderrow)
+                    group.add(child=row)
+
             self.extensions_page.add(group=group)
