@@ -30,18 +30,19 @@ class Dialog(Adw.MessageDialog):
         )
 
 
-@Gtk.Template(resource_path="/com/jaoushingan/WaydroidHelper/ui/AvailableVersionPage.ui")
+@Gtk.Template(
+    resource_path="/com/jaoushingan/WaydroidHelper/ui/AvailableVersionPage.ui"
+)
 class AvailableVersionPage(Adw.NavigationPage):
     __gtype_name__ = "AvailableVersionPage"
     extension_manager: PackageManager = ...
     _task = Task()
     page = Gtk.Template.Child()
-    
 
-    def __init__(self, ext_versions, extension_manager):
+    def __init__(self, ext_versions: dict, extension_manager):
         super().__init__(title=_("Available Versions"))
         self.extension_manager = extension_manager
-
+        ext_versions = sorted(ext_versions, key=lambda x: x["version"], reverse=True)
         adw_preferences_group = Adw.PreferencesGroup.new()
         self.page.add(group=adw_preferences_group)
 
