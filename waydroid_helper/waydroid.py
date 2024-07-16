@@ -339,7 +339,7 @@ class Waydroid(GObject.Object):
             for k, v in pairs.items():
                 name = k.replace(".", "-")
                 if self.find_property(name):
-                    self.set_property(name)
+                    self.set_property(name, v)
                 else:
                     self.cfg.set("properties", k, v)
             self.state = PropsState.READY
