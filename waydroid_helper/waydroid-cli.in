@@ -77,7 +77,7 @@ function call_package() {
     pkgdir="$startdir/pkg"
     rm -rf $srcdir && mkdir -p $srcdir
     rm -rf $pkgdir && mkdir -p $pkgdir
-    fakeroot sh -c "startdir=$startdir srcdir=$srcdir pkgdir=$pkgdir;cd $startdir;source $startdir/EXTENSION && package && tar -czpf \"${name}-${version}.tar.gz\" -C pkg ."
+    fakeroot sh -c "arch=$arch startdir=$startdir srcdir=$srcdir pkgdir=$pkgdir;cd $startdir;source $startdir/EXTENSION && package && tar -czpf \"${name}-${version}.tar.gz\" -C pkg ."
 }
 
 function install_tar_gz() {

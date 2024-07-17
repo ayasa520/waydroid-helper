@@ -8,6 +8,7 @@ import yaml
 from gi.repository import GLib, GObject
 from waydroid_helper.util.SubprocessManager import SubprocessManager
 from waydroid_helper.util.Task import Task
+from waydroid_helper.util.arch import host
 from waydroid_helper.waydroid import Waydroid
 from enum import IntEnum
 
@@ -22,6 +23,7 @@ class PackageManager(GObject.Object):
     waydroid: Waydroid = GObject.Property(type=object)
     available_extensions = {}
     installed_packages = {}
+    arch = host()
     remote = "https://github.com/ayasa520/extensions/raw/master/"
     extensions_json = []
     storage_dir = os.path.join(GLib.get_user_data_dir(), os.getenv("PROJECT_NAME"))
@@ -237,7 +239,15 @@ class PackageManager(GObject.Object):
                 dest = f'{self.cache_dir}/extensions/{package_info["name"]}/{file}'
                 tasks.append(self.download_file(client, url, dest))
 
-            for source, md5 in zip(package_info["source"], package_info["md5sums"]):
+            if f"source_{self.arch}" in package_info.keys():
+                _source = f"source_{self.arch}"
+                _md5sums = f"md5sums_{self.arch}"
+            else:
+                _source = "source"
+                _md5sums = f"md5sums"
+            
+
+            for source, md5 in zip(package_info[_source], package_info[_md5sums]):
                 file_name = source.split("::")[0]
                 url = source.split("::")[1]
                 file_path = os.path.join(
@@ -273,6 +283,9 @@ class PackageManager(GObject.Object):
                         f"Package {package_info['name']} conflicts with installed packages: {', '.join(conflicts)}."
                     )
                     return
+            # 检查架构
+            if "arch" in package_info.keys() and self.arch not in package_info["arch"]:
+                raise ValueError("Hardware architecture mismatch")
 
         # 检查依赖
         # missing_dependencies = self.check_dependencies(package_info)
@@ -299,7 +312,7 @@ class PackageManager(GObject.Object):
                 f'{startdir}/{package_info["name"]}-{package_info["version"]}.tar.gz'
             )
             await self._subprocess.run(
-                f'waydroid-cli call_package "{startdir}" "{package_info['name']}" "{package_info['version']}"'
+                f'waydroid-cli call_package "{startdir}" "{package_info['name']}" "{package_info['version']}"', env={"arch":self.arch}
             )
             await self._subprocess.run(f'pkexec waydroid-cli install "{package}"')
 

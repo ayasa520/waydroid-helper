@@ -54,6 +54,7 @@ util_sources = [
     'util/SubprocessManager.py',
     'util/Task.py',
     'util/ExtentionsManager.py',
+    'util/arch.py',
 ]
 
 install_data(waydroid_helper_sources, install_dir: moduledir)
