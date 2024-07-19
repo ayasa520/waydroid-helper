@@ -49,9 +49,9 @@ class AvailableVersionPage(Adw.NavigationPage):
         for version in ext_versions:
             adw_action_row = Adw.ActionRow.new()
             adw_action_row.set_title(title=f'{version["name"]}-{version["version"]}')
-            if version.get("description", "") != "":
-                adw_action_row.set_subtitle(subtitle=_(version["description"]))
-                adw_action_row.set_subtitle_selectable(True)
+            # if version.get("description", "") != "":
+            #     adw_action_row.set_subtitle(subtitle=_(version["description"]))
+            #     adw_action_row.set_subtitle_selectable(True)
             adw_preferences_group.add(child=adw_action_row)
 
             install_button = Gtk.Button.new()
@@ -68,7 +68,7 @@ class AvailableVersionPage(Adw.NavigationPage):
             )
             adw_action_row.add_suffix(install_button)
 
-            if self.extension_manager.is_installed(version["name"]):
+            if self.extension_manager.is_installed(version["name"], version["version"]):
                 delete_button = Gtk.Button.new()
                 delete_button.set_valign(align=Gtk.Align.CENTER)
                 delete_button.add_css_class("flat")

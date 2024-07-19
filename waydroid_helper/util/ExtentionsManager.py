@@ -3,6 +3,7 @@ import json
 import aiofiles
 import os
 import httpx
+import xml.etree.ElementTree as ET
 import yaml
 
 from gi.repository import GLib, GObject
@@ -73,8 +74,11 @@ class PackageManager(GObject.Object):
         if extensions:
             self._task.create_task(self.save_extension_json())
 
-    def is_installed(self, name):
-        return name in self.installed_packages.keys()
+    def is_installed(self, name, version=None):
+        package = self.installed_packages.get(name)
+        if package is None:
+            return False
+        return version is None or package.get("version") == version
 
     async def init_manager(self):
         json_path = os.path.join(self.storage_dir, "extensions.json")
@@ -245,7 +249,6 @@ class PackageManager(GObject.Object):
             else:
                 _source = "source"
                 _md5sums = f"md5sums"
-            
 
             for source, md5 in zip(package_info[_source], package_info[_md5sums]):
                 file_name = source.split("::")[0]
@@ -312,8 +315,11 @@ class PackageManager(GObject.Object):
                 f'{startdir}/{package_info["name"]}-{package_info["version"]}.tar.gz'
             )
             await self._subprocess.run(
-                f'waydroid-cli call_package "{startdir}" "{package_info['name']}" "{package_info['version']}"', env={"arch":self.arch}
+                f'waydroid-cli call_package "{startdir}" "{package_info['name']}" "{package_info['version']}"',
+                env={"CARCH": self.arch, "SDK": "30"},
             )
+            if "install" in package_info.keys():
+                await self.pre_install(package_info)
             await self._subprocess.run(f'pkexec waydroid-cli install "{package}"')
 
             installed_files = self.get_all_files_relative(pkgdir)
@@ -366,8 +372,16 @@ class PackageManager(GObject.Object):
             if "install" in package_info.keys():
                 await self.post_install(package_info)
 
-    async def execute_post_operations(self, info, operation_key):
-        install_path = os.path.join(self.storage_dir, "local", info["name"], "install")
+    async def execute_post_operations(self, info, operation_key: str):
+        if operation_key.endswith("install"):
+            install_path = os.path.join(
+                self.cache_dir, "extensions", info["name"], info["install"]
+            )
+        else:
+            install_path = os.path.join(
+                self.storage_dir, "local", info["name"], "install"
+            )
+
         async with aiofiles.open(install_path, "r") as f:
             content = await f.read()
             yml = yaml.safe_load(content)
@@ -378,7 +392,7 @@ class PackageManager(GObject.Object):
         operations = yml[operation_key]
         for operation in operations:
             for func_name, args in operation.items():
-                command = self.generate_command(func_name, args)
+                command = await self.generate_command(func_name, args)
                 if command:
                     await self._subprocess.run(
                         command,
@@ -389,13 +403,32 @@ class PackageManager(GObject.Object):
                         },
                     )
                 else:
-                    print(f"Unsupported function: {func_name}")
+                    print(f"Unsupported function or invalid arguments: {func_name}")
 
-    def generate_command(self, func_name, args):
+    async def get_apk_path(self, apks: list) -> str:
+        paths = []
+        data_dir = os.path.join(GLib.get_user_data_dir(), "waydroid/data")
+        package_path = os.path.join(data_dir, "system/packages.xml")
+        async with aiofiles.open(package_path, "r") as f:
+            content = await f.read()
+        tree = ET.fromstring(content)
+        for package in tree.findall("package"):
+            name = package.get("name")
+            code_path = package.get("codePath")
+            if name in apks:
+                paths.append(f"app/{os.path.basename(os.path.dirname(code_path))}")
+                apks.remove(name)
+                if len(apks) == 0:
+                    break
+        paths = ['"' + path + '"' for path in paths]
+        return " ".join(paths)
+
+    async def generate_command(self, func_name, args):
         command_map = {
             "rm_overlay_rw": "pkexec waydroid-cli rm_overlay_rw {paths}",
             "rm_data": "pkexec waydroid-cli rm_data {paths}",
-            "cp_to_data": "pkexec waydroid-cli cp_to_data {src} {dest}",
+            "cp_to_data": 'pkexec waydroid-cli cp_to_data "{src}" "{dest}"',
+            "rm_apk": "pkexec waydroid-cli rm_data {paths}",
         }
 
         if func_name in command_map:
@@ -404,11 +437,19 @@ class PackageManager(GObject.Object):
                 dest = args.get("dest")
                 if src and dest:
                     return command_map[func_name].format(src=src, dest=dest)
+            elif func_name == "rm_apk":
+                paths = await self.get_apk_path(args)
+                if paths.strip()=="":
+                    return None
+                return command_map[func_name].format(paths=paths)
             else:
-                paths = " ".join(args)
+                paths = " ".join(['"' + path + '"' for path in args])
                 return command_map[func_name].format(paths=paths)
 
         return None
+
+    async def pre_install(self, info):
+        await self.execute_post_operations(info, "pre_install")
 
     async def post_install(self, info):
         await self.execute_post_operations(info, "post_install")
