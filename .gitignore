@@ -18,9 +18,7 @@ __pycache__/
 # Meson build files
 meson-private/
 builddir/
-test.py
-test.ui
-test.blp
-test.css
+test*
 .flatpak-builder
 extract_description.py
+.idea
