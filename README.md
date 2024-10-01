@@ -6,9 +6,13 @@ Waydroid Helper is a graphical user interface application written in Python usin
 
 - Configure Waydroid settings
 - Install extensions for Waydroid
-  - Magisk
-  - ARM translation
-  - And more...
+  - [Magisk](https://github.com/HuskyDG/magisk-files/)
+  - [libhoudini](https://github.com/supremegamers/vendor_intel_proprietary_houdini)
+  - [libndk](https://github.com/supremegamers/vendor_google_proprietary_ndk_translation-prebuilt)
+  - [OpenGapps](https://sourceforge.net/projects/opengapps/)
+  - [MindTheGapps](https://github.com/MindTheGapps)
+  - [MicroG](https://microg.org/)
+  - [SmartDock](https://github.com/axel358/smartdock)
 
 ## Installation
 
@@ -32,7 +36,7 @@ On Arch Linux, install the following packages:
 - python-httpx
 - python-gobject (>=3.50.0)
 - python-yaml
-- pywayland
+- python-pywayland
 - python-cairo
 - gtk4
 - libadwaita
