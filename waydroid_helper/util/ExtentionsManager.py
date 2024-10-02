@@ -19,6 +19,10 @@ class ExtentionManagerState(IntEnum):
     READY = 1
 
 
+# TODO 1. 检查 arch 和 android_version
+#      2. 避免多次重启
+#      3. 进度条, 完成提醒
+#      4. prop 修改放在 yaml 里, 不要单独文件了
 class PackageManager(GObject.Object):
     state = GObject.Property(type=object)
     waydroid: Waydroid = GObject.Property(type=object)

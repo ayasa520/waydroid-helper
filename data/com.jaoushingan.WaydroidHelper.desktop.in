@@ -4,5 +4,6 @@ Exec=waydroid-helper
 Icon=com.jaoushingan.WaydroidHelper
 Terminal=false
 Type=Application
-Categories=GTK;
+Categories=Utility;Application;
+Comment=A GUI application for Waydroid configuration and extension installation
 StartupNotify=true

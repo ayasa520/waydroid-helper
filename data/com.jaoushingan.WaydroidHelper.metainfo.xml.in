@@ -3,7 +3,8 @@
 	<id>com.jaoushingan.WaydroidHelper.desktop</id>
 	<metadata_license>CC0-1.0</metadata_license>
 	<project_license>GPL-3.0-or-later</project_license>
+  <summary>A helper tool for Waydroid</summary>
 	<description>
-	  <p>No description</p>
+	  <p>A GUI application for Waydroid configuration and extension installation</p>
 	</description>
 </component>
