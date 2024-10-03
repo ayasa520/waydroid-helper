@@ -32,6 +32,7 @@ For manual installation, you'll need to install the dependencies and build the p
 On Arch Linux, install the following packages:
 
 - python
+- fakeroot
 - python-bidict
 - python-httpx
 - python-gobject (>=3.50.0)
