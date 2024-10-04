@@ -14,11 +14,20 @@ gnome.compile_resources(
 python = import('python')
 
 conf = configuration_data()
-conf.set('PYTHON', python.find_installation('python3').path())
 conf.set('VERSION', meson.project_version())
 conf.set('localedir', get_option('prefix') / get_option('localedir'))
 conf.set('pkgdatadir', pkgdatadir)
+conf.set('datadir', get_option('prefix') / get_option('datadir'))
+conf.set('bindir', get_option('prefix') / get_option('bindir'))
 conf.set('project_name',  meson.project_name())
+build_appimage = get_option('build_appimage')
+
+if build_appimage 
+    conf.set('build_appimage', 'True')
+else
+    conf.set('build_appimage', 'False')
+    conf.set('PYTHON', python.find_installation('python3').path())
+endif
 
 configure_file(
     input: 'waydroid-helper.in',

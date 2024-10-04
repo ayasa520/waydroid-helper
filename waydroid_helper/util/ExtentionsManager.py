@@ -319,12 +319,14 @@ class PackageManager(GObject.Object):
                 f'{startdir}/{package_info["name"]}-{package_info["version"]}.tar.gz'
             )
             await self._subprocess.run(
-                f'waydroid-cli call_package "{startdir}" "{package_info['name']}" "{package_info['version']}"',
+                f'{os.environ['WAYDROID_CLI_PATH']} call_package "{startdir}" "{package_info['name']}" "{package_info['version']}"',
                 env={"CARCH": self.arch, "SDK": "30"},
             )
             if "install" in package_info.keys():
                 await self.pre_install(package_info)
-            await self._subprocess.run(f'pkexec waydroid-cli install "{package}"')
+            await self._subprocess.run(
+                f'pkexec {os.environ['WAYDROID_CLI_PATH']} install "{package}"'
+            )
 
             installed_files = self.get_all_files_relative(pkgdir)
 
@@ -393,21 +395,26 @@ class PackageManager(GObject.Object):
         if operation_key not in yml:
             return
 
+        commands = []
         operations = yml[operation_key]
         for operation in operations:
             for func_name, args in operation.items():
                 command = await self.generate_command(func_name, args)
                 if command:
-                    await self._subprocess.run(
-                        command,
-                        env={
-                            "pkgdir": os.path.join(
-                                self.cache_dir, "extensions", info["name"], "pkg"
-                            )
-                        },
-                    )
+                    commands.append(command)
                 else:
                     print(f"Unsupported function or invalid arguments: {func_name}")
+
+        commands_str = ";".join(commands)
+        print(f'pkexec bash -c "{commands_str}"')
+        await self._subprocess.run(
+            f'pkexec bash -c "{commands_str}"',
+            env={
+                "pkgdir": os.path.join(
+                    self.cache_dir, "extensions", info["name"], "pkg"
+                )
+            },
+        )
 
     async def get_apk_path(self, apks: list) -> str:
         paths = []
@@ -429,10 +436,10 @@ class PackageManager(GObject.Object):
 
     async def generate_command(self, func_name, args):
         command_map = {
-            "rm_overlay_rw": "pkexec waydroid-cli rm_overlay_rw {paths}",
-            "rm_data": "pkexec waydroid-cli rm_data {paths}",
-            "cp_to_data": 'pkexec waydroid-cli cp_to_data "{src}" "{dest}"',
-            "rm_apk": "pkexec waydroid-cli rm_data {paths}",
+            "rm_overlay_rw": "pkexec {cli_path} rm_overlay_rw {paths}",
+            "rm_data": "pkexec {cli_path} rm_data {paths}",
+            "cp_to_data": 'pkexec {cli_path} cp_to_data "{src}" "{dest}"',
+            "rm_apk": "pkexec {cli_path} rm_data {paths}",
         }
 
         if func_name in command_map:
@@ -440,15 +447,21 @@ class PackageManager(GObject.Object):
                 src = args.get("src")
                 dest = args.get("dest")
                 if src and dest:
-                    return command_map[func_name].format(src=src, dest=dest)
+                    return command_map[func_name].format(
+                        cli_path=os.environ["WAYDROID_CLI_PATH"], src=src, dest=dest
+                    )
             elif func_name == "rm_apk":
                 paths = await self.get_apk_path(args)
-                if paths.strip()=="":
+                if paths.strip() == "":
                     return None
-                return command_map[func_name].format(paths=paths)
+                return command_map[func_name].format(
+                    cli_path=os.environ["WAYDROID_CLI_PATH"], paths=paths
+                )
             else:
                 paths = " ".join(['"' + path + '"' for path in args])
-                return command_map[func_name].format(paths=paths)
+                return command_map[func_name].format(
+                    cli_path=os.environ["WAYDROID_CLI_PATH"], paths=paths
+                )
 
         return None
 
@@ -465,7 +478,7 @@ class PackageManager(GObject.Object):
         """移除包"""
         if package_name in self.installed_packages:
             await self._subprocess.run(
-                f'pkexec waydroid-cli rm_overlay {" ".join(self.installed_packages[package_name]["installed_files"])}'
+                f'pkexec {os.environ['WAYDROID_CLI_PATH']} rm_overlay {" ".join(self.installed_packages[package_name]["installed_files"])}'
             )
             # await self._subprocess.run(
             #     f"pkexec waydroid-cli rm {os.path.join(self.storage_dir, 'local', package_name)}"

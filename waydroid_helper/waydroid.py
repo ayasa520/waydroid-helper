@@ -435,7 +435,7 @@ class Waydroid(GObject.Object):
             os.makedirs(cache_dir, exist_ok=True)
             with open(cache_config_path, "w") as f:
                 self.cfg.write(f)
-            cmd = f"pkexec waydroid-cli copy_to_var {cache_config_path} waydroid.cfg"
+            cmd = f"pkexec {os.environ['WAYDROID_CLI_PATH']} copy_to_var {cache_config_path} waydroid.cfg"
 
             try:
                 await self._subprocess.run(cmd, flag=True)
@@ -578,14 +578,14 @@ class Waydroid(GObject.Object):
                 try:
                     await self.privileged_props.save()
                     await self._subprocess.run(
-                        command="pkexec waydroid-cli upgrade -o", flag=True
+                        command=f"pkexec {os.environ['WAYDROID_CLI_PATH']} upgrade -o", flag=True
                     )
                 except SubprocessError as e:
                     self.privileged_props.restore()
                     print(e)
             else:
                 await self._subprocess.run(
-                    command="pkexec waydroid-cli upgrade", flag=True
+                    command=f"pkexec {os.environ['WAYDROID_CLI_PATH']} upgrade", flag=True
                 )
             return True
         finally:

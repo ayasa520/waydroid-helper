@@ -1,0 +1,1 @@
+option('build_appimage', type: 'boolean', value: false, description: 'Build AppImage')
