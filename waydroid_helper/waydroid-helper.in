@@ -24,10 +24,25 @@ import sys
 import signal
 import locale
 import gettext
+import shutil
 
 VERSION = '@VERSION@'
-pkgdatadir = '@pkgdatadir@'
-localedir = '@localedir@'
+BUILD_APPIMAGE = '@build_appimage@'
+if BUILD_APPIMAGE == 'True':
+    appdir = os.environ.get('APPDIR')
+    pkgdatadir = os.path.join(appdir, '@pkgdatadir@'.lstrip('/'))
+    os.environ['XDG_DATA_DIRS']=f"{os.environ.get('XDG_DATA_DIRS','')}:{os.path.join(appdir, '@datadir@'.lstrip('/'))}"
+    os.environ['PATH']=f"{os.path.join(appdir, '@bindir@'.lstrip('/'))}:{os.environ.get('PATH','')}"
+    cli_path = os.path.join(appdir, '@bindir@'.strip('/'),'waydroid-cli')
+    dest_path = os.path.join('/tmp', 'waydroid-helper', 'waydroid-cli')
+    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+    shutil.copy(cli_path, dest_path) 
+    os.environ['WAYDROID_CLI_PATH']=dest_path
+    localedir = os.path.join(appdir, '@localedir@'.lstrip('/'))
+else:
+    pkgdatadir = '@pkgdatadir@'
+    localedir = '@localedir@'
+    os.environ['WAYDROID_CLI_PATH']=os.path.join('@bindir@','waydroid-cli')
 project_name = '@project_name@'
 
 sys.path.insert(1, pkgdatadir)
