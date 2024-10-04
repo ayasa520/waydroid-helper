@@ -10,7 +10,10 @@ options = parser.parse_args()
 a = Analysis(
     ["waydroid-helper"],
     binaries=[
-        ('/usr/bin/fakeroot', 'usr/bin'),
+        ('usr/bin/fakeroot-real', 'usr/bin'),
+        ('usr/bin/fakeroot', 'usr/bin'),
+        ('usr/bin/faked', 'usr/bin'),
+        ('usr/lib/libfakeroot', 'usr/lib/libfakeroot'),
         ('usr/bin/waydroid-cli', 'usr/bin')
     ],
     pathex=["usr/share/waydroid-helper"],
