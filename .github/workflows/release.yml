@@ -61,5 +61,5 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: >-
           gh release upload
-          '${{ github.ref_name }}' dist/**
+          '${{ github.ref_name }}' AppDir/dist/**
           --repo '${{ github.repository }}'
