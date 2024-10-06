@@ -36,6 +36,6 @@ class ExtensionRow(Adw.ActionRow):
         return ExtensionRow()
 
     def on_button_clicked(self, button):
-        view: Adw.NavigationView = self.get_root().navigation_view
+        root: Adw.Window = self.get_root()
         page = AvailableVersionPage(self.info, self.extension_manager)
-        view.push(page)
+        root.push(page)

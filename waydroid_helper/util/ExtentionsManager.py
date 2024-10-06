@@ -313,26 +313,28 @@ class PackageManager(GObject.Object):
 
         async with self._semaphore_2:
             # 调用 installer
-            startdir = os.path.join(self.cache_dir, "extensions", package_info["name"])
+            package_name = package_info["name"]
+            package_version = package_info["version"]
+            startdir = os.path.join(self.cache_dir, "extensions", package_name)
             pkgdir = os.path.join(startdir, "pkg")
             package = (
-                f'{startdir}/{package_info["name"]}-{package_info["version"]}.tar.gz'
+                f'{startdir}/{package_name}-{package_version}.tar.gz'
             )
             await self._subprocess.run(
-                f'{os.environ['WAYDROID_CLI_PATH']} call_package "{startdir}" "{package_info['name']}" "{package_info['version']}"',
+                f'{os.environ["WAYDROID_CLI_PATH"]} call_package "{startdir}" "{package_name}" "{package_version}"',
                 env={"CARCH": self.arch, "SDK": "30"},
             )
             if "install" in package_info.keys():
                 await self.pre_install(package_info)
             await self._subprocess.run(
-                f'pkexec {os.environ['WAYDROID_CLI_PATH']} install "{package}"'
+                f'pkexec {os.environ["WAYDROID_CLI_PATH"]} install "{package}"'
             )
 
             installed_files = self.get_all_files_relative(pkgdir)
 
             # desc_cache_path = os.path.join(startdir, "desc")
             local_dir = os.path.join(
-                self.storage_dir, "local", f"{package_info['name']}"
+                self.storage_dir, "local", f"{package_name}"
             )
             desc_path = os.path.join(local_dir, "desc")
             package_info = {
@@ -371,8 +373,8 @@ class PackageManager(GObject.Object):
             #     f"pkexec waydroid-cli copy {desc_cache_path} {local_dir}"
             # )
 
-            self.installed_packages[package_info["name"]] = package_info
-            print(f"Package {package_info['name']} installed successfully.")
+            self.installed_packages[package_name] = package_info
+            print(f"Package {package_name} installed successfully.")
 
             # post_install
             if "install" in package_info.keys():
@@ -478,7 +480,7 @@ class PackageManager(GObject.Object):
         """移除包"""
         if package_name in self.installed_packages:
             await self._subprocess.run(
-                f'pkexec {os.environ['WAYDROID_CLI_PATH']} rm_overlay {" ".join(self.installed_packages[package_name]["installed_files"])}'
+                f'pkexec {os.environ["WAYDROID_CLI_PATH"]} rm_overlay {" ".join(self.installed_packages[package_name]["installed_files"])}'
             )
             # await self._subprocess.run(
             #     f"pkexec waydroid-cli rm {os.path.join(self.storage_dir, 'local', package_name)}"

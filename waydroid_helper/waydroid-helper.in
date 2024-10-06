@@ -58,7 +58,16 @@ gettext.textdomain('waydroid-helper')
 if __name__ == '__main__':
     import gi
 
-    from gi.repository import Gio
+    gi.require_version('Adw', '1')
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("GLib", "2.0")
+    from gi.repository import Gio, Adw, Gtk, GLib
+    os.environ['adw_version'] = str(Adw.get_major_version()*10000+Adw.get_minor_version()*100+Adw.get_micro_version())
+    os.environ['gtk_version'] = str(Gtk.get_major_version()*10000+Gtk.get_minor_version()*100+Gtk.get_micro_version())
+    os.environ['glib_version'] = str(GLib.MAJOR_VERSION*10000+GLib.MINOR_VERSION*100+GLib.MICRO_VERSION)
+    # os.environ['gtk_version'] = '40609'
+    # os.environ['adw_version'] = '10107'
+    # os.environ['glib_version'] = '27400'
     resource = Gio.Resource.load(os.path.join(pkgdatadir, 'waydroid-helper.gresource'))
     resource._register()
 

@@ -26,7 +26,7 @@ a = Analysis(
         ("usr/share/waydroid-helper/data", "share/waydroid-helper/data"),
         ("usr/share/waydroid-helper/waydroid-helper.gresource", "share/waydroid-helper/"),
     ],
-    hiddenimports=[],
+    hiddenimports=['gi', 'glib'],
     hookspath=[],
     hooksconfig={
         "gi": {

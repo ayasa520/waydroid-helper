@@ -8,7 +8,7 @@ on:
 jobs:
   build-linux:
     name: Build for Linux
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
   github-release:
     name: GitHub Release
     needs: [build-linux]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       id-token: write

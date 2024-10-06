@@ -40,7 +40,14 @@ class SubprocessManager:
                 command,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                env={**os.environ.copy(), **env},
+                env={
+                    **os.environ.copy(),
+                    **env,
+                    "PATH": f"/usr/bin:/bin:{os.environ['PATH']}",
+                    "LD_LIBRARY_PATH": "",
+                    "PYTHONPATH": "",
+                    "PYTHONHOME": "",
+                },
                 preexec_fn=os.setsid if flag else None,
             )
 
