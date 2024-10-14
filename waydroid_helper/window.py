@@ -22,12 +22,11 @@ else:
     NAVIGATION = "leaflet"
     RESOURCE_PATH = "/com/jaoushingan/WaydroidHelper/ui/window_old.ui"
 
-
 @Gtk.Template(resource_path=RESOURCE_PATH)
 class WaydroidHelperWindow(Adw.ApplicationWindow):
     __gtype_name__ = "WaydroidHelperWindow"
     stack: Adw.ViewStack = Gtk.Template.Child()
-    navigation_view: Adw.Leaflet = Gtk.Template.Child(NAVIGATION)
+    navigation_view = Gtk.Template.Child(NAVIGATION)
 
     def on_visible_child_changed(self, leaflet, pspec):
         """
@@ -44,7 +43,7 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
                         self.navigation_view.remove(page)
                     self.leafletpages = self.leafletpages[: index + 1]
 
-    def push(self, widget):
+    def view_push(self, widget):
         if NAVIGATION == "navigation_view":
             self.navigation_view.push(widget)
         else:
@@ -52,6 +51,18 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
             self.navigation_view.append(widget)
             self.navigation_view.set_visible_child(widget)
             self.leafletpages.append(widget)
+
+    def view_add(self, widget):
+        if NAVIGATION == "navigation_view":
+            self.navigation_view.add(widget)
+
+    def view_find_page(self, tag: str):
+        if NAVIGATION == "navigation_view":
+            return self.navigation_view.find_page(tag)
+
+    def view_push_by_tag(self, tag: str):
+        if NAVIGATION == "navigation_view":
+            self.navigation_view.push_by_tag(tag)
 
     def navigate_back(self):
         """
@@ -67,7 +78,6 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
         else:
             view_page = self.stack.add_titled(child, name, title)
             view_page.set_icon_name(icon_name)
-
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

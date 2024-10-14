@@ -23,7 +23,7 @@ class ExtensionRow(Adw.ActionRow):
             self.set_subtitle(subtitle)
         if info is not ...:
             self.info = info
-        self.button.connect("clicked", self.on_button_clicked)
+        # self.button.connect("clicked", self.on_button_clicked)
 
     def set_info(self, versions):
         self.info = versions
@@ -35,7 +35,10 @@ class ExtensionRow(Adw.ActionRow):
     def new(cls):
         return ExtensionRow()
 
-    def on_button_clicked(self, button):
-        root: Adw.Window = self.get_root()
-        page = AvailableVersionPage(self.info, self.extension_manager)
-        root.push(page)
+    # def on_button_clicked(self, button):
+    #     root: Adw.Window = self.get_root()
+    #     if root.view_find_page(self.get_title()) is None:
+    #         page = AvailableVersionPage(self.info, self.extension_manager)
+    #         page.set_tag(self.get_title())
+    #         root.view_add(page)
+    #     root.view_push_by_tag(self.get_title())

@@ -24,6 +24,12 @@ class ExtentionManagerState(IntEnum):
 #      3. 进度条, 完成提醒
 #      4. prop 修改放在 yaml 里, 不要单独文件了
 class PackageManager(GObject.Object):
+    __gsignals__ = {
+        "installation-started": (GObject.SignalFlags.RUN_FIRST, None, (str, str)),
+        # 'installation-progress': (GObject.SignalFlags.RUN_FIRST, None, (str, float)),
+        "installation-completed": (GObject.SignalFlags.RUN_FIRST, None, (str, str)),
+        "uninstallation-completed": (GObject.SignalFlags.RUN_FIRST, None, (str, str)),
+    }
     state = GObject.Property(type=object)
     waydroid: Waydroid = GObject.Property(type=object)
     available_extensions = {}
@@ -36,8 +42,7 @@ class PackageManager(GObject.Object):
     _task = Task()
     _subprocess = SubprocessManager()
     # TODO 同时安装多个扩展的问题, 最好做到可以并发下载, 串行安装
-    _semaphore_1 = asyncio.Semaphore(1)
-    _semaphore_2 = asyncio.Semaphore(1)
+    _package_lock = asyncio.Lock()
 
     async def fetch_snapshot(self, name, version):
         print(self.available_extensions[f"{name}-{version}"])
@@ -272,54 +277,39 @@ class PackageManager(GObject.Object):
 
             await asyncio.gather(*tasks)
 
-    async def install_package(
-        self, name, version, remove_conflicts=False, install_dependencies=False
-    ):
-        async with self._semaphore_1:
+    async def install_package(self, name, version):
+        async with self._package_lock:
+            self.emit("installation-started", name, version)
             package_info = self.get_package_info(name, version)
             if package_info is None:
                 print(f"Package {name} not found.")
                 return
-            # 检查冲突
-            conflicts = self.check_conflicts(package_info)
-            if conflicts:
-                if remove_conflicts:
-                    await self.remove_packages(conflicts)
-                else:
-                    print(
-                        f"Package {package_info['name']} conflicts with installed packages: {', '.join(conflicts)}."
-                    )
-                    return
+
             # 检查架构
             if "arch" in package_info.keys() and self.arch not in package_info["arch"]:
                 raise ValueError("Hardware architecture mismatch")
 
-        # 检查依赖
-        # missing_dependencies = self.check_dependencies(package_info)
-        # if missing_dependencies:
-        #     if install_dependencies:
-        #         for dependency in missing_dependencies:
-        #             self.install_package(
-        #                 dependency, remove_conflicts, install_dependencies
-        #             )
-        #     else:
-        #         print(
-        #             f"Package {package_info['name']} is missing dependencies: {', '.join(missing_dependencies)}."
-        #         )
-        #         return
-
-        # 下载
-        await self.download(package_info)
-
-        async with self._semaphore_2:
+            # 检查依赖
+            # missing_dependencies = self.check_dependencies(package_info)
+            # if missing_dependencies:
+            #     if install_dependencies:
+            #         for dependency in missing_dependencies:
+            #             self.install_package(
+            #                 dependency, remove_conflicts, install_dependencies
+            #             )
+            #     else:
+            #         print(
+            #             f"Package {package_info['name']} is missing dependencies: {', '.join(missing_dependencies)}."
+            #         )
+            #         return
+            # 下载
+            await self.download(package_info)
             # 调用 installer
             package_name = package_info["name"]
             package_version = package_info["version"]
             startdir = os.path.join(self.cache_dir, "extensions", package_name)
             pkgdir = os.path.join(startdir, "pkg")
-            package = (
-                f'{startdir}/{package_name}-{package_version}.tar.gz'
-            )
+            package = f"{startdir}/{package_name}-{package_version}.tar.gz"
             await self._subprocess.run(
                 f'{os.environ["WAYDROID_CLI_PATH"]} call_package "{startdir}" "{package_name}" "{package_version}"',
                 env={"CARCH": self.arch, "SDK": "30"},
@@ -333,9 +323,7 @@ class PackageManager(GObject.Object):
             installed_files = self.get_all_files_relative(pkgdir)
 
             # desc_cache_path = os.path.join(startdir, "desc")
-            local_dir = os.path.join(
-                self.storage_dir, "local", f"{package_name}"
-            )
+            local_dir = os.path.join(self.storage_dir, "local", f"{package_name}")
             desc_path = os.path.join(local_dir, "desc")
             package_info = {
                 **package_info,
@@ -355,10 +343,6 @@ class PackageManager(GObject.Object):
                     **{"props": list(props.keys())},
                 }
 
-            os.makedirs(local_dir, exist_ok=True)
-            async with aiofiles.open(desc_path, mode="w") as f:
-                content = json.dumps(package_info)
-                await f.write(content)
 
             if "install" in package_info.keys():
                 cache_install = os.path.join(startdir, package_info["install"])
@@ -373,12 +357,19 @@ class PackageManager(GObject.Object):
             #     f"pkexec waydroid-cli copy {desc_cache_path} {local_dir}"
             # )
 
-            self.installed_packages[package_name] = package_info
-            print(f"Package {package_name} installed successfully.")
 
             # post_install
             if "install" in package_info.keys():
                 await self.post_install(package_info)
+
+            os.makedirs(local_dir, exist_ok=True)
+            async with aiofiles.open(desc_path, mode="w") as f:
+                content = json.dumps(package_info)
+                await f.write(content)
+            
+            self.installed_packages[package_name] = package_info
+            print(f"Package {name} installed successfully.")
+            self.emit("installation-completed", name, version)
 
     async def execute_post_operations(self, info, operation_key: str):
         if operation_key.endswith("install"):
@@ -397,26 +388,34 @@ class PackageManager(GObject.Object):
         if operation_key not in yml:
             return
 
-        commands = []
+        # commands = []
         operations = yml[operation_key]
         for operation in operations:
             for func_name, args in operation.items():
                 command = await self.generate_command(func_name, args)
                 if command:
-                    commands.append(command)
+                    # commands.append(command)
+                    await self._subprocess.run(
+                        command,
+                        env={
+                            "pkgdir": os.path.join(
+                                self.cache_dir, "extensions", info["name"], "pkg"
+                            )
+                        },
+                    )
                 else:
                     print(f"Unsupported function or invalid arguments: {func_name}")
 
-        commands_str = ";".join(commands)
-        print(f'pkexec bash -c "{commands_str}"')
-        await self._subprocess.run(
-            f'pkexec bash -c "{commands_str}"',
-            env={
-                "pkgdir": os.path.join(
-                    self.cache_dir, "extensions", info["name"], "pkg"
-                )
-            },
-        )
+        # commands_str = ";".join(commands)
+        # print(f'pkexec bash -c "{commands_str}"')
+        # await self._subprocess.run(
+        #     f'pkexec bash -c "{commands_str}"',
+        #     env={
+        #         "pkgdir": os.path.join(
+        #             self.cache_dir, "extensions", info["name"], "pkg"
+        #         )
+        #     },
+        # )
 
     async def get_apk_path(self, apks: list) -> str:
         paths = []
@@ -478,28 +477,31 @@ class PackageManager(GObject.Object):
 
     async def remove_package(self, package_name):
         """移除包"""
-        if package_name in self.installed_packages:
-            await self._subprocess.run(
-                f'pkexec {os.environ["WAYDROID_CLI_PATH"]} rm_overlay {" ".join(self.installed_packages[package_name]["installed_files"])}'
-            )
-            # await self._subprocess.run(
-            #     f"pkexec waydroid-cli rm {os.path.join(self.storage_dir, 'local', package_name)}"
-            # )
-            if "props" in self.installed_packages[package_name].keys():
-                await self.waydroid.remove_extension_props(
-                    self.installed_packages[package_name]["props"]
+        async with self._package_lock:
+            if package_name in self.installed_packages:
+                await self._subprocess.run(
+                    f'pkexec {os.environ["WAYDROID_CLI_PATH"]} rm_overlay {" ".join(self.installed_packages[package_name]["installed_files"])}'
                 )
-            if "install" in self.installed_packages[package_name].keys():
-                await self.post_remove(self.installed_packages[package_name])
-            await self._subprocess.run(
-                f"rm -rf {os.path.join(self.storage_dir, 'local', package_name)}"
-            )
-            # await asyncio.gather(coro1, coro2, coro3)
+                # await self._subprocess.run(
+                #     f"pkexec waydroid-cli rm {os.path.join(self.storage_dir, 'local', package_name)}"
+                # )
+                if "props" in self.installed_packages[package_name].keys():
+                    await self.waydroid.remove_extension_props(
+                        self.installed_packages[package_name]["props"]
+                    )
+                if "install" in self.installed_packages[package_name].keys():
+                    await self.post_remove(self.installed_packages[package_name])
+                await self._subprocess.run(
+                    f"rm -rf {os.path.join(self.storage_dir, 'local', package_name)}"
+                )
+                # await asyncio.gather(coro1, coro2, coro3)
 
-            del self.installed_packages[package_name]
-            print(f"Package {package_name} removed successfully.")
-        else:
-            print(f"Package {package_name} is not installed.")
+                version = self.installed_packages[package_name]["version"]
+                del self.installed_packages[package_name]
+                print(f"Package {package_name} removed successfully.")
+                self.emit("uninstallation-completed", package_name, version)
+            else:
+                print(f"Package {package_name} is not installed.")
 
     async def remove_packages(self, package_names):
         for pkg in package_names:
