@@ -21,13 +21,13 @@ CONFIG_PATH = os.environ.get("WAYDROID_CONFIG", "/var/lib/waydroid/waydroid.cfg"
 
 # TODO 异常处理
 class WaydroidState(enum.IntEnum):
-    LOADING = 1
-    UNINITIALIZED = 2
-    STOPPED = 4
+    LOADING = 0x01
+    UNINITIALIZED = 0x02
+    STOPPED = 0x04
     # waydroid session is running
-    RUNNING = 8
+    RUNNING = 0x08
     # connected to app
-    CONNECTED = 16
+    CONNECTED = 0x10
 
 
 def bool_to_str(b, flag=0) -> str:
