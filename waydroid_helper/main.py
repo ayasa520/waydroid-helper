@@ -62,7 +62,7 @@ class WaydroidHelperApplication(Adw.Application):
             application_name="waydroid-helper",
             application_icon="com.jaoushingan.WaydroidHelper",
             developer_name="rikka",
-            version="0.1.0",
+            version="0.1.1",
             developers=["rikka"],
             copyright="© 2024 rikka",
         )
