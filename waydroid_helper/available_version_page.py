@@ -301,7 +301,7 @@ class AvailableVersionPage(NavigationPage):
             )
             logger.error(e)
             dialog = Dialog(
-                heading=_("Installation Failed"), body=e, parent=self.get_root()
+                heading=_("Uninstallation Failed"), body=e, parent=self.get_root()
             )
             dialog.add_response(Gtk.ResponseType.OK, _("OK"))
             dialog.present()
