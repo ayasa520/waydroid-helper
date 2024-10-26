@@ -20,6 +20,7 @@ class NavigationView(Gtk.Widget):
         if ADW_VERSION >= (1, 4, 0):
             self._navigation_view = Adw.NavigationView()
         else:
+            self.maybe_removed = None
             self._pages: list[NavigationPage] = []
             self._navigation_stack: list[NavigationPage] = []
             self._navigation_view = Adw.Leaflet()
@@ -32,13 +33,12 @@ class NavigationView(Gtk.Widget):
         self.set_layout_manager(Gtk.BinLayout())
         self._navigation_view.set_parent(self)
         self.connect("destroy", self.on_destroy)
-    
+
     def get_navigation_stack(self):
-        if ADW_VERSION>=(1,4,0):
+        if ADW_VERSION >= (1, 4, 0):
             return list(self._navigation_view.get_navigation_stack())
         else:
             return self._navigation_stack
-        
 
     def find_page(self, tag):
         if ADW_VERSION >= (1, 4, 0):
@@ -63,8 +63,10 @@ class NavigationView(Gtk.Widget):
                 logger.warning("Page is already in navigation stack")
                 return
 
+            if not self._navigation_view.get_page(page):
+                self._navigation_view.append(page)
             self._navigation_stack.append(page)
-            self._navigation_view.append(page)
+            self._navigation_view.get_page(page).set_navigatable(True)
             self._navigation_view.set_visible_child(page)
 
     def add(self, page):
@@ -93,8 +95,14 @@ class NavigationView(Gtk.Widget):
             return self._navigation_view.pop()
         else:
             if len(self._navigation_stack) > 1:
-                # self._navigation_stack.pop()
-                self._navigation_view.navigate(Adw.NavigationDirection.BACK)
+                self.maybe_removed = self._navigation_stack.pop()
+                self._navigation_view.get_page(self.maybe_removed).set_navigatable(
+                    False
+                )
+                self._navigation_view.set_visible_child(self._navigation_stack[-1])
+
+                # print(self._navigation_stack)
+                # print([self._navigation_view.get_page(n).get_navigatable() for n in self._navigation_stack if self._navigation_view.get_page(n)])
                 return True
             return False
 
@@ -104,24 +112,47 @@ class NavigationView(Gtk.Widget):
         """
         if not self._navigation_view.get_child_transition_running():
             current_page = self._navigation_view.get_visible_child()
-            # push 新页面
+
             if current_page == self._navigation_stack[-1]:
                 return
+
+            # 手势或者键盘触发 NavigationBack, pop 没有被调用
+            self.maybe_removed = self._navigation_stack.pop()
+            self._navigation_view.get_page(self.maybe_removed).set_navigatable(False)
+
+            # if self.maybe_removed is None:
+            #     return
+
             # pop
-            page = self._navigation_stack.pop()
-            self._navigation_view.remove(page)
+            if self.maybe_removed not in self._pages:
+                self._navigation_view.remove(self.maybe_removed)
+            self.maybe_removed = None
 
     def push_by_tag(self, tag):
         if ADW_VERSION >= (1, 4, 0):
             self._navigation_view.push_by_tag(tag)
         else:
+            # page = self._navigation_view.get_child_by_name(tag)
+            # # 肯定不行, 因为这个检查的是 AdwLeafletPage 的 name
+            # if page:
+            #     self._navigation_stack.append(page)
+            #     self._navigation_view.set_visible_child_name(tag)
+            # else:
+
             for page in self._pages:
                 if page.get_tag() == tag:
-                    self.push(page)
-                    return
+
+                    if page in self._navigation_stack:
+                        logger.warning("Page is already in navigation stack")
+                        return
+
+                    if not self._navigation_view.get_page(page):
+                        self._navigation_view.append(page)
+
+                    self._navigation_stack.append(page)
+                    self._navigation_view.get_page(page).set_navigatable(True)
+                    self._navigation_view.set_visible_child(page)
 
     def on_destroy(self, widget):
         self._navigation_view.unparent()
         self._navigation_view = None
-
-

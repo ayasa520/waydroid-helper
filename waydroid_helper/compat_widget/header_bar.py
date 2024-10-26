@@ -81,6 +81,7 @@ class HeaderBar(Gtk.Widget):
                         self._header.pack_start(back_button)
                     title_label = Gtk.Label()
                     title_label.set_markup(f"<b>{title}</b>")
+                    self._header.set_title_widget(title_label)
                 self._header.add_css_class("flat")
 
     @classmethod

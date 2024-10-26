@@ -20,7 +20,7 @@ else:
 class NavigationPageMeta(type(GObject.Object)):
     def __new__(mcs, name, bases, attrs):
         replace = False
-        if BASE_PAGE == Gtk.Box and (Gtk.Box in bases):
+        if ADW_VERSION < (1, 4, 0) and (Gtk.Box in bases):
             replace = True
             attrs["title"] = GObject.Property(type=str, default="")
 
@@ -52,7 +52,7 @@ class NavigationPageMeta(type(GObject.Object)):
             def get_title(self):
                 return self.get_property("title")
 
-        elif BASE_PAGE == Adw.NavigationPage and (Adw.NavigationPage in bases):
+        elif ADW_VERSION >= (1, 4, 0) and (Adw.NavigationPage in bases):
             replace = True
 
             def __init__(

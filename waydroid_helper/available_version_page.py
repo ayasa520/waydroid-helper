@@ -40,7 +40,7 @@ class AvailableRow(Adw.ActionRow):
         self.install_button.add_css_class("suggested-action")
         self.install_button.set_valign(align=Gtk.Align.CENTER)
         # self. install_button.add_css_class("flat")
-        self.install_button.set_icon_name("software-install-symbolic")
+        self.install_button.set_icon_name("document-save-symbolic")
         self.add_suffix(self.install_button)
         self.spinner = Spinner()
         # 统一大小
