@@ -7,7 +7,7 @@ from gettext import gettext as _
 import json
 import os
 from waydroid_helper.infobar import InfoBar
-from waydroid_helper.util.Task import Task
+from waydroid_helper.util.task import Task
 from waydroid_helper.waydroid import PropsState, Waydroid
 from gi.repository import Gtk, GObject, Adw, GLib
 from functools import partial

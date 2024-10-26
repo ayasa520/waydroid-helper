@@ -1,44 +1,54 @@
 import os
 import gi
 
-from waydroid_helper.extensionwindow import AvailableVersionPage
-from waydroid_helper.util.ExtentionsManager import PackageManager, ExtentionManagerState
+from waydroid_helper.available_version_page import AvailableVersionPage
+from waydroid_helper.util.extensions_manager import PackageManager, ExtensionManagerState
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
 from gettext import gettext as _
-from waydroid_helper.extensionrow import ExtensionRow
+from waydroid_helper.extension_row import ExtensionRow
 from waydroid_helper.waydroid import Waydroid
 from gi.repository import Gtk, GObject, Adw
-
-adw_version = os.environ["adw_version"]
-if adw_version >= "10600":
-    RESOURCE_PATH = "/com/jaoushingan/WaydroidHelper/ui/ExtensionsPage.ui"
-else:
-    RESOURCE_PATH = "/com/jaoushingan/WaydroidHelper/ui/ExtensionsPage_old.ui"
+from waydroid_helper.compat_widget import Spinner
 
 
-@Gtk.Template(resource_path=RESOURCE_PATH)
 class ExtensionsPage(Gtk.Box):
     __gtype_name__ = "ExtensionsPage"
     waydroid: GObject.Property = GObject.Property(default=None, type=Waydroid)
-    extensions_page: Adw.PreferencesPage = Gtk.Template.Child()
-    stack = Gtk.Template.Child()
+    stack: Gtk.Stack = ...
+    extensions_page: Adw.PreferencesPage = ...
     extension_manager = ...
     extensions = []
 
-    # houdini_expanderrow: Adw.ExpanderRow = Gtk.Template.Child()
-    # ndk_expanderrow: Adw.ExpanderRow = Gtk.Template.Child()
-
     def __init__(self, waydroid: Waydroid, **kargs):
         super().__init__(**kargs)
+        self.set_orientation(Gtk.Orientation.VERTICAL)
         self.set_property("waydroid", waydroid)
+        self.extensions_page = Adw.PreferencesPage.new()
+        self.stack = Gtk.Stack.new()
+        self.stack.set_vexpand(True)
+        self.stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
+
+        # 创建一个居中的容器用于 spinner
+        spinner_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        spinner_box.set_halign(Gtk.Align.CENTER)
+        spinner_box.set_valign(Gtk.Align.CENTER)
+        
+        # 创建并设置 spinner
+        spinner = Spinner()
+        spinner.set_size_request(64, 64)
+
+        # 将 spinner 添加到容器中
+        spinner_box.append(spinner)
+        self.stack.add_named(name="spinner", child=spinner_box)
+        self.stack.add_named(name="content", child=self.extensions_page)
+
         self.extension_manager = PackageManager()
         self.extension_manager.set_property("waydroid", self.waydroid)
-        self.extension_manager.connect("notify::state", self.init_page)
         self.stack.set_visible_child_name("spinner")
-
+        self.extension_manager.connect("notify::state", self.init_page)
         self.extension_manager.connect(
             "installation-started", self.on_installation_started
         )
@@ -48,17 +58,18 @@ class ExtensionsPage(Gtk.Box):
         self.extension_manager.connect(
             "uninstallation-completed", self.on_uninstallation_completed
         )
+        self.append(self.stack)
 
     def on_installation_started(self, obj, name, version):
-        page:AvailableVersionPage = self.get_root().view_find_page(name)
+        page: AvailableVersionPage = self.get_root().view_find_page(name)
         page.on_installation_started(obj, name, version)
 
     def on_installation_completed(self, obj, name, version):
-        page:AvailableVersionPage = self.get_root().view_find_page(name)
+        page: AvailableVersionPage = self.get_root().view_find_page(name)
         page.on_installation_completed(obj, name, version)
 
     def on_uninstallation_completed(self, obj, name, version):
-        page:AvailableVersionPage = self.get_root().view_find_page(name)
+        page: AvailableVersionPage = self.get_root().view_find_page(name)
         page.on_uninstallation_completed(obj, name, version)
 
     def create_row(self, title, subtitle, info):
@@ -81,7 +92,7 @@ class ExtensionsPage(Gtk.Box):
         return row
 
     def init_page(self, w, param):
-        if self.extension_manager.get_property("state") != ExtentionManagerState.READY:
+        if self.extension_manager.get_property("state") != ExtensionManagerState.READY:
             return
         self.extensions = self.extension_manager.get_data()
         self.stack.set_visible_child_name("content")

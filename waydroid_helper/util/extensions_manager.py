@@ -7,14 +7,14 @@ import xml.etree.ElementTree as ET
 import yaml
 
 from gi.repository import GLib, GObject
-from waydroid_helper.util.SubprocessManager import SubprocessManager
-from waydroid_helper.util.Task import Task
+from waydroid_helper.util.subprocess_manager import SubprocessManager
+from waydroid_helper.util.task import Task
 from waydroid_helper.util.arch import host
-from waydroid_helper.waydroid import Waydroid
+from waydroid_helper.util.log import logger
 from enum import IntEnum
 
 
-class ExtentionManagerState(IntEnum):
+class ExtensionManagerState(IntEnum):
     UNINITIALIZED = 0
     READY = 1
 
@@ -31,7 +31,7 @@ class PackageManager(GObject.Object):
         "uninstallation-completed": (GObject.SignalFlags.RUN_FIRST, None, (str, str)),
     }
     state = GObject.Property(type=object)
-    waydroid: Waydroid = GObject.Property(type=object)
+    waydroid = GObject.Property(type=object)
     available_extensions = {}
     installed_packages = {}
     arch = host()
@@ -45,7 +45,7 @@ class PackageManager(GObject.Object):
     _package_lock = asyncio.Lock()
 
     async def fetch_snapshot(self, name, version):
-        print(self.available_extensions[f"{name}-{version}"])
+        logger.info(self.available_extensions[f"{name}-{version}"])
 
     async def fetch_extension_json(self):
         async with httpx.AsyncClient(follow_redirects=True) as client:
@@ -54,7 +54,7 @@ class PackageManager(GObject.Object):
                 if response.status_code == 200:
                     return response.json()
                 else:
-                    print(
+                    logger.error(
                         f"Failed to fetch JSON from, status code: {response.status_code}"
                     )
                     return None
@@ -98,11 +98,11 @@ class PackageManager(GObject.Object):
                 self.extensions_json = json.loads(await f.read())
         self.grab_meta()
         await self.load_installed()
-        self.state = ExtentionManagerState.READY
+        self.state = ExtensionManagerState.READY
 
     def __init__(self):
         super().__init__()
-        self.state = ExtentionManagerState.UNINITIALIZED
+        self.state = ExtensionManagerState.UNINITIALIZED
         self._task.create_task(self.init_manager())
         os.makedirs(self.storage_dir, exist_ok=True)
 
@@ -216,22 +216,17 @@ class PackageManager(GObject.Object):
                             f"MD5 mismatch: expected {md5}, got {actual_md5}"
                         )
 
-                print(f"File downloaded and saved to {dest_path}")
+                logger.info(f"File downloaded and saved to {dest_path}")
                 return
-            except (
-                httpx.HTTPStatusError,
-                httpx.RequestError,
-                AssertionError,
-                ValueError,
-            ) as e:
+            except Exception as e:
                 attempt += 1
                 if attempt < retries:
-                    print(
+                    logger.warning(
                         f"Attempt {attempt} failed: {e}. Retrying in {delay} seconds..."
                     )
                     await asyncio.sleep(delay)
                 else:
-                    print(
+                    logger.error(
                         f"All {retries} attempts failed. Could not download the file."
                     )
                     raise
@@ -282,7 +277,7 @@ class PackageManager(GObject.Object):
             self.emit("installation-started", name, version)
             package_info = self.get_package_info(name, version)
             if package_info is None:
-                print(f"Package {name} not found.")
+                logger.error(f"Package {name} not found.")
                 return
 
             # 检查架构
@@ -302,8 +297,8 @@ class PackageManager(GObject.Object):
             #             f"Package {package_info['name']} is missing dependencies: {', '.join(missing_dependencies)}."
             #         )
             #         return
-            # 下载
             await self.download(package_info)
+
             # 调用 installer
             package_name = package_info["name"]
             package_version = package_info["version"]
@@ -368,7 +363,7 @@ class PackageManager(GObject.Object):
                 await f.write(content)
             
             self.installed_packages[package_name] = package_info
-            print(f"Package {name} installed successfully.")
+            logger.info(f"Package {name} installed successfully.")
             self.emit("installation-completed", name, version)
 
     async def execute_post_operations(self, info, operation_key: str):
@@ -404,7 +399,7 @@ class PackageManager(GObject.Object):
                         },
                     )
                 else:
-                    print(f"Unsupported function or invalid arguments: {func_name}")
+                    logger.error(f"Unsupported function or invalid arguments: {func_name}")
 
         # commands_str = ";".join(commands)
         # print(f'pkexec bash -c "{commands_str}"')
@@ -498,12 +493,12 @@ class PackageManager(GObject.Object):
 
                 version = self.installed_packages[package_name]["version"]
                 del self.installed_packages[package_name]
-                print(f"Package {package_name} removed successfully.")
+                logger.info(f"Package {package_name} removed successfully.")
                 self.emit("uninstallation-completed", package_name, version)
             else:
-                print(f"Package {package_name} is not installed.")
+                logger.warning(f"Package {package_name} is not installed.")
 
     async def remove_packages(self, package_names):
         for pkg in package_names:
-            print("remove", pkg)
+            logger.info("remove", pkg)
             await self.remove_package(pkg)

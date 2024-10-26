@@ -4,7 +4,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
 from gettext import gettext as _
-from waydroid_helper.extensionwindow import AvailableVersionPage
+from waydroid_helper.available_version_page import AvailableVersionPage
 from gi.repository import Gtk, Adw
 
 

@@ -93,7 +93,6 @@
               <object class="AdwActionRow">
                 <property name="title">persist.waydroid.fake_touch</property>
                 <property name="subtitle" translatable="true">Interpret mouse inputs as touch inputs. Enter the package names separated by &quot;,&quot;. Use the wildcard &quot;*&quot; to match all Apps</property>
-                <property name="title-lines">1</property>
                 <property name="sensitive" bind-source="entry_1" bind-property="sensitive" bind-flags="sync-create"/>
                 <property name="activatable-widget">entry_1</property>
                 <child>
@@ -111,7 +110,6 @@
               <object class="AdwActionRow">
                 <property name="title">persist.waydroid.fake_wifi</property>
                 <property name="subtitle" translatable="true">Make the Apps appear as if connected to WiFi. Enter the package names separated by &quot;,&quot;. Use the wildcard &quot;*&quot; to match all Apps</property>
-                <property name="title-lines">1</property>
                 <property name="sensitive" bind-source="entry_2" bind-property="sensitive" bind-flags="sync-create"/>
                 <property name="activatable-widget">entry_2</property>
                 <child>
@@ -221,6 +219,7 @@
             <child>
               <object class="AdwComboRow" id="device_combo">
                 <property name="title">device</property>
+                <property name="sensitive">False</property>
                 <property name="subtitle" translatable="true">spoof device</property><!-- <property name="model">model</property> --><!-- <signal name="notify::selected" handler="on_adw_combo_row_selected"/>--><!-- <signal name="notify::selected-item" handler="on_adw_combo_row_selected_item"/>  -->
               </object>
             </child>
@@ -235,8 +234,6 @@
     <property name="label" translatable="true">Reset</property>
     <property name="halign">end</property>
     <property name="valign">center</property>
-    <property name="vexpand">true</property>
-    <property name="hexpand">true</property>
     <property name="sensitive">False</property>
     <signal name="clicked" handler="on_reset_persist_clicked"/>
   </object>
@@ -245,8 +242,6 @@
     <signal name="clicked" handler="on_reset_privileged_clicked"/>
     <property name="halign">end</property>
     <property name="valign">center</property>
-    <property name="vexpand">true</property>
-    <property name="hexpand">true</property>
     <property name="sensitive">False</property>
   </object>
 </interface>

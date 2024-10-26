@@ -13,7 +13,7 @@
             <property name="can-navigate-back">True</property>
             <child>
               <object class="AdwLeafletPage">
-                <property name="name">page-1</property><!-- <property name="title" translatable="yes">Waydroid Helper</property> -->
+                <property name="name">page-1</property><!--AdwViewStack <property name="title" translatable="yes">Waydroid Helper</property> -->
                 <property name="child">
                   <object class="GtkBox">
                     <property name="orientation">vertical</property>

@@ -1,6 +1,7 @@
 pkgdatadir = get_option('prefix') / get_option('datadir') / meson.project_name()
 moduledir = pkgdatadir / 'waydroid_helper'
 utildir = moduledir / 'util'
+compatwidgetdir = moduledir / 'compat_widget'
 gnome = import('gnome')
 
 gnome.compile_resources(
@@ -52,19 +53,31 @@ waydroid_helper_sources = [
     'main.py',
     'window.py',
     'waydroid.py',
-    'generalpage.py',
-    'propspage.py',
-    'extensionspage.py',
+    'general_page.py',
+    'props_page.py',
+    'extensions_page.py',
     'infobar.py',
-    'extensionrow.py',
-    'extensionwindow.py',
+    'extension_row.py',
+    'available_version_page.py',
 ]
 util_sources = [
-    'util/SubprocessManager.py',
-    'util/Task.py',
-    'util/ExtentionsManager.py',
+    'util/__init__.py',
+    'util/subprocess_manager.py',
+    'util/task.py',
+    'util/extensions_manager.py',
     'util/arch.py',
+    'util/log.py',
 ]
 
+compat_widget_sources = [
+    'compat_widget/__init__.py',
+    'compat_widget/navigation_view.py',
+    'compat_widget/navigation_page.py',
+    'compat_widget/toolbar_view.py',
+    'compat_widget/spinner.py',
+    'compat_widget/dialog.py',
+    'compat_widget/header_bar.py',
+]
 install_data(waydroid_helper_sources, install_dir: moduledir)
 install_data(util_sources, install_dir: utildir)
+install_data(compat_widget_sources, install_dir: compatwidgetdir)

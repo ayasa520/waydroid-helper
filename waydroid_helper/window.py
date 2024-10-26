@@ -1,83 +1,37 @@
-import os
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
 from gettext import gettext as _
-from waydroid_helper.extensionspage import ExtensionsPage
-from waydroid_helper.generalpage import GeneralPage
-from waydroid_helper.waydroid import Waydroid
-from waydroid_helper.propspage import PropsPage
-from gi.repository import Gtk, Adw, Gio
+from waydroid_helper import ExtensionsPage,GeneralPage,Waydroid,PropsPage
+from waydroid_helper.compat_widget import ADW_VERSION, NavigationView, NavigationPage, ToolbarView,HeaderBar
+from gi.repository import Gtk, Adw, Gio, GObject
 
-# from waydroid_helper.controller import ControllerWindow
 
-adw_version = os.environ["adw_version"]
-
-if adw_version >= "10400":
-    NAVIGATION = "navigation_view"
-    RESOURCE_PATH = "/com/jaoushingan/WaydroidHelper/ui/window.ui"
-else:
-    NAVIGATION = "leaflet"
-    RESOURCE_PATH = "/com/jaoushingan/WaydroidHelper/ui/window_old.ui"
-
-@Gtk.Template(resource_path=RESOURCE_PATH)
+@Gtk.Template(resource_path="/com/jaoushingan/WaydroidHelper/ui/window.ui")
 class WaydroidHelperWindow(Adw.ApplicationWindow):
     __gtype_name__ = "WaydroidHelperWindow"
-    stack: Adw.ViewStack = Gtk.Template.Child()
-    navigation_view = Gtk.Template.Child(NAVIGATION)
-
-    def on_visible_child_changed(self, leaflet, pspec):
-        """
-        AdwLeaflet
-        """
-        if not self.navigation_view.get_child_transition_running():
-            current_page = self.navigation_view.get_visible_child()
-            if current_page in self.leafletpages:
-                index = self.leafletpages.index(current_page)
-                if index < len(self.leafletpages) - 1:
-                    # This is a back navigation
-                    pages_to_remove = self.leafletpages[index + 1 :]
-                    for page in pages_to_remove:
-                        self.navigation_view.remove(page)
-                    self.leafletpages = self.leafletpages[: index + 1]
+    navigation_view: NavigationView = Gtk.Template.Child()
 
     def view_push(self, widget):
-        if NAVIGATION == "navigation_view":
-            self.navigation_view.push(widget)
-        else:
-            # AdwLeaflet
-            self.navigation_view.append(widget)
-            self.navigation_view.set_visible_child(widget)
-            self.leafletpages.append(widget)
+        self.navigation_view.push(widget)
 
     def view_add(self, widget):
-        if NAVIGATION == "navigation_view":
-            self.navigation_view.add(widget)
+        self.navigation_view.add(widget)
 
     def view_find_page(self, tag: str):
-        if NAVIGATION == "navigation_view":
-            return self.navigation_view.find_page(tag)
+        return self.navigation_view.find_page(tag)
 
     def view_push_by_tag(self, tag: str):
-        if NAVIGATION == "navigation_view":
-            self.navigation_view.push_by_tag(tag)
+        self.navigation_view.push_by_tag(tag)
 
-    def navigate_back(self):
-        """
-        AdwLeafletPage
-        """
-        self.navigation_view.navigate(Adw.NavigationDirection.BACK)
 
     def stack_add_titled_with_icon(
         self, child: Gtk.Widget, name: str | None, title: str, icon_name: str
     ):
-        if adw_version >= "10200":
-            self.stack.add_titled_with_icon(child, name, title, icon_name)
-        else:
-            view_page = self.stack.add_titled(child, name, title)
-            view_page.set_icon_name(icon_name)
+        view_page = self.adw_view_stack.add_titled(child, name, title)
+        view_page.set_icon_name(icon_name)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -96,6 +50,70 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
         self.settings.bind(
             "is-fullscreen", self, "fullscreened", Gio.SettingsBindFlags.DEFAULT
         )
+
+        adw_toolbar_view = ToolbarView.new()
+
+        self.adw_view_stack = Adw.ViewStack.new()
+        adw_toolbar_view.set_content(content=self.adw_view_stack)
+
+        self.adw_header_bar = HeaderBar.new()
+        if ADW_VERSION>=(1,4,0):
+            adw_view_switcher = Adw.ViewSwitcher.new()
+            adw_view_switcher.set_policy(Adw.ViewSwitcherPolicy.WIDE)
+            adw_view_switcher.set_stack(self.adw_view_stack)
+            self.adw_header_bar.set_title_widget(adw_view_switcher)
+        else:
+            self.adw_header_bar.set_property("centering-policy", Adw.CenteringPolicy.STRICT)
+            adw_view_switcher_title = Adw.ViewSwitcherTitle.new()
+            adw_view_switcher_title.set_stack(self.adw_view_stack)
+            adw_view_switcher_title.set_title("Waydroid Helper")
+            self.adw_header_bar.set_title_widget(adw_view_switcher_title)
+
+        adw_toolbar_view.add_top_bar(widget=self.adw_header_bar)
+
+        menu_button_model = Gio.Menu()
+        menu_button_model.append(
+            label=_("_Preferences"),
+            detailed_action="app.preferences",
+        )
+        menu_button_model.append(
+            label=_("_About waydroid-helper"),
+            detailed_action="app.about",
+        )
+        menu_button = Gtk.MenuButton.new()
+        menu_button.set_icon_name(icon_name="open-menu-symbolic")
+        menu_button.set_menu_model(menu_model=menu_button_model)
+        self.adw_header_bar.pack_end(child=menu_button)
+
+        adw_view_switcher_bar = Adw.ViewSwitcherBar.new()
+        adw_view_switcher_bar.set_stack(self.adw_view_stack)
+        if ADW_VERSION<(1,4,0):
+            adw_view_switcher_title.bind_property("title-visible",adw_view_switcher_bar,"reveal",GObject.BindingFlags.SYNC_CREATE)
+        adw_toolbar_view.add_bottom_bar(adw_view_switcher_bar)
+
+        if ADW_VERSION>=(1,4,0):
+            breakpoint_condition = Adw.BreakpointCondition.new_length(
+                type=Adw.BreakpointConditionLengthType.MAX_WIDTH,
+                value=550,
+                unit=Adw.LengthUnit.PX,
+            )
+            break_point = Adw.Breakpoint.new(condition=breakpoint_condition)
+            none_value = GObject.Value()
+            none_value.init(GObject.TYPE_OBJECT)
+            none_value.set_object(None)
+
+            break_point.add_setters(
+                objects=[adw_view_switcher_bar, self.adw_header_bar],
+                names=["reveal", "title-widget"],
+                values=[True, none_value],
+            )
+            self.add_breakpoint(breakpoint=break_point)
+
+        adw_navigation_page = NavigationPage.new(
+            child=adw_toolbar_view, title="Waydroid Helper"
+        )
+        self.navigation_view.push(adw_navigation_page)
+
 
         self.waydroid = Waydroid()
         general_page = GeneralPage(self.waydroid)
@@ -120,8 +138,3 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
             title=_("Extensions"),
             icon_name="com.jaoushingan.WaydroidHelper-addon-symbolic",
         )
-        if NAVIGATION == "leaflet":
-            self.navigation_view.connect(
-                "notify::child-transition-running", self.on_visible_child_changed
-            )
-            self.leafletpages = [self.navigation_view.get_child_by_name("page-1")]
