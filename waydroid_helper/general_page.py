@@ -1,9 +1,7 @@
-from gi.repository import Gtk, GObject, Gdk
-from waydroid_helper.waydroid import WaydroidState
-from waydroid_helper.waydroid import Waydroid
-from waydroid_helper.util.Task import Task
+from gi.repository import Gtk, GObject
+from waydroid_helper.waydroid import WaydroidState, Waydroid
+from waydroid_helper.util import Task, logger
 from gettext import gettext as _
-import asyncio
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -83,9 +81,8 @@ class GeneralPage(Gtk.Box):
     @Gtk.Template.Callback()
     def on_init_button_clicked(self, button: Gtk.Button):
         self._disable_buttons()
-        print("waydroid init")
+        logger.info("waydroid init")
         # TODO
-
 
     async def __on_start_button_clicked(self):
         old = self.waydroid.state
@@ -96,9 +93,8 @@ class GeneralPage(Gtk.Box):
 
     @Gtk.Template.Callback()
     def on_start_button_clicked(self, button: Gtk.Button):
-        print("waydroid session start")
+        logger.info("waydroid session start")
         self._task.create_task(self.__on_start_button_clicked())
-
 
     async def __on_stop_button_clicked(self):
         old = self.waydroid.state
@@ -109,12 +105,12 @@ class GeneralPage(Gtk.Box):
 
     @Gtk.Template.Callback()
     def on_stop_button_clicked(self, button):
-        print("waydroid session stop")
+        logger.info("waydroid session stop")
         self._task.create_task(self.__on_stop_button_clicked())
 
     @Gtk.Template.Callback()
     def on_show_full_ui_button_clicked(self, button):
-        print("waydroid show-full-ui")
+        logger.info("waydroid show-full-ui")
         self._task.create_task(self.waydroid.show_full_ui())
 
     async def __on_start_upgrade_offline_clicked(self):
@@ -126,5 +122,5 @@ class GeneralPage(Gtk.Box):
 
     @Gtk.Template.Callback()
     def on_start_upgrade_offline_clicked(self, button):
-        print("sudo waydroid upgrade -o")
+        logger.info("sudo waydroid upgrade -o")
         self._task.create_task(self.__on_start_upgrade_offline_clicked())

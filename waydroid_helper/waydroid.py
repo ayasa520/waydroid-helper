@@ -12,8 +12,7 @@ from gi.repository import GObject, GLib
 import asyncio
 from typing import Optional
 from functools import partial
-from waydroid_helper.util.SubprocessManager import SubprocessError, SubprocessManager
-from waydroid_helper.util.Task import Task
+from waydroid_helper.util import SubprocessError, SubprocessManager, Task, logger
 
 
 CONFIG_PATH = os.environ.get("WAYDROID_CONFIG", "/var/lib/waydroid/waydroid.cfg")
@@ -363,7 +362,7 @@ class Waydroid(GObject.Object):
             try:
                 await self.save()
             except SubprocessError as e:
-                print(e)
+                logger.error(e)
                 self.restore()
 
         def fetch(self):
@@ -441,7 +440,7 @@ class Waydroid(GObject.Object):
                 await self._subprocess.run(cmd, flag=True)
                 self.cfg_old = copy.deepcopy(self.cfg)
             except SubprocessError as e:
-                print(e)
+                logger.error(e)
 
     persist_props: PersistProps = PersistProps()
     privileged_props: PrivilegedProps = PrivilegedProps()
@@ -578,14 +577,16 @@ class Waydroid(GObject.Object):
                 try:
                     await self.privileged_props.save()
                     await self._subprocess.run(
-                        command=f"pkexec {os.environ['WAYDROID_CLI_PATH']} upgrade -o", flag=True
+                        command=f"pkexec {os.environ['WAYDROID_CLI_PATH']} upgrade -o",
+                        flag=True,
                     )
                 except SubprocessError as e:
                     self.privileged_props.restore()
-                    print(e)
+                    logger.error(e)
             else:
                 await self._subprocess.run(
-                    command=f"pkexec {os.environ['WAYDROID_CLI_PATH']} upgrade", flag=True
+                    command=f"pkexec {os.environ['WAYDROID_CLI_PATH']} upgrade",
+                    flag=True,
                 )
             return True
         finally:

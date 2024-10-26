@@ -3,75 +3,16 @@
   <requires lib="Adw" version="1.0"/>
   <requires lib="gio" version="2.0"/>
   <requires lib="gtk" version="4.0"/>
-  <requires lib="libadwaita" version="1.4"/>
   <template class="WaydroidHelperWindow" parent="AdwApplicationWindow">
     <property name="content">
       <object class="AdwToastOverlay">
         <property name="child">
-          <object class="AdwNavigationView" id="navigation_view">
-            <child>
-              <object class="AdwNavigationPage">
-                <property name="title" translatable="yes">Waydroid Helper</property>
-                <property name="child">
-                  <object class="AdwToolbarView">
-                    <property name="content">
-                      <object class="AdwViewStack" id="stack"></object>
-                    </property>
-                    <child type="top">
-                      <object class="AdwHeaderBar" id="header_bar">
-                        <property name="title-widget">
-                          <object class="AdwViewSwitcher">
-                            <property name="policy">wide</property>
-                            <property name="stack">stack</property>
-                          </object>
-                        </property>
-                        <child type="end">
-                          <object class="GtkMenuButton">
-                            <property name="icon-name">open-menu-symbolic</property>
-                            <property name="menu-model">primary_menu</property>
-                            <property name="primary">True</property>
-                            <property name="tooltip-text" translatable="yes">Menu</property>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child type="bottom">
-                      <object class="AdwViewSwitcherBar" id="switcher_bar">
-                        <property name="stack">stack</property>
-                      </object>
-                    </child>
-                  </object>
-                </property>
-              </object>
-            </child>
+          <object class="NavigationView" id="navigation_view">
           </object>
         </property>
       </object>
     </property>
     <property name="height-request">400</property>
     <property name="width-request">400</property>
-    <child>
-      <object class="AdwBreakpoint">
-        <condition>max-width: 550sp</condition>
-        <setter object="switcher_bar" property="reveal">True</setter>
-        <setter object="header_bar" property="title-widget"/>
-      </object>
-    </child>
   </template>
-  <menu id="primary_menu">
-    <section>
-      <item>
-        <attribute name="action">app.preferences</attribute>
-        <attribute name="label" translatable="yes">_Preferences</attribute>
-      </item>
-      <item>
-        <attribute name="action">win.show-help-overlay</attribute>
-        <attribute name="label" translatable="yes">_Keyboard Shortcuts</attribute>
-      </item>
-      <item>
-        <attribute name="action">app.about</attribute>
-        <attribute name="label" translatable="yes">_About waydroid-helper</attribute>
-      </item>
-    </section>
-  </menu>
 </interface>
