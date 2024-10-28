@@ -1,7 +1,8 @@
 # Copyright 2021 Oliver Smith
 # SPDX-License-Identifier: GPL-3.0-or-later
-import platform
 import logging
+import platform
+
 
 def host():
     machine = platform.machine()

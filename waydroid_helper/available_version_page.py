@@ -1,6 +1,7 @@
 import asyncio
 from enum import IntEnum
 from functools import partial
+
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -13,7 +14,7 @@ from waydroid_helper.compat_widget import (
     HeaderBar,
     Spinner,
 )
-from waydroid_helper.util import PackageManager, SubprocessError, Task, logger
+from waydroid_helper.util import PackageManager, Task, logger
 from gi.repository import Gtk, Adw
 from gettext import gettext as _
 

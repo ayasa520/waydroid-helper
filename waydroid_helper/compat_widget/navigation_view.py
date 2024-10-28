@@ -156,3 +156,5 @@ class NavigationView(Gtk.Widget):
     def on_destroy(self, widget):
         self._navigation_view.unparent()
         self._navigation_view = None
+
+NavigationView.set_css_name("compat-navigation-view")

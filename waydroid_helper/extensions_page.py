@@ -1,4 +1,3 @@
-import os
 import gi
 
 from waydroid_helper.available_version_page import AvailableVersionPage

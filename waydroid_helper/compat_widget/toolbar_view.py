@@ -1,10 +1,11 @@
 from typing import Optional
+
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Gtk, Adw, GLib, GObject
+from gi.repository import Gtk, Adw, GLib
 
 GTK_VERSION = Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version()
 ADW_VERSION = Adw.get_major_version(), Adw.get_minor_version(), Adw.get_micro_version()
@@ -20,7 +21,7 @@ class ToolbarView(Gtk.Widget):
             self._toolbar_view = Adw.ToolbarView.new()
         else:
             self._toolbar_view = Gtk.Box.new(
-                orientation=Gtk.Orientation.VERTICAL, spacing=10
+                orientation=Gtk.Orientation.VERTICAL, spacing=0
             )
             self._top_bar = None
             self._content = None
@@ -69,3 +70,5 @@ class ToolbarView(Gtk.Widget):
     def on_destroy(self, widget):
         self._toolbar_view.unparent()
         self._toolbar_view = None
+
+ToolbarView.set_css_name("compat-toolbarview")

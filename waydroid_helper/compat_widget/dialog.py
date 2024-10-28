@@ -1,4 +1,5 @@
 from typing import Optional
+
 import gi
 
 gi.require_version("Gtk", "4.0")

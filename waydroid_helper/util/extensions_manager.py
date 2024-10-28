@@ -1,17 +1,18 @@
 import asyncio
 import json
-import aiofiles
 import os
-import httpx
 import xml.etree.ElementTree as ET
-import yaml
+from enum import IntEnum
 
+import aiofiles
+import httpx
+import yaml
 from gi.repository import GLib, GObject
-from waydroid_helper.util.subprocess_manager import SubprocessManager
-from waydroid_helper.util.task import Task
+
 from waydroid_helper.util.arch import host
 from waydroid_helper.util.log import logger
-from enum import IntEnum
+from waydroid_helper.util.subprocess_manager import SubprocessManager
+from waydroid_helper.util.task import Task
 
 
 class ExtensionManagerState(IntEnum):

@@ -1,10 +1,10 @@
 from typing import Optional
+
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from waydroid_helper.util import logger
 from gi.repository import Gtk, Adw, GLib, GObject
 
 GTK_VERSION = Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version()
@@ -103,4 +103,3 @@ class NavigationPage(BASE_PAGE, metaclass=NavigationPageMeta):
 
     def get_title(self):
         pass
-

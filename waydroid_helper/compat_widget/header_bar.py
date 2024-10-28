@@ -1,4 +1,3 @@
-from typing import Optional
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -82,8 +81,9 @@ class HeaderBar(Gtk.Widget):
                     title_label = Gtk.Label()
                     title_label.set_markup(f"<b>{title}</b>")
                     self._header.set_title_widget(title_label)
-                self._header.add_css_class("flat")
 
     @classmethod
     def new(cls):
         return HeaderBar()
+
+HeaderBar.set_css_name("compat-headerbar")

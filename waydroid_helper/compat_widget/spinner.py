@@ -1,10 +1,9 @@
-from typing import Optional
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Gtk, Adw, GLib, GObject
+from gi.repository import Gtk, Adw, GLib
 
 GTK_VERSION = Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version()
 ADW_VERSION = Adw.get_major_version(), Adw.get_minor_version(), Adw.get_micro_version()
@@ -42,3 +41,5 @@ class Spinner(Gtk.Widget):
     def on_destroy(self, widget):
         self._spinner.unparent()
         self._spinner = None
+
+Spinner.set_css_name("compat-spinner")

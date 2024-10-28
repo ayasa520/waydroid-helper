@@ -1,8 +1,10 @@
-from gi.repository import Gtk, GObject
-from waydroid_helper.waydroid import WaydroidState, Waydroid
-from waydroid_helper.util import Task, logger
 from gettext import gettext as _
+
 import gi
+from gi.repository import Gtk, GObject
+
+from waydroid_helper.util import Task, logger
+from waydroid_helper.waydroid import WaydroidState, Waydroid
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
