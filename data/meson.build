@@ -1,3 +1,13 @@
+application_id = 'com.jaoushingan.WaydroidHelper'
+
+gnome.compile_resources(
+    'waydroid-helper',
+    '@0@.gresource.xml'.format(application_id),
+    gresource_bundle: true,
+    install: true,
+    install_dir: pkgdatadir,
+)
+
 desktop_file = i18n.merge_file(
     input: 'com.jaoushingan.WaydroidHelper.desktop.in',
     output: 'com.jaoushingan.WaydroidHelper.desktop',
@@ -56,4 +66,16 @@ test(
     args: ['--strict', '--dry-run', meson.current_source_dir()],
 )
 
-subdir('icons')
+scalable_dir = 'icons' / 'hicolor' / 'scalable' / 'apps'
+install_data(
+  scalable_dir / ('@0@.svg').format(application_id),
+  install_dir: get_option('datadir') / 'icons' / scalable_dir,
+)
+
+symbolic_dir = 'icons' / 'hicolor' / 'symbolic' / 'apps'
+install_data(
+  [
+    symbolic_dir / ('@0@-symbolic.svg').format(application_id),
+  ],
+  install_dir: get_option('datadir') / 'icons' / symbolic_dir,
+)

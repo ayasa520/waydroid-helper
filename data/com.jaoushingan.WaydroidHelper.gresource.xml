@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/com/jaoushingan/WaydroidHelper">
+    <file alias="gtk/help-overlay.ui" preprocess="xml-stripblanks">ui/help-overlay.ui</file>
+    <file preprocess="xml-stripblanks">ui/GeneralPage.ui</file>
+    <file preprocess="xml-stripblanks">ui/PropsPage.ui</file>
+    <file preprocess="xml-stripblanks">ui/InfoBar.ui</file>
+    <file preprocess="xml-stripblanks">ui/window.ui</file>
+    <file preprocess="xml-stripblanks">ui/window_old.ui</file>
+    <file preprocess="xml-stripblanks">ui/ExtensionRow.ui</file>
+  </gresource>
+  <gresource prefix="/com/jaoushingan/WaydroidHelper/icons/scalable/actions">
+    <file alias="addon-symbolic.svg" preprocess="xml-stripblanks">icons/addon-symbolic.svg</file>
+    <file alias="conflicting.svg">icons/conflicting.svg</file>
+    <file alias="normal.svg">icons/normal.svg</file>
+    <file alias="grid-symbolic.svg">icons/grid-symbolic.svg</file>
+    <file alias="home-symbolic.svg">icons/home-symbolic.svg</file>
+    <file alias="system-shutdown-symbolic.svg">icons/system-shutdown-symbolic.svg</file>
+    <file alias="system-symbolic.svg">icons/system-symbolic.svg</file>
+  </gresource>
+</gresources>

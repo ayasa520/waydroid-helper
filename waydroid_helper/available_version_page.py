@@ -37,19 +37,22 @@ class AvailableRow(Adw.ActionRow):
         self.delete_button.set_icon_name("edit-delete-symbolic")
         self.delete_button.add_css_class("destructive-action")
         self.add_suffix(self.delete_button)
+
         self.install_button = Gtk.Button.new()
         self.install_button.add_css_class("suggested-action")
         self.install_button.set_valign(align=Gtk.Align.CENTER)
         # self. install_button.add_css_class("flat")
         self.install_button.set_icon_name("document-save-symbolic")
         self.add_suffix(self.install_button)
+
         self.spinner = Spinner()
+        self.add_suffix(self.spinner)
+
         # 统一大小
         size_group = Gtk.SizeGroup(mode=Gtk.SizeGroupMode.VERTICAL)
         size_group.add_widget(self.install_button)
         size_group.add_widget(self.delete_button)
         size_group.add_widget(self.spinner)
-        self.add_suffix(self.spinner)
         # w = self.install_button.get_size(0)
         self.spinner.set_size_request(32, 32)
 

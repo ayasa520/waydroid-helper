@@ -30,7 +30,7 @@ class GeneralPage(Gtk.Box):
             self.status.set_title(_("Connected"))
             self.status.set_subtitle(_("Waydroid session is running"))
             self.status_image.set_from_icon_name(
-                "com.jaoushingan.WaydroidHelper-normal"
+                "normal"
             )
             self.start_button.set_sensitive(False)
             self.stop_button.set_sensitive(True)
@@ -41,7 +41,7 @@ class GeneralPage(Gtk.Box):
             self.status.set_title(_("Stopped"))
             self.status.set_subtitle(_("Waydroid session is stopped"))
             self.status_image.set_from_icon_name(
-                "com.jaoushingan.WaydroidHelper-conflicting"
+                "conflicting"
             )
             self.start_button.set_sensitive(True)
             self.stop_button.set_sensitive(False)
@@ -53,7 +53,7 @@ class GeneralPage(Gtk.Box):
             self.status.set_title(_("Uninitialized"))
             self.status.set_subtitle(_("Waydroid is not initialized"))
             self.status_image.set_from_icon_name(
-                "com.jaoushingan.WaydroidHelper-conflicting"
+                "conflicting"
             )
             self.general_button_stack.set_visible_child_name("uninitialized_menu")
             self.init_button.set_sensitive(True)

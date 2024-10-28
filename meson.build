@@ -6,7 +6,7 @@ project('waydroid-helper',
 
 i18n = import('i18n')
 gnome = import('gnome')
-
+pkgdatadir = get_option('prefix') / get_option('datadir') / meson.project_name()
 
 
 subdir('data')

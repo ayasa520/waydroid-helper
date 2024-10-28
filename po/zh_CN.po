@@ -235,3 +235,11 @@ msgstr "安装扩展"
 #: waydroid_helper/extensionwindow.py:132
 msgid "Do you want to install"
 msgstr "是否要安装"
+
+#" waydroid_helper/available_version_page.py:282
+msgid "Installation Failed"
+msgstr "安装失败"
+
+#" waydroid_helper/available_version_page.py:305
+msgid "Uninstallaion Failed"
+msgstr "卸载失败"

@@ -5,7 +5,7 @@ gi.require_version("Adw", "1")
 
 import os
 from .window import WaydroidHelperWindow
-from gi.repository import Gtk, Gio, Adw
+from gi.repository import Gtk, Gio, Adw, Gdk
 from gi.events import GLibEventLoopPolicy
 from waydroid_helper.compat_widget import GLIB_VERSION, Dialog
 from waydroid_helper.util import logger

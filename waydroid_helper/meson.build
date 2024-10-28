@@ -1,16 +1,7 @@
-pkgdatadir = get_option('prefix') / get_option('datadir') / meson.project_name()
 moduledir = pkgdatadir / 'waydroid_helper'
 utildir = moduledir / 'util'
 compatwidgetdir = moduledir / 'compat_widget'
 gnome = import('gnome')
-
-gnome.compile_resources(
-    'waydroid-helper',
-    'waydroid-helper.gresource.xml',
-    gresource_bundle: true,
-    install: true,
-    install_dir: pkgdatadir,
-)
 
 python = import('python')
 

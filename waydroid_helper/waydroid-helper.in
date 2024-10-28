@@ -64,6 +64,5 @@ if __name__ == '__main__':
     from gi.repository import Gio, Adw, Gtk, GLib
     resource = Gio.Resource.load(os.path.join(pkgdatadir, 'waydroid-helper.gresource'))
     resource._register()
-
     from waydroid_helper import main
     sys.exit(main.main(VERSION))

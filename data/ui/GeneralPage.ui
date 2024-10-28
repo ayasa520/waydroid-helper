@@ -22,7 +22,7 @@
                     <property name="hexpand">true</property>
                     <property name="always-show-arrow">true</property>
                     <property name="popover">pop_power</property>
-                    <property name="icon-name">com.jaoushingan.WaydroidHelper-system-shutdown-symbolic</property>
+                    <property name="icon-name">system-shutdown-symbolic</property>
                     <style>
                       <class name="flat"/>
                     </style>

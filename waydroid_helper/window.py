@@ -36,6 +36,8 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        # theme = Gtk.IconTheme.get_for_display(self.get_display())
+        # theme.add_resource_path("/com/jaoushingan/WaydroidHelper/icons")
         self.settings = Gio.Settings(schema_id="com.jaoushingan.WaydroidHelper")
 
         self.settings.bind(
@@ -124,17 +126,17 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
             child=general_page,
             name="page01",
             title=_("Home"),
-            icon_name="com.jaoushingan.WaydroidHelper-home-symbolic",
+            icon_name="home-symbolic",
         )
         self.stack_add_titled_with_icon(
             child=props_page,
             name="page02",
             title=_("Settings"),
-            icon_name="com.jaoushingan.WaydroidHelper-system-symbolic",
+            icon_name="system-symbolic",
         )
         self.stack_add_titled_with_icon(
             child=extensions_page,
             name="page03",
             title=_("Extensions"),
-            icon_name="com.jaoushingan.WaydroidHelper-addon-symbolic",
+            icon_name="addon-symbolic",
         )
