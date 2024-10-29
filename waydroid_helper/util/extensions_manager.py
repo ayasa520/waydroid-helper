@@ -501,5 +501,5 @@ class PackageManager(GObject.Object):
 
     async def remove_packages(self, package_names):
         for pkg in package_names:
-            logger.info("remove", pkg)
+            logger.info(f"remove {pkg}")
             await self.remove_package(pkg)
