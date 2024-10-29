@@ -2,7 +2,7 @@ name: Bug Report
 description: "Create a report to help us improve."
 title: "[BUG]"
 
-body: 
+body:
   - type: textarea
     attributes:
       label: Describe the bug
@@ -10,14 +10,6 @@ body:
     validations:
       required: true
 
-  - type: input
-    attributes:
-      label: Waydroid version
-      description: Output of `waydroid --version`
-      placeholder: "Example: 1.4.0"
-    validations:
-      required: true
-   
   - type: dropdown
     attributes:
       label: Device
@@ -68,5 +60,6 @@ body:
         /var/lib/waydroid/waydroid.log
         `sudo waydroid shell -- logcat -d | tee logcat.txt`
         `sudo dmesg | tee dmesg.txt`
+        `waydroid-helper > log.txt 2>&1`
     validations:
       required: true
