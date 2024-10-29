@@ -230,7 +230,9 @@ class PackageManager(GObject.Object):
                     logger.error(
                         f"All {retries} attempts failed. Could not download the file."
                     )
-                    raise
+                    raise ValueError(
+                        f"All {retries} attempts failed. Could not download the file."
+                    )
 
     def get_all_files_relative(self, directory):
         all_files = []
@@ -339,7 +341,6 @@ class PackageManager(GObject.Object):
                     **{"props": list(props.keys())},
                 }
 
-
             if "install" in package_info.keys():
                 cache_install = os.path.join(startdir, package_info["install"])
                 local_install = os.path.join(local_dir, "install")
@@ -353,7 +354,6 @@ class PackageManager(GObject.Object):
             #     f"pkexec waydroid-cli copy {desc_cache_path} {local_dir}"
             # )
 
-
             # post_install
             if "install" in package_info.keys():
                 await self.post_install(package_info)
@@ -362,7 +362,7 @@ class PackageManager(GObject.Object):
             async with aiofiles.open(desc_path, mode="w") as f:
                 content = json.dumps(package_info)
                 await f.write(content)
-            
+
             self.installed_packages[package_name] = package_info
             logger.info(f"Package {name} installed successfully.")
             self.emit("installation-completed", name, version)
@@ -400,7 +400,9 @@ class PackageManager(GObject.Object):
                         },
                     )
                 else:
-                    logger.error(f"Unsupported function or invalid arguments: {func_name}")
+                    logger.error(
+                        f"Unsupported function or invalid arguments: {func_name}"
+                    )
 
         # commands_str = ";".join(commands)
         # print(f'pkexec bash -c "{commands_str}"')
