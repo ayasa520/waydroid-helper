@@ -69,7 +69,8 @@ class ExtensionsPage(Gtk.Box):
 
     def on_uninstallation_completed(self, obj, name, version):
         page: AvailableVersionPage = self.get_root().view_find_page(name)
-        page.on_uninstallation_completed(obj, name, version)
+        if page is not None:
+            page.on_uninstallation_completed(obj, name, version)
 
     def create_row(self, title, subtitle, info):
 

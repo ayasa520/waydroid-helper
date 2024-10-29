@@ -16,6 +16,7 @@ if ADW_VERSION >= (1, 4, 0):
 else:
     BASE_PAGE = Gtk.Box
 
+
 # 其实应该做成 final 类了, 但是
 class NavigationPageMeta(type(GObject.Object)):
     def __new__(mcs, name, bases, attrs):
@@ -64,13 +65,14 @@ class NavigationPageMeta(type(GObject.Object)):
                 super(NavigationPage, self).set_tag(tag)
 
             def get_tag(self):
-                super(NavigationPage, self).get_tag()
+                return super(NavigationPage, self).get_tag()
 
             def set_child(self, child: Optional[Gtk.Widget] = None) -> None:
                 super(NavigationPage, self).set_child(child)
 
             def get_title(self):
-                super(NavigationPage, self).get_title()
+                return super(NavigationPage, self).get_title()
+
         if replace:
             attrs["__init__"] = __init__
             attrs["set_tag"] = set_tag
@@ -79,8 +81,10 @@ class NavigationPageMeta(type(GObject.Object)):
             attrs["get_title"] = get_title
         return super().__new__(mcs, name, bases, attrs)
 
+
 class NavigationPage(BASE_PAGE, metaclass=NavigationPageMeta):
     __gtype_name__ = "NavigationPage"
+
     def __init__(self, child: Gtk.Widget = None, title: str = "", tag: str = None):
         pass
 
