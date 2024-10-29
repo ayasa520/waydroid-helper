@@ -243,3 +243,20 @@ msgstr "安装失败"
 #" waydroid_helper/available_version_page.py:305
 msgid "Uninstallaion Failed"
 msgstr "卸载失败"
+
+
+#" waydroid_helper/available_version_page.py:204
+msgid "Installation Complete"
+msgstr "安装完成"
+
+#" waydroid_helper/available_version_page.py:217
+msgid "Uninstallation Complete"
+msgstr "卸载完成"
+
+#" waydroid_helper/available_version_page.py:205
+msgid "{0} has been successfully installed."
+msgstr "{0} 已成功安装。"
+
+#" waydroid_helper/available_version_page.py:218
+msgid "{0} has been successfully uninstalled."
+msgstr "{0} 已成功卸载。"

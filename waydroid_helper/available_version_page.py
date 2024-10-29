@@ -202,7 +202,7 @@ class AvailableVersionPage(NavigationPage):
         )
         dialog = Dialog(
             _("Installation Complete"),
-            _(f"{name}-{version} has been successfully installed."),
+            _("{0} has been successfully installed.").format(f"{name}-{version}"),
             self.get_root(),
             True,
         )
@@ -215,7 +215,7 @@ class AvailableVersionPage(NavigationPage):
         )
         dialog = Dialog(
             _("Uninstallation Complete"),
-            _(f"{name}-{version} has been successfully uninstalled."),
+            _("{0} has been successfully uninstalled.").format(f"{name}-{version}"),
             self.get_root(),
             True,
         )
