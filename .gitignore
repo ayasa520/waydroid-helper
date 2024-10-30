@@ -27,3 +27,4 @@ AppDir
 .venv
 .flatpak-builder
 extract_description.py
+.VSCodeCounter/
