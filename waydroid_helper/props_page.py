@@ -428,7 +428,7 @@ class PropsPage(Gtk.Box):
     def on_restore_button_clicked(self, button):
         self.set_reveal(self.save_privileged_notification, False)
         # self.save_privileged_notification.set_reveal_child(False)
-        self.waydroid.restore_privileged_props()
+        self._task.create_task(self.waydroid.restore_privileged_props())
 
     def on_apply_button_clicked(self, button):
         self.set_reveal(self.save_privileged_notification, False)

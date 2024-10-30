@@ -2,13 +2,14 @@ import asyncio
 import json
 import os
 import xml.etree.ElementTree as ET
+
+from gettext import gettext as _
 from enum import IntEnum
 
 import aiofiles
 import httpx
 import yaml
 from gi.repository import GLib, GObject
-
 from waydroid_helper.util.arch import host
 from waydroid_helper.util.log import logger
 from waydroid_helper.util.subprocess_manager import SubprocessManager
@@ -20,10 +21,10 @@ class ExtensionManagerState(IntEnum):
     READY = 1
 
 
-# TODO 1. 检查 arch 和 android_version
-#      2. 避免多次重启
-#      3. 进度条, 完成提醒
-#      4. prop 修改放在 yaml 里, 不要单独文件了
+# TODO 
+#      1. 避免多次重启
+#      2. 进度条, 完成提醒
+#      3. prop 修改放在 yaml 里, 不要单独文件了
 class PackageManager(GObject.Object):
     __gsignals__ = {
         "installation-started": (GObject.SignalFlags.RUN_FIRST, None, (str, str)),
@@ -286,6 +287,16 @@ class PackageManager(GObject.Object):
             # 检查架构
             if "arch" in package_info.keys() and self.arch not in package_info["arch"]:
                 raise ValueError("Hardware architecture mismatch")
+
+            if "android_version" in package_info.keys():
+                current_android_version = self.waydroid.get_android_version()
+                required_android_version = package_info["android_version"]
+                if current_android_version != required_android_version:
+                    raise ValueError(
+                        _(
+                            "Your Android version is not supported. Required version: {0}. Current version: {1}."
+                        ).format(required_android_version, current_android_version)
+                    )
 
             # 检查依赖
             # missing_dependencies = self.check_dependencies(package_info)

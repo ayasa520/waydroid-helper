@@ -315,6 +315,10 @@ class Waydroid(GObject.Object):
             type=str, default="", nick="ro.odm.build.tags"
         )
 
+        android_version = GObject.Property(
+            type=str, default=""
+        )
+
         cfg: configparser.ConfigParser = configparser.ConfigParser()
         cfg_old: configparser.ConfigParser = None
         # cfg_all: configparser.ConfigParser = None
@@ -326,7 +330,7 @@ class Waydroid(GObject.Object):
             # self.cfg_all = copy.deepcopy(self.cfg)
 
         def _list_properties(self):
-            return [prop for prop in self.list_properties() if prop.name != "state"]
+            return [prop for prop in self.list_properties() if prop.name not in ["state", "android-version"]]
 
         def reset_state(self):
             self.state = PropsState.UNINITIALIZED
@@ -361,13 +365,18 @@ class Waydroid(GObject.Object):
                 await self.save()
             except SubprocessError as e:
                 logger.error(e)
-                self.restore()
+                await self.restore()
         
         def init(self):
             self.cfg.read(CONFIG_PATH)
             self.cfg_old = copy.deepcopy(self.cfg)
 
-        def fetch(self):
+        async def fetch_android_version(self):
+            system_image_path = os.path.join(self.cfg.get("waydroid","images_path"), "system.img")
+            result = await self._subprocess.run(f"debugfs -R 'cat /system/build.prop' {system_image_path} | grep '^ro.build.version.release=' | cut -d'=' -f2")
+            self.android_version = result["stdout"].strip()
+
+        async def fetch(self):
             self.state = PropsState.UNINITIALIZED
             # fallbacks = []
             for each in self._list_properties():
@@ -404,9 +413,9 @@ class Waydroid(GObject.Object):
             # print(each.nick, self.get_property(each.name))
             self.state = PropsState.READY
 
-        def restore(self):
+        async def restore(self):
             self.cfg = copy.deepcopy(self.cfg_old)
-            self.fetch()
+            await self.fetch()
             # self.cfg_all = self.cfg_all_old
             # for each in self._list_properties():
             #     value = self.cfg_all.get("properties", each.name)
@@ -467,9 +476,10 @@ class Waydroid(GObject.Object):
     async def init_persist_props(self):
         await self.persist_props.fetch()
 
-    def init_privileged_props(self):
+    async def init_privileged_props(self):
         self.privileged_props.init()
-        self.privileged_props.fetch()
+        await self.privileged_props.fetch()
+        await self.privileged_props.fetch_android_version()
 
     def reset_persist_props_state(self):
         # self.persist_props.reset_ready_list()
@@ -481,8 +491,8 @@ class Waydroid(GObject.Object):
     async def save_privileged_props(self):
         await self.upgrade(offline=True)
 
-    def restore_privileged_props(self):
-        self.privileged_props.restore()
+    async def restore_privileged_props(self):
+        await self.privileged_props.restore()
 
     async def set_extension_props(self, pairs):
         await self.privileged_props.set_extension_props(pairs)
@@ -502,10 +512,10 @@ class Waydroid(GObject.Object):
         if self.state == WaydroidState.UNINITIALIZED:
             if "Session:\tRUNNING" in output:
                 await self.init_persist_props()
-                self.init_privileged_props()
+                await self.init_privileged_props()
                 self.set_property("state", WaydroidState.RUNNING)
             elif "Session:\tSTOPPED" in output:
-                self.init_privileged_props()
+                await self.init_privileged_props()
                 self.set_property("state", WaydroidState.STOPPED)
         elif self.state == WaydroidState.STOPPED:
             if "Session:\tRUNNING" in output:
@@ -523,12 +533,12 @@ class Waydroid(GObject.Object):
                 self.set_property("state", WaydroidState.UNINITIALIZED)
         elif self.state == WaydroidState.LOADING:
             if "Session:\tSTOPPED" in output:
-                self.init_privileged_props()
+                await self.init_privileged_props()
                 self.set_property("state", WaydroidState.STOPPED)
             elif "WayDroid is not initialized" in output:
                 self.set_property("state", WaydroidState.UNINITIALIZED)
             if "Session:\tRUNNING" in output:
-                self.init_privileged_props()
+                await self.init_privileged_props()
                 await self.init_persist_props()
                 self.set_property("state", WaydroidState.RUNNING)
 
@@ -584,7 +594,7 @@ class Waydroid(GObject.Object):
                         flag=True,
                     )
                 except SubprocessError as e:
-                    self.privileged_props.restore()
+                    await self.privileged_props.restore()
                     logger.error(e)
             else:
                 await self._subprocess.run(
@@ -594,3 +604,6 @@ class Waydroid(GObject.Object):
             return True
         finally:
             await self.update_waydroid_status()
+
+    def get_android_version(self):
+        return self.privileged_props.android_version
