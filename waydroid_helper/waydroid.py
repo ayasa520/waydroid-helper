@@ -323,8 +323,6 @@ class Waydroid(GObject.Object):
         def __init__(self) -> None:
             super().__init__()
             self.state = PropsState.UNINITIALIZED
-            self.cfg.read(CONFIG_PATH)
-            self.cfg_old = copy.deepcopy(self.cfg)
             # self.cfg_all = copy.deepcopy(self.cfg)
 
         def _list_properties(self):
@@ -364,6 +362,10 @@ class Waydroid(GObject.Object):
             except SubprocessError as e:
                 logger.error(e)
                 self.restore()
+        
+        def init(self):
+            self.cfg.read(CONFIG_PATH)
+            self.cfg_old = copy.deepcopy(self.cfg)
 
         def fetch(self):
             self.state = PropsState.UNINITIALIZED
@@ -466,6 +468,7 @@ class Waydroid(GObject.Object):
         await self.persist_props.fetch()
 
     def init_privileged_props(self):
+        self.privileged_props.init()
         self.privileged_props.fetch()
 
     def reset_persist_props_state(self):
