@@ -28,33 +28,27 @@ class AvailableRow(Adw.ActionRow):
     def __init__(self, name, version, installed):
         super().__init__()
         self.set_title(title=f"{name}-{version}")
-        # if version.get("description", "") != "":
-        #     adw_action_row.set_subtitle(subtitle=_(version["description"]))
-        #     adw_action_row.set_subtitle_selectable(True)
+        
+        button_size = 36
+        
         self.delete_button = Gtk.Button.new()
         self.delete_button.set_valign(align=Gtk.Align.CENTER)
-        # self.delete_button.add_css_class("flat")
         self.delete_button.set_icon_name("edit-delete-symbolic")
         self.delete_button.add_css_class("destructive-action")
+        self.delete_button.set_size_request(button_size, button_size)
         self.add_suffix(self.delete_button)
 
         self.install_button = Gtk.Button.new()
         self.install_button.add_css_class("suggested-action")
         self.install_button.set_valign(align=Gtk.Align.CENTER)
-        # self. install_button.add_css_class("flat")
         self.install_button.set_icon_name("document-save-symbolic")
+        self.install_button.set_size_request(button_size, button_size)
         self.add_suffix(self.install_button)
 
         self.spinner = Spinner()
+        self.spinner.set_size_request(button_size, button_size)
+        self.spinner.set_valign(align=Gtk.Align.CENTER)
         self.add_suffix(self.spinner)
-
-        # 统一大小
-        size_group = Gtk.SizeGroup(mode=Gtk.SizeGroupMode.VERTICAL)
-        size_group.add_widget(self.install_button)
-        size_group.add_widget(self.delete_button)
-        size_group.add_widget(self.spinner)
-        # w = self.install_button.get_size(0)
-        self.spinner.set_size_request(32, 32)
 
         if installed:
             self.set_installation_state(self.State.INSTALLED)
@@ -74,7 +68,6 @@ class AvailableRow(Adw.ActionRow):
             self.install_button.hide()
             self.delete_button.hide()
             self.spinner.show()
-
 
 # class CircularProgressBar(Gtk.DrawingArea):
 #     def __init__(self):
