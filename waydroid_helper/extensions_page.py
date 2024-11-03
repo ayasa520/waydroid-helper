@@ -1,7 +1,10 @@
 import gi
 
 from waydroid_helper.available_version_page import AvailableVersionPage
-from waydroid_helper.util.extensions_manager import PackageManager, ExtensionManagerState
+from waydroid_helper.util.extensions_manager import (
+    PackageManager,
+    ExtensionManagerState,
+)
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
@@ -34,7 +37,7 @@ class ExtensionsPage(Gtk.Box):
         spinner_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         spinner_box.set_halign(Gtk.Align.CENTER)
         spinner_box.set_valign(Gtk.Align.CENTER)
-        
+
         # 创建并设置 spinner
         spinner = Spinner()
         spinner.set_size_request(64, 64)
@@ -91,6 +94,7 @@ class ExtensionsPage(Gtk.Box):
         row.button.connect("clicked", on_button_clicked)
         return row
 
+    # TODO 换成 TreeListModel? 我找不到可用的资料或者样例
     def init_page(self, w, param):
         if self.extension_manager.get_property("state") != ExtensionManagerState.READY:
             return
@@ -127,3 +131,12 @@ class ExtensionsPage(Gtk.Box):
                     group.add(child=row)
 
             self.extensions_page.add(group=group)
+
+    async def refresh(self):
+        await self.extension_manager.update_extension_json()
+
+        self.stack.remove(self.extensions_page)
+
+        self.extensions_page = Adw.PreferencesPage.new()
+        self.stack.add_named(self.extensions_page, "content")
+        self.init_page(None, None)

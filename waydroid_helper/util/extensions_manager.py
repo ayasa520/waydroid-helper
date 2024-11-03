@@ -82,6 +82,7 @@ class PackageManager(GObject.Object):
     async def update_extension_json(self):
         extensions = await self.fetch_extension_json()
         self.extensions_json = extensions
+        logger.info("extension json has been updated")
         if extensions:
             self._task.create_task(self.save_extension_json())
 
