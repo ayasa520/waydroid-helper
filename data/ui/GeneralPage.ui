@@ -32,6 +32,9 @@
             </child>
           </object>
         </child>
+        <child>
+          <object class="SharedFoldersWidget" id="shared_folders_widget"></object>
+        </child>
       </object>
     </child>
     <object class="GtkPopover" id="pop_power">

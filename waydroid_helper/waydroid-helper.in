@@ -25,6 +25,7 @@ import signal
 import locale
 import gettext
 import shutil
+from argparse import ArgumentParser
 
 VERSION = '@VERSION@'
 BUILD_APPIMAGE = '@build_appimage@'
@@ -55,7 +56,7 @@ locale.textdomain('waydroid-helper')
 
 gettext.bindtextdomain('waydroid-helper', localedir)
 gettext.textdomain('waydroid-helper')
-if __name__ == '__main__':
+def start_gui():
     import gi
 
     gi.require_version('Adw', '1')
@@ -66,3 +67,19 @@ if __name__ == '__main__':
     resource._register()
     from waydroid_helper import main
     sys.exit(main.main(VERSION))
+
+if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument("--start-mount", action="store_true", help="Start the mounting service")
+    parser.add_argument("--start-monitor", action="store_true", help="Start the monitoring service")
+    args = parser.parse_args()
+
+    if args.start_mount:
+        from waydroid_helper.tools import start_monitor, start_mount
+        start_mount()
+    elif args.start_monitor:
+        from waydroid_helper.tools import start_monitor, start_mount
+        start_monitor()
+    else:
+        start_gui()
+

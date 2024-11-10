@@ -1,0 +1,10 @@
+[Unit]
+Description=Waydroid Mount
+
+[Service]
+UMask=0022
+BusName=id.waydro.Mount
+ExecStart=/usr/bin/waydroid-helper --start-mount
+
+[Install]
+WantedBy=multi-user.target

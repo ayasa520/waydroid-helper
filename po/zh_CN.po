@@ -260,3 +260,30 @@ msgstr "{0} 已成功安装。"
 #" waydroid_helper/available_version_page.py:218
 msgid "{0} has been successfully uninstalled."
 msgstr "{0} 已成功卸载。"
+
+msgid "Shared Folders"
+msgstr "共享文件夹"
+
+msgid "Use the button below to add your first shared folder. For file sharing to work, you need to have <a href='https://bindfs.org/'>bindfs</a> installed."
+msgstr "点击下方按钮添加首个共享文件夹。需要安装 <a href='https://bindfs.org/'>bindfs</a> 才能共享文件夹。"
+
+msgid "Restart the systemd user service immediately"
+msgstr "立即重启 systemd 用户级服务"
+
+msgid "Source"
+msgstr "源"
+
+msgid "Target"
+msgstr "目标"
+
+msgid "Save"
+msgstr "保存"
+
+msgid "Target Directory"
+msgstr "目标目录"
+
+msgid "Select Folder"
+msgstr "选择文件夹"
+
+msgid "Select"
+msgstr "选择"

@@ -12,6 +12,8 @@ pkgdatadir = get_option('prefix') / get_option('datadir') / meson.project_name()
 subdir('data')
 subdir('waydroid_helper')
 subdir('po')
+subdir('dbus')
+subdir('systemd')
 
 gnome.post_install(
      glib_compile_schemas: true,

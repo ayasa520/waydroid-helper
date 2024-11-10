@@ -10,6 +10,7 @@ from .toolbar_view import ToolbarView
 from .spinner import Spinner
 from .dialog import Dialog
 from .header_bar import HeaderBar
+from .file_dialog import FileDialog
 
 GTK_VERSION = Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version()
 ADW_VERSION = Adw.get_major_version(), Adw.get_minor_version(), Adw.get_micro_version()

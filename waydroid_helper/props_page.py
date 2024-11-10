@@ -139,7 +139,7 @@ class PropsPage(Gtk.Box):
 
         self.save_notification: InfoBar = InfoBar(
             label=_("Restart the session to apply the changes"),
-            cancel_callback=self.on_cancel_button_clicked,
+            # cancel_callback=self.on_cancel_button_clicked,
             ok_callback=self.on_restart_button_clicked,
         )
         self.save_privileged_notification: InfoBar = InfoBar(
@@ -416,22 +416,22 @@ class PropsPage(Gtk.Box):
         # print("来咯", name, self.waydroid.persist_props.get_property(name))
         self._task.create_task(self.waydroid.save_persist_prop(name))
 
-    def on_cancel_button_clicked(self, button):
-        self.set_reveal(self.save_notification, False)
+    # def on_cancel_button_clicked(self, button):
+    #     self.set_reveal(self.save_notification, False)
         # self.save_notification.set_reveal_child(False)
 
     def on_restart_button_clicked(self, button):
-        self.set_reveal(self.save_notification, False)
+        # self.set_reveal(self.save_notification, False)
         # self.save_notification.set_reveal_child(False)
         self._task.create_task(self.waydroid.restart_session())
 
     def on_restore_button_clicked(self, button):
-        self.set_reveal(self.save_privileged_notification, False)
+        # self.set_reveal(self.save_privileged_notification, False)
         # self.save_privileged_notification.set_reveal_child(False)
         self._task.create_task(self.waydroid.restore_privileged_props())
 
     def on_apply_button_clicked(self, button):
-        self.set_reveal(self.save_privileged_notification, False)
+        # self.set_reveal(self.save_privileged_notification, False)
         # self.save_privileged_notification.set_reveal_child(False)
         self._task.create_task(self.waydroid.save_privileged_props())
 
