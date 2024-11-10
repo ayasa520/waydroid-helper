@@ -5,4 +5,4 @@ pycairo
 PyGObject>=3.50.0
 pywayland
 PyYAML
-
+dbus-python
