@@ -1,6 +1,7 @@
 moduledir = pkgdatadir / 'waydroid_helper'
 utildir = moduledir / 'util'
 compatwidgetdir = moduledir / 'compat_widget'
+toolsdir = moduledir / 'tools'
 gnome = import('gnome')
 
 python = import('python')
@@ -50,6 +51,7 @@ waydroid_helper_sources = [
     'infobar.py',
     'extension_row.py',
     'available_version_page.py',
+    'shared_folder.py'
 ]
 util_sources = [
     'util/__init__.py',
@@ -60,6 +62,12 @@ util_sources = [
     'util/log.py',
 ]
 
+tools_sources = [
+    'tools/__init__.py',
+    'tools/monitor_service.py',
+    'tools/mount_service.py',
+]
+
 compat_widget_sources = [
     'compat_widget/__init__.py',
     'compat_widget/navigation_view.py',
@@ -68,7 +76,9 @@ compat_widget_sources = [
     'compat_widget/spinner.py',
     'compat_widget/dialog.py',
     'compat_widget/header_bar.py',
+    'compat_widget/file_dialog.py',
 ]
 install_data(waydroid_helper_sources, install_dir: moduledir)
 install_data(util_sources, install_dir: utildir)
 install_data(compat_widget_sources, install_dir: compatwidgetdir)
+install_data(tools_sources, install_dir: toolsdir)

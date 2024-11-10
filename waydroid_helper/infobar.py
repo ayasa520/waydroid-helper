@@ -16,8 +16,13 @@ class InfoBar(Gtk.Revealer):
     def __init__(self, label=None, cancel_callback=None, ok_callback=None):
         super().__init__()
         self.label.set_text(label)
-        self.cancel_button.connect("clicked", cancel_callback)
-        self.ok_button.connect("clicked", ok_callback)
+        if cancel_callback:
+            self.cancel_button.connect("clicked", cancel_callback)
+        if ok_callback:
+            self.ok_button.connect("clicked", ok_callback)
+
+        self.cancel_button.connect_after("clicked", lambda _:self.default_callback(self, False))
+        self.ok_button.connect_after("clicked", lambda _:self.default_callback(self, False))
 
         css_provider = Gtk.CssProvider()
         css_provider.load_from_data(
@@ -27,3 +32,6 @@ class InfoBar(Gtk.Revealer):
         Gtk.StyleContext.add_provider_for_display(
             self.get_display(), css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER
         )
+
+    def default_callback(self, widget: Gtk.Revealer, reveal: bool):
+        widget.set_reveal_child(reveal)

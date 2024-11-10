@@ -5,7 +5,10 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
 from gettext import gettext as _
-from waydroid_helper import ExtensionsPage, GeneralPage, Waydroid, PropsPage
+from .extensions_page import ExtensionsPage
+from .general_page import GeneralPage
+from .waydroid import Waydroid
+from .props_page import PropsPage
 from waydroid_helper.compat_widget import (
     ADW_VERSION,
     NavigationView,

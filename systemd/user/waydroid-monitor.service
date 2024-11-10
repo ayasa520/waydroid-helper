@@ -1,0 +1,14 @@
+[Unit]
+Description=Waydro Session DBus Monitor
+After=dbus.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/waydroid-helper --start-monitor
+StandardOutput=journal
+StandardError=journal
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

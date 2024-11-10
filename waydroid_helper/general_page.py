@@ -5,6 +5,8 @@ from gi.repository import Gtk, GObject
 
 from waydroid_helper.util import Task, logger
 from waydroid_helper.waydroid import WaydroidState, Waydroid
+from waydroid_helper.shared_folder import SharedFoldersWidget
+from waydroid_helper.infobar import InfoBar
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
@@ -22,6 +24,8 @@ class GeneralPage(Gtk.Box):
     init_button: Gtk.Button = Gtk.Template.Child("init-button")
     updrade_button: Gtk.Button = Gtk.Template.Child()
     show_full_ui_button: Gtk.Button = Gtk.Template.Child("show-full-ui-button")
+    shared_folders_widget: SharedFoldersWidget = Gtk.Template.Child()
+    # mount_list:Gtk.ListBox = Gtk.Template.Child()
 
     _task = Task()
 
@@ -29,9 +33,7 @@ class GeneralPage(Gtk.Box):
         if state == WaydroidState.RUNNING:
             self.status.set_title(_("Connected"))
             self.status.set_subtitle(_("Waydroid session is running"))
-            self.status_image.set_from_icon_name(
-                "normal"
-            )
+            self.status_image.set_from_icon_name("normal")
             self.start_button.set_sensitive(False)
             self.stop_button.set_sensitive(True)
             self.general_button_stack.set_visible_child_name("initialized_menu")
@@ -40,9 +42,7 @@ class GeneralPage(Gtk.Box):
         elif state == WaydroidState.STOPPED:
             self.status.set_title(_("Stopped"))
             self.status.set_subtitle(_("Waydroid session is stopped"))
-            self.status_image.set_from_icon_name(
-                "conflicting"
-            )
+            self.status_image.set_from_icon_name("conflicting")
             self.start_button.set_sensitive(True)
             self.stop_button.set_sensitive(False)
             self.general_button_stack.set_visible_child_name("initialized_menu")
@@ -52,9 +52,7 @@ class GeneralPage(Gtk.Box):
         elif state == WaydroidState.UNINITIALIZED:
             self.status.set_title(_("Uninitialized"))
             self.status.set_subtitle(_("Waydroid is not initialized"))
-            self.status_image.set_from_icon_name(
-                "conflicting"
-            )
+            self.status_image.set_from_icon_name("conflicting")
             self.general_button_stack.set_visible_child_name("uninitialized_menu")
             self.init_button.set_sensitive(True)
             self.updrade_button.set_sensitive(False)
@@ -72,6 +70,14 @@ class GeneralPage(Gtk.Box):
         super().__init__(**kargs)
         self.set_property("waydroid", waydroid)
         self.waydroid.connect("notify::state", self.on_waydroid_state_changed)
+        self.infobar = InfoBar(
+            label=_("Restart the systemd user service immediately"),
+            ok_callback=lambda *_:self.shared_folders_widget.restart_service(),
+        )
+        self.shared_folders_widget.connect(
+            "updated", lambda _: self.infobar.set_reveal_child(True)
+        )
+        self.append(self.infobar)
 
     def _disable_buttons(self):
         self.start_button.set_sensitive(False)
@@ -126,3 +132,8 @@ class GeneralPage(Gtk.Box):
     def on_start_upgrade_offline_clicked(self, button):
         logger.info("sudo waydroid upgrade -o")
         self._task.create_task(self.__on_start_upgrade_offline_clicked())
+
+    #
+    # @Gtk.Template.Callback()
+    # def on_mount_point_add_button_clicked(self, button):
+    #     pass

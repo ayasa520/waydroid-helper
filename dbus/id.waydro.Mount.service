@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=id.waydro.Mount
+User=root
+SystemdService=waydroid-mount.service
