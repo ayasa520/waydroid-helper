@@ -27,36 +27,56 @@ yay -S waydroid-helper
 
 For manual installation, you'll need to install the dependencies and build the project using Meson.
 
-#### Dependencies
+#### Arch-based Distributions
+1. Install dependencies:
 
-On Arch Linux, install the following packages:
+    ```bash
+    sudo pacman -S gtk4 libadwaita meson ninja
+    ```
 
-- python
-- fakeroot
-- python-bidict
-- python-httpx
-- python-gobject (>=3.50.0)
-- python-yaml
-- python-pywayland
-- python-cairo
-- gtk4
-- libadwaita
-- python-aiofiles
 
-Note: Package names may differ on other distributions. Please refer to your distribution's package manager to find the equivalent packages.
+2. Clone the repository:
+    ```
+    git clone https://github.com/ayasa520/waydroid-helper.git
+    cd waydroid-helper
+    ```
+3. Build and install using Meson:
+    ```
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install -r requirements.txt
+    meson setup --prefix /usr build
+    sudo ninja -C build install
 
-#### Building and Installing
+    # Uninstall waydroid helper
+    # sudo ninja -C build uninstall
+    ```
 
-1. Clone the repository:
-```
-git clone https://github.com/ayasa520/waydroid-helper.git
-cd waydroid-helper
-```
-2. Build and install using Meson:
-```
-meson setup --prefix /usr build
-ninja -C build install
-```
+#### Debian-based Distributions
+1. Install dependencies:
+
+    ```bash
+    sudo apt install libgtk-4-1 libgtk-4-dev libadwaita-1-dev libadwaita-1-0 libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-4.0 gir1.2-adw-1 gettext ninja-build fakeroot attr libcap-dev libdbus-1-dev desktop-file-utils software-properties-common -y
+    ```
+
+
+2. Clone the repository:
+    ```
+    git clone https://github.com/ayasa520/waydroid-helper.git
+    cd waydroid-helper
+    ```
+3. Build and install using Meson:
+    ```
+    python3 -m venv .venv
+    source .venv/bin/activate
+    python3 -m pip install meson
+    pip install -r requirements.txt
+    meson setup --prefix /usr build
+    sudo ninja -C build install
+
+    # Uninstall waydroid helper
+    # sudo ninja -C build uninstall
+    ```
 
 ## Screenshots
 
