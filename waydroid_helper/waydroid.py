@@ -507,40 +507,41 @@ class Waydroid(GObject.Object):
         await self.persist_props.save(name)
 
     async def update_waydroid_status(self):
-        result = await self._subprocess.run("waydroid status")
-        output = result["stdout"]
-        if self.state == WaydroidState.UNINITIALIZED:
-            if "Session:\tRUNNING" in output:
-                await self.init_persist_props()
-                await self.init_privileged_props()
-                self.set_property("state", WaydroidState.RUNNING)
-            elif "Session:\tSTOPPED" in output:
-                await self.init_privileged_props()
-                self.set_property("state", WaydroidState.STOPPED)
-        elif self.state == WaydroidState.STOPPED:
-            if "Session:\tRUNNING" in output:
-                await self.init_persist_props()
-                self.set_property("state", WaydroidState.RUNNING)
-            elif "WayDroid is not initialized" in output:
-                self.set_property("state", WaydroidState.UNINITIALIZED)
-        elif self.state == WaydroidState.RUNNING:
-            if "Session:\tSTOPPED" in output:
-                self.reset_persist_props_state()
-                self.set_property("state", WaydroidState.STOPPED)
-            elif "WayDroid is not initialized" in output:
-                self.reset_persist_props_state()
-                self.reset_privileged_props_state()
-                self.set_property("state", WaydroidState.UNINITIALIZED)
-        elif self.state == WaydroidState.LOADING:
-            if "Session:\tSTOPPED" in output:
-                await self.init_privileged_props()
-                self.set_property("state", WaydroidState.STOPPED)
-            elif "WayDroid is not initialized" in output:
-                self.set_property("state", WaydroidState.UNINITIALIZED)
-            if "Session:\tRUNNING" in output:
-                await self.init_privileged_props()
-                await self.init_persist_props()
-                self.set_property("state", WaydroidState.RUNNING)
+        async with self._lock:
+            result = await self._subprocess.run("waydroid status")
+            output = result["stdout"]
+            if self.state == WaydroidState.UNINITIALIZED:
+                if "Session:\tRUNNING" in output:
+                    await self.init_persist_props()
+                    await self.init_privileged_props()
+                    self.set_property("state", WaydroidState.RUNNING)
+                elif "Session:\tSTOPPED" in output:
+                    await self.init_privileged_props()
+                    self.set_property("state", WaydroidState.STOPPED)
+            elif self.state == WaydroidState.STOPPED:
+                if "Session:\tRUNNING" in output:
+                    await self.init_persist_props()
+                    self.set_property("state", WaydroidState.RUNNING)
+                elif "WayDroid is not initialized" in output:
+                    self.set_property("state", WaydroidState.UNINITIALIZED)
+            elif self.state == WaydroidState.RUNNING:
+                if "Session:\tSTOPPED" in output:
+                    self.reset_persist_props_state()
+                    self.set_property("state", WaydroidState.STOPPED)
+                elif "WayDroid is not initialized" in output:
+                    self.reset_persist_props_state()
+                    self.reset_privileged_props_state()
+                    self.set_property("state", WaydroidState.UNINITIALIZED)
+            elif self.state == WaydroidState.LOADING:
+                if "Session:\tSTOPPED" in output:
+                    await self.init_privileged_props()
+                    self.set_property("state", WaydroidState.STOPPED)
+                elif "WayDroid is not initialized" in output:
+                    self.set_property("state", WaydroidState.UNINITIALIZED)
+                if "Session:\tRUNNING" in output:
+                    await self.init_privileged_props()
+                    await self.init_persist_props()
+                    self.set_property("state", WaydroidState.RUNNING)
 
     def __update_waydroid_status(self):
         self._task.create_task(self.update_waydroid_status())
@@ -552,6 +553,7 @@ class Waydroid(GObject.Object):
         # 立即执行一次, 随后再每两秒一次
         self._task.create_task(self.update_waydroid_status())
         GLib.timeout_add_seconds(2, self.__update_waydroid_status)
+        self._lock = asyncio.Lock()
 
     async def start_session(self):
         try:
