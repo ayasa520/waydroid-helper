@@ -60,6 +60,7 @@ util_sources = [
     'util/extensions_manager.py',
     'util/arch.py',
     'util/log.py',
+    'util/weak_ref.py',
 ]
 
 tools_sources = [
@@ -74,9 +75,10 @@ compat_widget_sources = [
     'compat_widget/navigation_page.py',
     'compat_widget/toolbar_view.py',
     'compat_widget/spinner.py',
-    'compat_widget/dialog.py',
+    'compat_widget/message_dialog.py',
     'compat_widget/header_bar.py',
     'compat_widget/file_dialog.py',
+    'compat_widget/shared_folder_dialog.py',
 ]
 install_data(waydroid_helper_sources, install_dir: moduledir)
 install_data(util_sources, install_dir: utildir)

@@ -8,9 +8,10 @@ from .navigation_view import NavigationView
 from .navigation_page import NavigationPage
 from .toolbar_view import ToolbarView
 from .spinner import Spinner
-from .dialog import Dialog
+from .message_dialog import MessageDialog
 from .header_bar import HeaderBar
 from .file_dialog import FileDialog
+from .shared_folder_dialog import SharedFolderDialog
 
 GTK_VERSION = Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version()
 ADW_VERSION = Adw.get_major_version(), Adw.get_minor_version(), Adw.get_micro_version()

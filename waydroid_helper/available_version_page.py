@@ -10,7 +10,7 @@ gi.require_version("Adw", "1")
 from waydroid_helper.compat_widget import (
     ToolbarView,
     NavigationPage,
-    Dialog,
+    MessageDialog,
     HeaderBar,
     Spinner,
 )
@@ -193,7 +193,7 @@ class AvailableVersionPage(NavigationPage):
         self.rows[f"{name}-{version}"].set_installation_state(
             AvailableRow.State.INSTALLED
         )
-        dialog = Dialog(
+        dialog = MessageDialog(
             _("Installation Complete"),
             _("{0} has been successfully installed.").format(f"{name}-{version}"),
             self.get_root(),
@@ -206,7 +206,7 @@ class AvailableVersionPage(NavigationPage):
         self.rows[f"{name}-{version}"].set_installation_state(
             AvailableRow.State.UNINSTALLED
         )
-        dialog = Dialog(
+        dialog = MessageDialog(
             _("Uninstallation Complete"),
             _("{0} has been successfully uninstalled.").format(f"{name}-{version}"),
             self.get_root(),
@@ -216,7 +216,7 @@ class AvailableVersionPage(NavigationPage):
         dialog.present()
 
     async def show_dialog(self, title, body):
-        dialog = Dialog(
+        dialog = MessageDialog(
             heading=title,
             body=body,
             parent=self.get_root(),
@@ -274,7 +274,7 @@ class AvailableVersionPage(NavigationPage):
                     installation_successful = True
         except Exception as e:
             logger.error(e)
-            dialog = Dialog(
+            dialog = MessageDialog(
                 heading=_("Installation Failed"), body=e, parent=self.get_root()
             )
             dialog.add_response(Gtk.ResponseType.OK, _("OK"))
@@ -297,7 +297,7 @@ class AvailableVersionPage(NavigationPage):
                 AvailableRow.State.INSTALLED
             )
             logger.error(e)
-            dialog = Dialog(
+            dialog = MessageDialog(
                 heading=_("Uninstallation Failed"), body=e, parent=self.get_root()
             )
             dialog.add_response(Gtk.ResponseType.OK, _("OK"))

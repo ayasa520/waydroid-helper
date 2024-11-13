@@ -113,7 +113,7 @@ class DialogMeta(type(GObject.Object)):
         return super().__new__(mcs, name, bases, attrs)
 
 
-class Dialog(BASE_DIALOG, metaclass=DialogMeta):
+class MessageDialog(BASE_DIALOG, metaclass=DialogMeta):
     def __init__(
         self, heading: str, body: str, parent: Optional[Gtk.Window], modal: bool = True
     ):

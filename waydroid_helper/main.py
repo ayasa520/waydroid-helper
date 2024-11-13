@@ -7,7 +7,7 @@ import os
 from .window import WaydroidHelperWindow
 from gi.repository import Gtk, Gio, Adw, Gdk
 from gi.events import GLibEventLoopPolicy
-from waydroid_helper.compat_widget import GLIB_VERSION, Dialog
+from waydroid_helper.compat_widget import GLIB_VERSION, MessageDialog
 from waydroid_helper.util import logger
 import sys
 import asyncio
@@ -41,7 +41,7 @@ class WaydroidHelperApplication(Adw.Application):
             win = Adw.ApplicationWindow(application=self)
             def dialog_response(dialog, response):
                 sys.exit()
-            dialog = Dialog(
+            dialog = MessageDialog(
                 parent=win, heading="Error", body="Cannot run as root user!"
             )
             dialog.add_response(Gtk.ResponseType.OK, "OK")
