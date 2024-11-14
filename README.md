@@ -27,7 +27,7 @@ yay -S waydroid-helper
 
 For manual installation, you'll need to install the dependencies and build the project using Meson.
 
-#### Arch-based Distributions
+#### Arch, Manjaro and EndeavourOS based distributions
 1. Install dependencies:
 
     ```bash
@@ -52,7 +52,7 @@ For manual installation, you'll need to install the dependencies and build the p
     # sudo ninja -C build uninstall
     ```
 
-#### Debian-based Distributions
+#### Debian and Ubuntu based distributions
 1. Install dependencies:
 
     ```bash
@@ -69,7 +69,32 @@ For manual installation, you'll need to install the dependencies and build the p
     ```
     python3 -m venv .venv
     source .venv/bin/activate
-    python3 -m pip install meson
+    pip install meson
+    pip install -r requirements.txt
+    meson setup --prefix /usr build
+    sudo ninja -C build install
+
+    # Uninstall waydroid helper
+    # sudo ninja -C build uninstall
+    ```
+
+#### RHEL, Fedora and Rocky based distributions
+1. Install dependencies:
+
+    ```bash
+    sudo dnf install gtk4 gtk4-devel libadwaita libadwaita-devel gobject-introspection-devel gcc cairo-devel pkgconf-pkg-config python3-devel gobject-introspection gtk4-devel libadwaita-devel gettext ninja-build fakeroot attr libcap-devel dbus-devel desktop-file-utils -y
+    ```
+
+2. Clone the repository:
+    ```
+    git clone https://github.com/ayasa520/waydroid-helper.git
+    cd waydroid-helper
+    ```
+3. Build and install using Meson:
+    ```
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install meson
     pip install -r requirements.txt
     meson setup --prefix /usr build
     sudo ninja -C build install
