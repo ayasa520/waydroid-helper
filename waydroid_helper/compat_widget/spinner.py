@@ -10,20 +10,42 @@ ADW_VERSION = Adw.get_major_version(), Adw.get_minor_version(), Adw.get_micro_ve
 GLIB_VERSION = GLib.MAJOR_VERSION, GLib.MINOR_VERSION, GLib.MICRO_VERSION
 
 
-class Spinner(Gtk.Widget):
-    __gtype_name__ = "Spinner"
+class SpinnerMeta(type(Gtk.Widget)):
+    def __new__(mcs, name, bases, attrs):
+        # final class
+        for base in bases:
+            if isinstance(base, SpinnerMeta):
+                raise TypeError("type '{0}' is not an acceptable base type".format(base.__name__))
 
-    def __init__(self):
-        super().__init__()
         if ADW_VERSION >= (1, 6, 0):
-            self._spinner = Adw.Spinner.new()
-        else:
-            self._spinner = Gtk.Spinner.new()
-            self._spinner.start()
+            def __init__(self):
+                super(self.__class__, self).__init__()
+                self._spinner = Adw.Spinner.new()
+                self.set_layout_manager(Gtk.BinLayout())
+                self._spinner.set_parent(self)
+                self.connect("destroy", self.on_destroy)
 
-        self.set_layout_manager(Gtk.BinLayout())
-        self._spinner.set_parent(self)
-        self.connect("destroy", self.on_destroy)
+            def set_spinning(self, spinning: bool):
+                pass
+        else:
+            def __init__(self):
+                super(self.__class__, self).__init__()
+                self._spinner = Gtk.Spinner.new()
+                self._spinner.start()
+                self.set_layout_manager(Gtk.BinLayout())
+                self._spinner.set_parent(self)
+                self.connect("destroy", self.on_destroy)
+
+            def set_spinning(self, spinning: bool):
+                self._spinner.set_spinning(spinning)
+
+        attrs["__init__"] = __init__
+        attrs["set_spinning"] = set_spinning
+        return super().__new__(mcs, name, bases, attrs)
+
+
+class Spinner(Gtk.Widget, metaclass=SpinnerMeta):
+    __gtype_name__ = "Spinner"
 
     def set_halign(self, align: Gtk.Align) -> None:
         self._spinner.set_halign(align)
@@ -34,12 +56,12 @@ class Spinner(Gtk.Widget):
     def set_size_request(self, width: int, height: int):
         self._spinner.set_size_request(width, height)
 
-    def set_spinning(self, spinning: bool):
-        if isinstance(self, Gtk.Spinner):
-            self._spinner.set_spinning(spinning)
-
     def on_destroy(self, widget):
         self._spinner.unparent()
         self._spinner = None
+    
+    def __init__(self):
+        pass    
+
 
 Spinner.set_css_name("compat-spinner")
