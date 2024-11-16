@@ -23,6 +23,8 @@ a = Analysis(
         ("usr/share/icons", "share/icons"),
         ("usr/share/locale", "share/locale"),
         ("usr/share/polkit-1", "share/polkit-1"),
+        ("usr/share/dbus-1", "share/dbus-1"),
+        ("usr/lib/systemd", "lib/systemd"),
         ("usr/share/waydroid-helper/data", "share/waydroid-helper/data"),
         ("usr/share/waydroid-helper/waydroid-helper.gresource", "share/waydroid-helper/"),
     ],
