@@ -16,6 +16,11 @@ Waydroid Helper is a graphical user interface application written in Python usin
 
 ## Installation
 
+### Installing from Releases
+1. Go to the [releases](https://github.com/ayasa520/waydroid-helper/releases) page
+2. Download the appropriate package for your distribution:
+3. Install the package
+
 ### AUR
 
 For Arch users, Waydroid Helper is available in the AUR:
