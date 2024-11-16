@@ -5,10 +5,11 @@ import gi
 import aiofiles
 import asyncio
 
+
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Gtk, Adw, Gio, GObject
-from waydroid_helper.util import SubprocessManager, logger
+from waydroid_helper.util import SubprocessManager, logger, SubprocessError
 from waydroid_helper.compat_widget import SharedFolderDialog
 from gettext import gettext as _
 
@@ -82,8 +83,17 @@ class SharedFoldersWidget(Adw.PreferencesGroup):
         return True
 
     async def read_drop_file(self):
-        service_name = "waydroid-monitor.service"
-        drop_in_dir = os.path.expanduser(f"~/.config/systemd/user/{service_name}.d")
+        monitor_service_name = "waydroid-monitor.service"
+        mount_service_name = "waydroid-mount.service"
+        try:
+            await self._subprocess.run(f"systemctl --user list-unit-files {monitor_service_name}")
+            await self._subprocess.run(f"systemctl list-unit-files {mount_service_name}")
+        except Exception:
+            logger.error(f"{monitor_service_name} or {monitor_service_name} not exists!")
+            self.hide()
+            return
+
+        drop_in_dir = os.path.expanduser(f"~/.config/systemd/user/{monitor_service_name}.d")
         drop_in_file = os.path.join(drop_in_dir, "override.conf")
         sources = []
         targets = []
