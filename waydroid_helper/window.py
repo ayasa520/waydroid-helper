@@ -1,3 +1,7 @@
+# pyright: reportOptionalCall=false
+# pyright: reportUnknownParameterType=false
+# pyright: reportMissingParameterType=false
+# pyright: reportUnknownArgumentType=false
 import gi
 import asyncio
 
@@ -5,6 +9,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
 from gettext import gettext as _
+from waydroid_helper.util import template, logger
 from .extensions_page import ExtensionsPage
 from .general_page import GeneralPage
 from .waydroid import Waydroid
@@ -15,27 +20,15 @@ from waydroid_helper.compat_widget import (
     NavigationPage,
     ToolbarView,
     HeaderBar,
-    Spinner
+    Spinner,
 )
 from gi.repository import Gtk, Adw, Gio, GObject
 
 
-@Gtk.Template(resource_path="/com/jaoushingan/WaydroidHelper/ui/window.ui")
+@template(resource_path="/com/jaoushingan/WaydroidHelper/ui/window.ui")
 class WaydroidHelperWindow(Adw.ApplicationWindow):
-    __gtype_name__ = "WaydroidHelperWindow"
+    __gtype_name__: str = "WaydroidHelperWindow"
     navigation_view: NavigationView = Gtk.Template.Child()
-
-    def view_push(self, widget):
-        self.navigation_view.push(widget)
-
-    def view_add(self, widget):
-        self.navigation_view.add(widget)
-
-    def view_find_page(self, tag: str):
-        return self.navigation_view.find_page(tag)
-
-    def view_push_by_tag(self, tag: str):
-        self.navigation_view.push_by_tag(tag)
 
     def stack_add_titled_with_icon(
         self, child: Gtk.Widget, name: str | None, title: str, icon_name: str
@@ -43,7 +36,7 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
         view_page = self.adw_view_stack.add_titled(child, name, title)
         view_page.set_icon_name(icon_name)
 
-    def _on_page_changed(self, stack, pspec):
+    def _on_page_changed(self, stack: Adw.ViewStack, pspec: GObject.ParamSpec):
         # 获取前一个页面和当前页面
         current_page = stack.get_visible_child()
 
@@ -53,22 +46,34 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
         else:
             self.refresh_button.set_visible(False)
 
-    def _on_refresh_button_clicked(self, button:Gtk.Button):
-        async def refresh():
-            await current_page.refresh()
-            button.get_child().set_visible_child_name("icon")
+    async def _refresh_extensions_page(self, button: Gtk.Button):
+        stack = button.get_child()
+        if not isinstance(stack, Gtk.Stack):
+            logger.error("Expected Gtk.Stack but got %s", type(stack))
+            return
+        stack.set_visible_child_name("spin")
 
         current_page = self.adw_view_stack.get_visible_child()
+        if not isinstance(current_page, ExtensionsPage):
+            logger.error("Expected ExtensionsPage but got %s", type(current_page))
+            return
+        await current_page.refresh()
+
+        stack.set_visible_child_name("icon")
+
+    def _on_refresh_button_clicked(self, button: Gtk.Button):
+        current_page = self.adw_view_stack.get_visible_child()
         if isinstance(current_page, ExtensionsPage):
-            button.get_child().set_visible_child_name("spin")
-            asyncio.create_task(refresh())
+            asyncio.create_task(self._refresh_extensions_page(button))
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         # theme = Gtk.IconTheme.get_for_display(self.get_display())
         # theme.add_resource_path("/com/jaoushingan/WaydroidHelper/icons")
-        self.settings = Gio.Settings(schema_id="com.jaoushingan.WaydroidHelper")
+        self.settings: Gio.Settings = Gio.Settings(
+            schema_id="com.jaoushingan.WaydroidHelper"
+        )
 
         self.settings.bind(
             "width", self, "default-width", Gio.SettingsBindFlags.DEFAULT
@@ -85,23 +90,25 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
 
         adw_toolbar_view = ToolbarView.new()
 
-        self.adw_view_stack = Adw.ViewStack.new()
+        self.adw_view_stack: Adw.ViewStack = Adw.ViewStack.new()
         self.adw_view_stack.connect("notify::visible-child", self._on_page_changed)
 
         adw_toolbar_view.set_content(content=self.adw_view_stack)
 
-        self.adw_header_bar = HeaderBar.new()
+        self.adw_header_bar: HeaderBar = HeaderBar()
 
-        self.refresh_button = Gtk.Button()
+        self.refresh_button: Gtk.Button = Gtk.Button()
         self.refresh_button.set_tooltip_text(_("Click to refresh extension list"))
         self.refresh_button.add_css_class("image-button")
-        self.refresh_btn_stack = Gtk.Stack.new()
+        self.refresh_btn_stack: Gtk.Stack = Gtk.Stack.new()
         self.refresh_btn_stack.set_hexpand(False)  # 防止水平扩展
         self.refresh_btn_stack.set_vexpand(False)  # 防止垂直扩展
         self.refresh_btn_stack.set_halign(Gtk.Align.CENTER)
         self.refresh_btn_stack.set_valign(Gtk.Align.CENTER)
         self.refresh_btn_stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
-        self.box = Gtk.Box.new(orientation=Gtk.Orientation.HORIZONTAL,spacing=0)
+        self.box: Gtk.Box = Gtk.Box.new(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=0
+        )
         self.box.append(Gtk.Image.new_from_icon_name("view-refresh-symbolic"))
         self.refresh_btn_stack.add_named(name="icon", child=self.box)
         self.refresh_btn_stack.add_named(name="spin", child=Spinner())
@@ -110,6 +117,9 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
         self.refresh_button.connect("clicked", self._on_refresh_button_clicked)
 
         self.adw_header_bar.pack_start(self.refresh_button)
+
+        # Initialize variable outside the if/else blocks
+        adw_view_switcher_title = None
 
         if ADW_VERSION >= (1, 4, 0):
             adw_view_switcher = Adw.ViewSwitcher.new()
@@ -144,12 +154,13 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
         adw_view_switcher_bar = Adw.ViewSwitcherBar.new()
         adw_view_switcher_bar.set_stack(self.adw_view_stack)
         if ADW_VERSION < (1, 4, 0):
-            adw_view_switcher_title.bind_property(
-                "title-visible",
-                adw_view_switcher_bar,
-                "reveal",
-                GObject.BindingFlags.SYNC_CREATE,
-            )
+            if adw_view_switcher_title:
+                adw_view_switcher_title.bind_property(
+                    "title-visible",
+                    adw_view_switcher_bar,
+                    "reveal",
+                    GObject.BindingFlags.SYNC_CREATE,
+                )
         adw_toolbar_view.add_bottom_bar(adw_view_switcher_bar)
 
         if ADW_VERSION >= (1, 4, 0):
@@ -160,7 +171,9 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
             )
             break_point = Adw.Breakpoint.new(condition=breakpoint_condition)
             none_value = GObject.Value()
-            none_value.init(GObject.TYPE_OBJECT)
+            none_value.init(  # pyright:ignore[reportUnknownMemberType]
+                GObject.TYPE_OBJECT  # pyright:ignore[reportAny]
+            )
             none_value.set_object(None)
 
             break_point.add_setters(
@@ -175,10 +188,12 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
         )
         self.navigation_view.push(adw_navigation_page)
 
-        self.waydroid = Waydroid()
+        self.waydroid: Waydroid = Waydroid()
         general_page = GeneralPage(self.waydroid)
         props_page = PropsPage(self.waydroid)
-        extensions_page = ExtensionsPage(self.waydroid)
+        extensions_page = ExtensionsPage(
+            self.waydroid, navigation_view=self.navigation_view
+        )
 
         self.stack_add_titled_with_icon(
             child=general_page,

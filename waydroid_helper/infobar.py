@@ -1,19 +1,22 @@
+# pyright: reportUnknownArgumentType=false
+from typing import Callable
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
 from gi.repository import Gtk
+from waydroid_helper.util import template
 
 
-@Gtk.Template(resource_path="/com/jaoushingan/WaydroidHelper/ui/InfoBar.ui")
+@template(resource_path="/com/jaoushingan/WaydroidHelper/ui/InfoBar.ui")
 class InfoBar(Gtk.Revealer):
-    __gtype_name__ = "InfoBar"
+    __gtype_name__: str = "InfoBar"
     label: Gtk.Label = Gtk.Template.Child()
     cancel_button: Gtk.Button = Gtk.Template.Child()
     ok_button: Gtk.Button = Gtk.Template.Child()
 
-    def __init__(self, label=None, cancel_callback=None, ok_callback=None):
+    def __init__(self, label: str, cancel_callback:Callable[[Gtk.Button],None]|None=None, ok_callback:Callable[[Gtk.Button],None]|None=None):
         super().__init__()
         self.label.set_text(label)
         if cancel_callback:
@@ -21,11 +24,15 @@ class InfoBar(Gtk.Revealer):
         if ok_callback:
             self.ok_button.connect("clicked", ok_callback)
 
-        self.cancel_button.connect_after("clicked", lambda _:self.default_callback(self, False))
-        self.ok_button.connect_after("clicked", lambda _:self.default_callback(self, False))
+        self.cancel_button.connect_after(
+            "clicked", lambda _: self.default_callback(self, False)
+        )
+        self.ok_button.connect_after(
+            "clicked", lambda _: self.default_callback(self, False)
+        )
 
         css_provider = Gtk.CssProvider()
-        css_provider.load_from_data(
+        css_provider.load_from_data(  # pyright:ignore[reportUnknownMemberType]
             " .info { background-color: mix(@accent_bg_color, @window_bg_color, 0.3); } "
         )
 

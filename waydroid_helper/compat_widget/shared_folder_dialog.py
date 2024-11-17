@@ -1,3 +1,16 @@
+# pyright: reportUnknownMemberType=false
+# pyright: reportUnknownParameterType=false
+# pyright: reportMissingParameterType=false
+# pyright: reportRedeclaration=false
+# pyright: reportUnknownVariableType=false
+# pyright: reportUnknownArgumentType=false
+# pyright: reportAny=false
+# pyright: reportCallIssue=false
+# pyright: reportMissingSuperCall=false
+# pyright: reportGeneralTypeIssues=false
+# pyright: reportUntypedBaseClass=false
+
+from typing import final
 import weakref
 import gi
 import os
@@ -13,9 +26,9 @@ from gettext import gettext as _
 ADW_VERSION = Adw.get_major_version(), Adw.get_minor_version(), Adw.get_micro_version()
 
 if ADW_VERSION >= (1, 5, 0):
-    BASE_DIALOG = Adw.Dialog
+    base_dialog = Adw.Dialog
 else:
-    BASE_DIALOG = Adw.Window
+    base_dialog = Adw.Window
 
 
 class DialogMeta(type(GObject.Object)):
@@ -27,7 +40,7 @@ class DialogMeta(type(GObject.Object)):
                     "type '{0}' is not an acceptable base type".format(base.__name__)
                 )
 
-        if BASE_DIALOG == Adw.Window:
+        if base_dialog == Adw.Window:
 
             def __init__(self, parent):
                 super(self.__class__, self).__init__(transient_for=parent, modal=True)
@@ -37,15 +50,18 @@ class DialogMeta(type(GObject.Object)):
                 content = self._init_content()
                 self.set_content(content)
 
-                instance = weakref.ref(self)
-                method = weakref.ref(Adw.Window.destroy)
-                shortcut = Gtk.Shortcut.new(
-                    Gtk.ShortcutTrigger.parse_string("Escape"),
-                    Gtk.CallbackAction.new(lambda *_: method()(instance())),
-                )
-                shortcut_controller = Gtk.ShortcutController()
-                shortcut_controller.add_shortcut(shortcut)
-                self.add_controller(shortcut_controller)
+                _instance = weakref.ref(self)
+                _method = weakref.ref(Adw.Window.destroy)
+                instance = _instance()
+                method = _method()
+                if method and instance:
+                    shortcut = Gtk.Shortcut.new(
+                        Gtk.ShortcutTrigger.parse_string("Escape"),
+                        Gtk.CallbackAction.new(lambda *_: method()(instance()) or True) ,
+                    )
+                    shortcut_controller = Gtk.ShortcutController()
+                    shortcut_controller.add_shortcut(shortcut)
+                    self.add_controller(shortcut_controller)
 
             def present(self):
                 super(self.__class__, self).present()
@@ -98,8 +114,9 @@ class DialogMeta(type(GObject.Object)):
         return super().__new__(mcs, name, bases, attrs)
 
 
-class SharedFolderDialog(BASE_DIALOG, metaclass=DialogMeta):
-    __gtype_name__ = "SharedFolderDialog"
+@final
+class SharedFolderDialog(base_dialog, metaclass=DialogMeta):
+    __gtype_name__:str = "SharedFolderDialog"
     __gsignals__ = {
         "saved": (
             GObject.SignalFlags.RUN_FIRST,
@@ -111,7 +128,7 @@ class SharedFolderDialog(BASE_DIALOG, metaclass=DialogMeta):
         ),
     }
 
-    special_dirs = [
+    special_dirs: list[GLib.UserDirectory] = [
         GLib.UserDirectory.DIRECTORY_DOCUMENTS,
         GLib.UserDirectory.DIRECTORY_DOWNLOAD,
         GLib.UserDirectory.DIRECTORY_MUSIC,
@@ -121,7 +138,7 @@ class SharedFolderDialog(BASE_DIALOG, metaclass=DialogMeta):
         GLib.UserDirectory.DIRECTORY_DESKTOP,
     ]
 
-    default_map = {
+    default_map:dict[str|None,str] = {
         GLib.get_user_special_dir(
             GLib.UserDirectory.DIRECTORY_DOCUMENTS
         ): os.path.expanduser("~/.local/share/waydroid/data/media/0/Documents"),
@@ -157,16 +174,16 @@ class SharedFolderDialog(BASE_DIALOG, metaclass=DialogMeta):
         source_label.set_halign(Gtk.Align.START)
         grid.attach(source_label, 0, 0, 1, 1)
 
-        self.file_chooser_button = Adw.SplitButton()
+        self.file_chooser_button:Adw.SplitButton= Adw.SplitButton()
         # FIXME
         connect_weakly(
             self.file_chooser_button, "clicked", self._on_file_chooser_clicked
         )
         # self.file_chooser_button.connect("clicked", self._on_file_chooser_clicked)
 
-        self.current_path = GLib.get_user_special_dir(
+        self.current_path:str = GLib.get_user_special_dir(
             GLib.UserDirectory.DIRECTORY_PUBLIC_SHARE
-        )
+        ) or os.path.expanduser("~")
         self.file_chooser_button.set_label(self.current_path)
         self.file_chooser_button.set_hexpand(True)
         grid.attach(self.file_chooser_button, 1, 0, 1, 1)
@@ -175,7 +192,7 @@ class SharedFolderDialog(BASE_DIALOG, metaclass=DialogMeta):
         target_label.set_halign(Gtk.Align.START)
         grid.attach(target_label, 0, 1, 1, 1)
 
-        self.target_entry = Gtk.Entry()
+        self.target_entry:Gtk.Entry = Gtk.Entry()
         self.target_entry.set_placeholder_text(_("Target Directory"))
         self.target_entry.set_hexpand(True)
         grid.attach(self.target_entry, 1, 1, 1, 1)
@@ -185,7 +202,7 @@ class SharedFolderDialog(BASE_DIALOG, metaclass=DialogMeta):
         menu = Gio.Menu()
         section = Gio.Menu()
 
-        self.action_group = Gio.SimpleActionGroup()
+        self.action_group:Gio.SimpleActionGroup = Gio.SimpleActionGroup()
         self.file_chooser_button.insert_action_group("folder", self.action_group)
 
         for i, dir_const in enumerate(self.special_dirs):
@@ -242,9 +259,9 @@ class SharedFolderDialog(BASE_DIALOG, metaclass=DialogMeta):
         dialog = FileDialog(
             title=_("Select Folder"), modal=True, parent=self.get_root()
         )
-        dialog.select_folder(self._on_folder_selected)
+        dialog.select_folder(callback=self._on_folder_selected)
 
-    def _on_folder_selected(self, success, path):
+    def _on_folder_selected(self, success: bool, path: str | None):
         if success and path:
             self.current_path = path
             self.file_chooser_button.set_label(path)

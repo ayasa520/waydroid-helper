@@ -1,3 +1,14 @@
+# pyright: reportUnknownMemberType=false
+# pyright: reportUnknownParameterType=false
+# pyright: reportMissingParameterType=false
+# pyright: reportRedeclaration=false
+# pyright: reportUnknownVariableType=false
+# pyright: reportUnknownArgumentType=false
+# pyright: reportAny=false
+# pyright: reportMissingSuperCall=false
+# pyright: reportCallIssue=false
+
+# from typing import override
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -55,9 +66,12 @@ class HeaderBarMeta(type(GObject.Object)):
             Gtk.Widget.do_unroot(self)
 
         if ADW_VERSION >= (1, 4, 0):
+
             def do_root(self):
                 Gtk.Widget.do_root(self)
+
         else:
+
             def do_root(self):
                 Gtk.Widget.do_root(self)
                 if not (self._navigation_page and self._navigation_view):
@@ -68,6 +82,7 @@ class HeaderBarMeta(type(GObject.Object)):
                         and self._navigation_view
                         and not self._header.get_title_widget()
                     ):
+
                         def on_back_clicked(button):
                             self._navigation_view.pop()
 
@@ -101,9 +116,11 @@ class HeaderBarMeta(type(GObject.Object)):
 
 
 class HeaderBar(Gtk.Widget, metaclass=HeaderBarMeta):
-    __gtype_name__ = "HeaderBar"
-    title_widget = GObject.Property(type=Gtk.Widget, default=None)
-    centering_policy = GObject.Property(type=Adw.CenteringPolicy, default=Adw.CenteringPolicy.LOOSE)
+    __gtype_name__: str = "HeaderBar"
+    title_widget: GObject.Property = GObject.Property(type=Gtk.Widget, default=None)
+    centering_policy: GObject.Property = GObject.Property(
+        type=Adw.CenteringPolicy, default=Adw.CenteringPolicy.LOOSE
+    )
 
     def __init__(self):
         pass
@@ -114,14 +131,14 @@ class HeaderBar(Gtk.Widget, metaclass=HeaderBarMeta):
     def on_destroy(self, widget):
         pass
 
+    # @override
     def do_unroot(self):
         pass
 
+    # @override
     def do_root(self):
         pass
 
-    @classmethod
-    def new(cls):
-        pass
+
 
 HeaderBar.set_css_name("compat-headerbar")

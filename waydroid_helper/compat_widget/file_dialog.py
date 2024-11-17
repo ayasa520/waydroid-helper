@@ -1,3 +1,9 @@
+# pyright: reportUnknownMemberType=false
+# pyright: reportUnknownParameterType=false
+# pyright: reportMissingParameterType=false
+# pyright: reportRedeclaration=false
+# pyright: reportUnknownVariableType=false
+from typing import Any, Callable
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -12,7 +18,7 @@ GTK_VERSION = Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_ve
 
 
 class FileDialogMeta(type(GObject.Object)):
-    def __new__(mcs, name, bases, attrs):
+    def __new__(mcs, name:str, bases:tuple[type, ...], attrs:dict[str, Any]):
         # final class
         for base in bases:
             if isinstance(base, FileDialogMeta):
@@ -22,10 +28,10 @@ class FileDialogMeta(type(GObject.Object)):
 
         if GTK_VERSION >= (4, 10, 0):
 
-            def __init__(self, parent=None, title=None, modal=True):
+            def __init__(self, parent: Gtk.Window | None = None, title: str | None = None, modal: bool = True):
                 # super().__init__()
                 self._parent = parent
-                self._title = title
+                self._title = title if title else ""
                 self._modal = modal
                 self._filedialog = Gtk.FileDialog(title=self._title, modal=self._modal)
 
@@ -51,7 +57,7 @@ class FileDialogMeta(type(GObject.Object)):
 
         else:
 
-            def __init__(self, parent=None, title=None, modal=True):
+            def __init__(self, parent: Gtk.Window | None = None, title: str | None = None, modal: bool = True):
                 # super().__init__()
                 self._parent = parent
                 self._title = title
@@ -70,7 +76,7 @@ class FileDialogMeta(type(GObject.Object)):
             def _on_folder_selected(self, dialog, response, callback):
                 try:
                     if response == Gtk.ResponseType.ACCEPT:
-                        path = dialog.get_file().get_path()
+                        path:str= dialog.get_file().get_path()
                         callback(True, path)
                     else:
                         callback(False, None)
@@ -87,10 +93,10 @@ class FileDialogMeta(type(GObject.Object)):
 
 
 class FileDialog(GObject.Object, metaclass=FileDialogMeta):
-    __gtype_name__ = "FileDialog"
+    __gtype_name__:str = "FileDialog"
 
-    def __init__(self, parent=None, title=None, modal=True):
+    def __init__(self, parent: Gtk.Window | None = None, title: str | None = None, modal: bool = True):
         pass
 
-    def select_folder(self, callback):
+    def select_folder(self, callback: Callable[[bool, str | None], None]):
         pass

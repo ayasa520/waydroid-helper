@@ -4,10 +4,10 @@ import logging
 import platform
 
 
-def host():
+def host() -> str:
     machine = platform.machine()
 
-    mapping = {
+    mapping: dict[str, str] = {
         "i686": "x86",
         "x86_64": "x86_64",
         "aarch64": "arm64",
@@ -16,10 +16,9 @@ def host():
     }
     if machine in mapping:
         return maybe_remap(mapping[machine])
-    raise ValueError("platform.machine '" + machine + "'"
-                     " architecture is not supported")
+    raise ValueError(f"platform.machine '{machine}' architecture is not supported")
 
-def maybe_remap(target):
+def maybe_remap(target: str) -> str:
     if target.startswith("x86"):
         with open("/proc/cpuinfo") as f:
             cpuinfo = f.read()

@@ -1,4 +1,14 @@
-from typing import Optional
+# pyright: reportUnknownMemberType=false
+# pyright: reportUnknownParameterType=false
+# pyright: reportMissingParameterType=false
+# pyright: reportRedeclaration=false
+# pyright: reportUnknownVariableType=false
+# pyright: reportUnknownArgumentType=false
+# pyright: reportAny=false
+# pyright: reportCallIssue=false
+# pyright: reportMissingSuperCall=false
+# pyright: reportGeneralTypeIssues=false
+# pyright: reportUntypedBaseClass=false
 
 import gi
 
@@ -12,20 +22,18 @@ ADW_VERSION = Adw.get_major_version(), Adw.get_minor_version(), Adw.get_micro_ve
 GLIB_VERSION = GLib.MAJOR_VERSION, GLib.MINOR_VERSION, GLib.MICRO_VERSION
 
 if ADW_VERSION >= (1, 4, 0):
-    BASE_PAGE = Adw.NavigationPage
+    base_page = Adw.NavigationPage
 else:
-    BASE_PAGE = Gtk.Box
+    base_page = Gtk.Box
 
 
 # 其实应该做成 final 类了, 但是
 class NavigationPageMeta(type(GObject.Object)):
     def __new__(mcs, name, bases, attrs):
-        replace = False
         if ADW_VERSION < (1, 4, 0) and (Gtk.Box in bases):
-            replace = True
             attrs["title"] = GObject.Property(type=str, default="")
 
-            def __init__(self, child=None, title: str = "", tag: str = None):
+            def __init__(self, child=None, title: str = "", tag: str | None = None):
                 super(NavigationPage, self).__init__(name=tag)
                 if child:
                     self.append(child)
@@ -35,7 +43,7 @@ class NavigationPageMeta(type(GObject.Object)):
                 if title:
                     self.set_property("title", title)
 
-            def set_child(self, child: Optional[Gtk.Widget] = None) -> None:
+            def set_child(self, child: Gtk.Widget | None = None) -> None:
                 if self._child:
                     self.remove(self._child)
                 self._child = child
@@ -53,11 +61,19 @@ class NavigationPageMeta(type(GObject.Object)):
             def get_title(self):
                 return self.get_property("title")
 
+            attrs["__init__"] = __init__
+            attrs["set_tag"] = set_tag
+            attrs["get_tag"] = get_tag
+            attrs["set_child"] = set_child
+            attrs["get_title"] = get_title
+
         elif ADW_VERSION >= (1, 4, 0) and (Adw.NavigationPage in bases):
-            replace = True
 
             def __init__(
-                self, child: Gtk.Widget = None, title: str = "", tag: str = None
+                self,
+                child: Gtk.Widget | None = None,
+                title: str = "",
+                tag: str | None = None,
             ):
                 super(NavigationPage, self).__init__(child=child, title=title, tag=tag)
 
@@ -67,13 +83,12 @@ class NavigationPageMeta(type(GObject.Object)):
             def get_tag(self):
                 return super(NavigationPage, self).get_tag()
 
-            def set_child(self, child: Optional[Gtk.Widget] = None) -> None:
+            def set_child(self, child: Gtk.Widget | None = None) -> None:
                 super(NavigationPage, self).set_child(child)
 
             def get_title(self):
                 return super(NavigationPage, self).get_title()
 
-        if replace:
             attrs["__init__"] = __init__
             attrs["set_tag"] = set_tag
             attrs["get_tag"] = get_tag
@@ -82,10 +97,12 @@ class NavigationPageMeta(type(GObject.Object)):
         return super().__new__(mcs, name, bases, attrs)
 
 
-class NavigationPage(BASE_PAGE, metaclass=NavigationPageMeta):
-    __gtype_name__ = "NavigationPage"
+class NavigationPage(base_page, metaclass=NavigationPageMeta):
+    __gtype_name__: str = "NavigationPage"
 
-    def __init__(self, child: Gtk.Widget = None, title: str = "", tag: str = None):
+    def __init__(
+        self, child: Gtk.Widget | None = None, title: str = "", tag: str | None = None
+    ):
         pass
 
     @classmethod
@@ -102,8 +119,11 @@ class NavigationPage(BASE_PAGE, metaclass=NavigationPageMeta):
     def get_tag(self):
         pass
 
-    def set_child(self, child: Optional[Gtk.Widget] = None) -> None:
+    def set_child(self, child: Gtk.Widget | None = None) -> None:
         pass
 
     def get_title(self):
         pass
+
+    def get_root(self)->Gtk.Window:
+        return super(NavigationPage, self).get_root()

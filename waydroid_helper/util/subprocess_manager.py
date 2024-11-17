@@ -1,19 +1,27 @@
+# pyright: reportUnknownArgumentType=false, reportUnknownParameterType=false, reportMissingParameterType=false
 import asyncio
 import os
+from typing import TypedDict
 
+class SubprocessResult(TypedDict):
+    command: str
+    key: str 
+    returncode: int
+    stdout: str
+    stderr: str
 
 class SubprocessError(Exception):
-    def __init__(self, returncode, stderr):
-        self.returncode = returncode
-        self.stderr = stderr
+    def __init__(self, returncode: int, stderr: bytes):
+        self.returncode: int = returncode
+        self.stderr: bytes = stderr
         super().__init__(
             f"Command failed with return code {returncode}: {stderr.decode()}"
         )
 
 
 class SubprocessManager:
-    _instance = None
-    _semaphore = None
+    _instance = None # pyright: ignore[reportUnannotatedClassAttribute]
+    _semaphore: asyncio.Semaphore | None = None
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -24,7 +32,18 @@ class SubprocessManager:
     def is_running_in_flatpak(self):
         return "container" in os.environ
 
-    async def run(self, command, flag=False, key=None, env={}):
+    async def run(
+        self,
+        command: str,
+        flag: bool = False,
+        key: str | None = None,
+        env: dict[str, str] | None = None,
+    )->SubprocessResult:
+        if self._semaphore is None:
+            raise RuntimeError("Semaphore is not initialized")
+        
+        env = env or {}  # Initialize empty dict if env is None
+
         async with self._semaphore:
             command_list = command.split(" ")
             if self.is_running_in_flatpak():
@@ -52,10 +71,10 @@ class SubprocessManager:
 
             stdout, stderr = await process.communicate()
 
-            result = {
+            result :SubprocessResult= {
                 "command": command,
                 "key": key if key else command,
-                "returncode": process.returncode,
+                "returncode": process.returncode if process.returncode is not None else 1,
                 "stdout": stdout.decode(),
                 "stderr": stderr.decode(),
             }

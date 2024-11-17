@@ -1,4 +1,15 @@
-from typing import Optional
+# pyright: reportUnknownMemberType=false
+# pyright: reportUnknownParameterType=false
+# pyright: reportMissingParameterType=false
+# pyright: reportRedeclaration=false
+# pyright: reportUnknownVariableType=false
+# pyright: reportUnknownArgumentType=false
+# pyright: reportAny=false
+# pyright: reportCallIssue=false
+# pyright: reportMissingSuperCall=false
+# pyright: reportGeneralTypeIssues=false
+# pyright: reportUntypedBaseClass=false
+
 
 import gi
 
@@ -13,11 +24,11 @@ ADW_VERSION = Adw.get_major_version(), Adw.get_minor_version(), Adw.get_micro_ve
 GLIB_VERSION = GLib.MAJOR_VERSION, GLib.MINOR_VERSION, GLib.MICRO_VERSION
 
 
-BASE_DIALOG = Gtk.MessageDialog
+base_dialog = Gtk.MessageDialog
 if ADW_VERSION >= (1, 2, 0) and ADW_VERSION < (1, 5, 0):
-    BASE_DIALOG = Adw.MessageDialog
+    base_dialog = Adw.MessageDialog
 elif ADW_VERSION >= (1, 5, 0):
-    BASE_DIALOG = Adw.AlertDialog
+    base_dialog = Adw.AlertDialog
 
 
 class DialogMeta(type(GObject.Object)):
@@ -25,9 +36,12 @@ class DialogMeta(type(GObject.Object)):
         # final class
         for base in bases:
             if isinstance(base, DialogMeta):
-                raise TypeError("type '{0}' is not an acceptable base type".format(base.__name__))
+                raise TypeError(
+                    "type '{0}' is not an acceptable base type".format(base.__name__)
+                )
 
-        if BASE_DIALOG == Gtk.MessageDialog:
+        if base_dialog == Gtk.MessageDialog:
+
             def __init__(self, heading, body, parent, modal=True):
                 super(self.__class__, self).__init__(
                     text=heading,
@@ -53,7 +67,7 @@ class DialogMeta(type(GObject.Object)):
             def present(self):
                 super(self.__class__, self).present()
 
-        elif BASE_DIALOG == Adw.MessageDialog:
+        elif base_dialog == Adw.MessageDialog:
 
             def __init__(self, heading, body, parent, modal=True):
                 super(self.__class__, self).__init__(transient_for=parent, modal=modal)
@@ -113,9 +127,9 @@ class DialogMeta(type(GObject.Object)):
         return super().__new__(mcs, name, bases, attrs)
 
 
-class MessageDialog(BASE_DIALOG, metaclass=DialogMeta):
+class MessageDialog(base_dialog, metaclass=DialogMeta):
     def __init__(
-        self, heading: str, body: str, parent: Optional[Gtk.Window], modal: bool = True
+        self, heading: str, body: str, parent: Gtk.Window | None, modal: bool = True
     ):
         pass
 

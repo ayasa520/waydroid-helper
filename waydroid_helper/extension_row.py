@@ -1,37 +1,42 @@
 import gi
 
+from waydroid_helper.tools import PackageManager
+from waydroid_helper.tools.extensions_manager import PackageInfo
+
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
 from gi.repository import Gtk, Adw
+from waydroid_helper.util import template
 
 
-@Gtk.Template(resource_path="/com/jaoushingan/WaydroidHelper/ui/ExtensionRow.ui")
+@template(resource_path="/com/jaoushingan/WaydroidHelper/ui/ExtensionRow.ui")
 class ExtensionRow(Adw.ActionRow):
-    __gtype_name__ = "ExtensionRow"
+    __gtype_name__: str = "ExtensionRow"
     button: Gtk.Button = Gtk.Template.Child()
-    info: list = []
-    extension_manager = ...
+    info: list[PackageInfo] = []
+    extension_manager: PackageManager
 
-    def __init__(self, title=..., subtitle=..., info=...):
+    def __init__(
+        self,
+        title: str | None = None,
+        subtitle: str | None = None,
+        info: list[PackageInfo] | None = None,
+    ):
         super().__init__()
-        if title is not ...:
+        if title is not None:
             self.set_title(title)
-        if subtitle is not ...:
+        if subtitle is not None:
             self.set_subtitle(subtitle)
-        if info is not ...:
+        if info is not None:
             self.info = info
         # self.button.connect("clicked", self.on_button_clicked)
 
-    def set_info(self, versions):
+    def set_info(self, versions: list[PackageInfo]):
         self.info = versions
 
-    def set_manager(self, extension_manager):
+    def set_manager(self, extension_manager: PackageManager):
         self.extension_manager = extension_manager
-
-    @classmethod
-    def new(cls):
-        return ExtensionRow()
 
     # def on_button_clicked(self, button):
     #     root: Adw.Window = self.get_root()

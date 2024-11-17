@@ -1,6 +1,7 @@
 import asyncio
 from enum import IntEnum
 from functools import partial
+from typing import TYPE_CHECKING
 
 import gi
 
@@ -14,9 +15,13 @@ from waydroid_helper.compat_widget import (
     HeaderBar,
     Spinner,
 )
-from waydroid_helper.util import PackageManager, Task, logger
-from gi.repository import Gtk, Adw
+from waydroid_helper.util import Task, logger
+from waydroid_helper.tools import PackageManager
+from gi.repository import Gtk, Adw, GObject
 from gettext import gettext as _
+
+if TYPE_CHECKING:
+    from waydroid_helper.tools.extensions_manager import PackageInfo
 
 
 class AvailableRow(Adw.ActionRow):
@@ -25,27 +30,27 @@ class AvailableRow(Adw.ActionRow):
         INSTALLING = 1
         INSTALLED = 2
 
-    def __init__(self, name, version, installed):
+    def __init__(self, name: str, version: str, installed: bool):
         super().__init__()
         self.set_title(title=f"{name}-{version}")
-        
+
         button_size = 36
-        
-        self.delete_button = Gtk.Button.new()
+
+        self.delete_button: Gtk.Button = Gtk.Button.new()
         self.delete_button.set_valign(align=Gtk.Align.CENTER)
         self.delete_button.set_icon_name("edit-delete-symbolic")
         self.delete_button.add_css_class("destructive-action")
         self.delete_button.set_size_request(button_size, button_size)
         self.add_suffix(self.delete_button)
 
-        self.install_button = Gtk.Button.new()
+        self.install_button: Gtk.Button = Gtk.Button.new()
         self.install_button.add_css_class("suggested-action")
         self.install_button.set_valign(align=Gtk.Align.CENTER)
         self.install_button.set_icon_name("document-save-symbolic")
         self.install_button.set_size_request(button_size, button_size)
         self.add_suffix(self.install_button)
 
-        self.spinner = Spinner()
+        self.spinner: Spinner = Spinner()
         self.spinner.set_size_request(button_size, button_size)
         self.spinner.set_valign(align=Gtk.Align.CENTER)
         self.add_suffix(self.spinner)
@@ -55,7 +60,7 @@ class AvailableRow(Adw.ActionRow):
         else:
             self.set_installation_state(self.State.UNINSTALLED)
 
-    def set_installation_state(self, state):
+    def set_installation_state(self, state: State):
         if state == self.State.INSTALLED:
             self.install_button.hide()
             self.delete_button.show()
@@ -68,6 +73,7 @@ class AvailableRow(Adw.ActionRow):
             self.install_button.hide()
             self.delete_button.hide()
             self.spinner.show()
+
 
 # class CircularProgressBar(Gtk.DrawingArea):
 #     def __init__(self):
@@ -129,24 +135,30 @@ AdwNavigationView：
 
 
 class AvailableVersionPage(NavigationPage):
-    __gtype_name__ = "AvailableVersionPage"
-    extension_manager: PackageManager = ...
-    _task = Task()
-    page: Adw.PreferencesPage = ...
+    __gtype_name__: str = "AvailableVersionPage"
+    extension_manager: PackageManager
+    _task: Task = Task()
+    page: Adw.PreferencesPage
 
     # AdwLeafletView
     # if NAVIGATION_PAGE == "AdwLeafletPage":
     #     back_button = Gtk.Template.Child()
 
-    def __init__(self, ext_versions: dict, extension_manager):
+    def __init__(
+        self, ext_versions: list["PackageInfo"], extension_manager: PackageManager
+    ):
         super().__init__(title=_("Available Versions"))
         self.extension_manager = extension_manager
-        ext_versions = sorted(ext_versions, key=lambda x: x["version"], reverse=True)
+        ext_versions = sorted(
+            ext_versions,
+            key=lambda x: x["version"],
+            reverse=True,
+        )
         adw_preferences_group = Adw.PreferencesGroup.new()
         self.page = Adw.PreferencesPage.new()
         self.page.add(group=adw_preferences_group)
 
-        adw_header_bar = HeaderBar.new()
+        adw_header_bar = HeaderBar()
         adw_tool_bar_view = ToolbarView.new()
         adw_tool_bar_view.add_top_bar(adw_header_bar)
 
@@ -155,7 +167,7 @@ class AvailableVersionPage(NavigationPage):
         self.set_child(adw_tool_bar_view)
 
         self.rows: dict[str, AvailableRow] = {}
-        self.lock = asyncio.Lock()
+        self.lock: asyncio.Lock = asyncio.Lock()
 
         for version in ext_versions:
             installed = self.extension_manager.is_installed(
@@ -183,13 +195,17 @@ class AvailableVersionPage(NavigationPage):
             adw_preferences_group.add(child=adw_action_row)
             self.rows[f"{version['name']}-{version['version']}"] = adw_action_row
 
-    def on_installation_started(self, obj, name, version):
+    def on_installation_started(
+        self, obj: GObject.Object, name: str, version: str
+    ) -> None:
         pass
         # self.rows[f"{name}-{version}"].set_installation_state(
         #     AvailableRow.State.INSTALLING
         # )
 
-    def on_installation_completed(self, obj, name, version):
+    def on_installation_completed(
+        self, obj: GObject.Object, name: str, version: str
+    ) -> None:
         self.rows[f"{name}-{version}"].set_installation_state(
             AvailableRow.State.INSTALLED
         )
@@ -202,7 +218,9 @@ class AvailableVersionPage(NavigationPage):
         dialog.add_response(Gtk.ResponseType.OK, _("OK"))
         dialog.present()
 
-    def on_uninstallation_completed(self, obj, name, version):
+    def on_uninstallation_completed(
+        self, obj: GObject.Object, name: str, version: str
+    ) -> None:
         self.rows[f"{name}-{version}"].set_installation_state(
             AvailableRow.State.UNINSTALLED
         )
@@ -215,7 +233,7 @@ class AvailableVersionPage(NavigationPage):
         dialog.add_response(Gtk.ResponseType.OK, _("OK"))
         dialog.present()
 
-    async def show_dialog(self, title, body):
+    async def show_dialog(self, title: str, body: str) -> bool:
         dialog = MessageDialog(
             heading=title,
             body=body,
@@ -227,9 +245,9 @@ class AvailableVersionPage(NavigationPage):
         dialog.set_response_appearance(Gtk.ResponseType.CANCEL, "destructive-action")
         dialog.set_default_response(Gtk.ResponseType.OK)
         # 使用 asyncio.Future 等待用户响应
-        future = asyncio.Future()
+        future:asyncio.Future[bool] = asyncio.Future()
 
-        def on_response(dialog, response):
+        def on_response(dialog:MessageDialog, response:Gtk.ResponseType|str):
             if (
                 response == Gtk.ResponseType.OK.value_nick
                 or response == Gtk.ResponseType.OK
@@ -238,12 +256,12 @@ class AvailableVersionPage(NavigationPage):
             else:
                 future.set_result(False)
 
-        dialog.connect("response", on_response)
+        dialog.connect("response", on_response) # pyright:ignore[reportUnknownMemberType]
         dialog.present()
 
         return await future
 
-    async def __install(self, name, version):
+    async def __install(self, name: str, version: str) -> None:
         installation_successful = False
         try:
             # Spinner
@@ -275,7 +293,7 @@ class AvailableVersionPage(NavigationPage):
         except Exception as e:
             logger.error(e)
             dialog = MessageDialog(
-                heading=_("Installation Failed"), body=e, parent=self.get_root()
+                heading=_("Installation Failed"), body=str(e), parent=self.get_root()
             )
             dialog.add_response(Gtk.ResponseType.OK, _("OK"))
             dialog.present()
@@ -285,7 +303,7 @@ class AvailableVersionPage(NavigationPage):
                     AvailableRow.State.UNINSTALLED
                 )
 
-    async def __uninstall(self, name, version):
+    async def __uninstall(self, name:str, version:str):
         try:
             if await self.show_dialog(
                 _("Uninstall Confirmation"),
@@ -298,13 +316,13 @@ class AvailableVersionPage(NavigationPage):
             )
             logger.error(e)
             dialog = MessageDialog(
-                heading=_("Uninstallation Failed"), body=e, parent=self.get_root()
+                heading=_("Uninstallation Failed"), body=str(e), parent=self.get_root()
             )
             dialog.add_response(Gtk.ResponseType.OK, _("OK"))
             dialog.present()
 
-    def on_install_button_clicked(self, button: Gtk.Button, name, version):
+    def on_install_button_clicked(self, button: Gtk.Button, name:str, version:str):
         self._task.create_task(self.__install(name, version))
 
-    def on_delete_button_clicked(self, button: Gtk.Button, name, version):
+    def on_delete_button_clicked(self, button: Gtk.Button, name:str, version:str):
         self._task.create_task(self.__uninstall(name, version))

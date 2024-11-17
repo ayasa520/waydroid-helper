@@ -1,6 +1,13 @@
+# pyright: reportAny=false
+# pyright: reportUnannotatedClassAttribute=false
+# pyright: reportUnknownVariableType=false
+# pyright: reportUnknownMemberType=false
+# pyright: reportUnknownArgumentType=false
 import asyncio
 import json
 import os
+from typing import Any, TypeGuard, TypedDict
+from collections.abc import Coroutine, Iterable
 import xml.etree.ElementTree as ET
 
 from gettext import gettext as _
@@ -14,6 +21,7 @@ from waydroid_helper.util.arch import host
 from waydroid_helper.util.log import logger
 from waydroid_helper.util.subprocess_manager import SubprocessManager
 from waydroid_helper.util.task import Task
+from waydroid_helper.waydroid import Waydroid
 
 
 class ExtensionManagerState(IntEnum):
@@ -21,7 +29,51 @@ class ExtensionManagerState(IntEnum):
     READY = 1
 
 
-# TODO 
+class PackageInfo(TypedDict):
+    name: str
+    description: str
+    version: str
+    path: str
+    android_version: str
+    files: list[str]
+    provides: list[str]
+    conflicts: list[str]
+    source: list[str]
+    md5sums: list[str]
+    source_x86: list[str]
+    md5sums_x86: list[str]
+    source_x86_64: list[str]
+    md5sums_x86_64: list[str]
+    source_arm: list[str]
+    md5sums_arm: list[str]
+    source_arm64: list[str]
+    md5sums_arm64: list[str]
+    installed_files: list[str]
+    props: list[str]
+    install: str
+
+
+# 包含一个包的新旧版本
+class PackageListItem(TypedDict):
+    path: str
+    list: list[PackageInfo]
+
+
+class VariantListItem(TypedDict):
+    name: str
+    description: str
+    path: str
+    list: list[PackageListItem]
+
+
+class PackageClassListItem(TypedDict):
+    name: str
+    description: str
+    path: str
+    list: list[VariantListItem] | list[PackageListItem]
+
+
+# TODO
 #      1. 避免多次重启
 #      2. 进度条, 完成提醒
 #      3. prop 修改放在 yaml 里, 不要单独文件了
@@ -33,23 +85,29 @@ class PackageManager(GObject.Object):
         "uninstallation-completed": (GObject.SignalFlags.RUN_FIRST, None, (str, str)),
     }
     state = GObject.Property(type=object)
-    waydroid = GObject.Property(type=object)
-    available_extensions = {}
-    installed_packages = {}
+    waydroid: Waydroid = GObject.Property(
+        type=Waydroid
+    )  # pyright: ignore[reportAssignmentType]
+    available_extensions: dict[str, PackageInfo] = {}
+    installed_packages: dict[str, PackageInfo] = {}
     arch = host()
     remote = "https://github.com/ayasa520/extensions/raw/master/"
-    extensions_json = []
-    storage_dir = os.path.join(GLib.get_user_data_dir(), os.getenv("PROJECT_NAME"))
-    cache_dir = os.path.join(GLib.get_user_cache_dir(), os.getenv("PROJECT_NAME"))
+    extensions_json: list[PackageClassListItem] = []
+    storage_dir = os.path.join(
+        GLib.get_user_data_dir(), os.getenv("PROJECT_NAME", "waydroid-helper")
+    )
+    cache_dir = os.path.join(
+        GLib.get_user_cache_dir(), os.getenv("PROJECT_NAME", "waydroid-helper")
+    )
     _task = Task()
     _subprocess = SubprocessManager()
     # TODO 同时安装多个扩展的问题, 最好做到可以并发下载, 串行安装
     _package_lock = asyncio.Lock()
 
-    async def fetch_snapshot(self, name, version):
+    async def fetch_snapshot(self, name: str, version: str):
         logger.info(self.available_extensions[f"{name}-{version}"])
 
-    async def fetch_extension_json(self):
+    async def fetch_extension_json(self) -> Any:
         async with httpx.AsyncClient(follow_redirects=True) as client:
             try:
                 response = await client.get(self.remote + "extensions.json")
@@ -61,6 +119,7 @@ class PackageManager(GObject.Object):
                     )
                     return None
             except AssertionError as e:
+                logger.error(e)
                 pass
 
     async def save_extension_json(self):
@@ -86,11 +145,11 @@ class PackageManager(GObject.Object):
         if extensions:
             self._task.create_task(self.save_extension_json())
 
-    def is_installed(self, name, version=None):
-        package = self.installed_packages.get(name)
+    def is_installed(self, name: str, version: str):
+        package: PackageInfo | None = self.installed_packages.get(name)
         if package is None:
             return False
-        return version is None or package.get("version") == version
+        return package.get("version") == version
 
     async def init_manager(self):
         json_path = os.path.join(self.storage_dir, "extensions.json")
@@ -106,7 +165,9 @@ class PackageManager(GObject.Object):
     def __init__(self):
         super().__init__()
         self.state = ExtensionManagerState.UNINITIALIZED
-        self._task.create_task(self.init_manager())
+        self._task.create_task(
+            self.init_manager()
+        )
         os.makedirs(self.storage_dir, exist_ok=True)
 
     async def load_installed(self):
@@ -129,34 +190,46 @@ class PackageManager(GObject.Object):
                         desc_data = json.loads(content)
                         self.installed_packages[desc_data["name"]] = desc_data
 
-    def get_data(self):
+    def get_package_data(self):
         return self.extensions_json
 
     def grab_meta(self):
+
+        def is_package_info_list_item(item3: Any) -> TypeGuard[PackageListItem]:
+            return "list" in item3.keys()
+
+        def is_package_info(item3: Any) -> TypeGuard[PackageInfo]:
+            return not is_package_info_list_item(item3)
+
         for item1 in self.extensions_json:
             for item2 in item1["list"]:
                 for item3 in item2["list"]:
-                    if "list" in item3.keys():
+                    extension: dict[str, PackageInfo]
+                    if is_package_info_list_item(item3):
                         path = f'{item1["path"]}/{item2["path"]}/{item3["path"]}'
-                        extension = item3["list"]
+                        extensions: list[PackageInfo] = item3["list"]
                         extension = {
                             f'{each["name"]}-{each["version"]}': {
                                 **each,
-                                **{"path": f"{path}/{each['path']}"},
+                                "path": f"{path}/{each['path']}",
                             }
-                            for each in extension
+                            for each in extensions
                         }
-                    else:
+                    elif is_package_info(item3):
                         path = f'{item1["path"]}/{item2["path"]}/{item3["path"]}'
                         extension = {
                             f'{item3["name"]}-{item3["version"]}': {
                                 **item3,
-                                **{"path": path},
+                                "path": path,
                             }
                         }
+                    else:
+                        return None
                     self.available_extensions.update(extension)
 
-    def get_package_info(self, name, version=None):
+    def get_package_info(
+        self, name: str, version: str | None = None
+    ) -> PackageInfo | None:
         if version is not None:
             package = self.available_extensions.get(f"{name}-{version}")
             return package
@@ -165,10 +238,18 @@ class PackageManager(GObject.Object):
                 return package
         return None
 
-    def check_conflicts(self, package_info=None, name=None, version=None):
-        conflicts = set()
+    def check_conflicts(
+        self,
+        name: str,
+        version: str | None = None,
+        package_info: PackageInfo | None = None,
+    ):
+        conflicts: set[str] = set()
         if package_info is None:
             package_info = self.get_package_info(name=name, version=version)
+        if package_info is None:
+            logger.error(f"Package {name}-{version} not found")
+            return conflicts
         for installed_package in self.installed_packages.values():
             # 检查 package_info 的 conflicts 列表
             for conflict in package_info.get("conflicts", []):
@@ -198,7 +279,15 @@ class PackageManager(GObject.Object):
     #             missing_dependencies.append(dependency)
     #     return missing_dependencies
 
-    async def download_file(self, client, url, dest_path, md5=None, retries=3, delay=2):
+    async def download_file(
+        self,
+        client: httpx.AsyncClient,
+        url: str,
+        dest_path: str,
+        md5: str | None = None,
+        retries: int = 3,
+        delay: int = 2,
+    ):
         attempt = 0
         while attempt < retries:
             try:
@@ -236,17 +325,17 @@ class PackageManager(GObject.Object):
                         f"All {retries} attempts failed. Could not download the file."
                     )
 
-    def get_all_files_relative(self, directory):
-        all_files = []
-        for root, dirs, files in os.walk(directory):
+    def get_all_files_relative(self, directory: str):
+        all_files: list[str] = []
+        for root, dirs, files in os.walk(directory): # pyright: ignore[reportUnusedVariable]
             for file in files:
                 file_path = os.path.relpath(os.path.join(root, file), directory)
                 all_files.append(file_path)
         return all_files
 
-    async def download(self, package_info):
+    async def download(self, package_info: PackageInfo):
         async with httpx.AsyncClient(follow_redirects=True) as client:
-            tasks = []
+            tasks: list[Coroutine[Any, Any, None]] = []
             for file in package_info["files"]:
                 url = f'{self.remote}{package_info["path"]}/{file}'
                 dest = f'{self.cache_dir}/extensions/{package_info["name"]}/{file}'
@@ -259,9 +348,18 @@ class PackageManager(GObject.Object):
                 _source = "source"
                 _md5sums = f"md5sums"
 
-            for source, md5 in zip(package_info[_source], package_info[_md5sums]):
-                file_name = source.split("::")[0]
-                url = source.split("::")[1]
+            if _source not in package_info or _md5sums not in package_info:
+                logger.warning(
+                    f"Package {package_info['name']} missing {_source} or {_md5sums}"
+                )
+                return
+
+            for source, md5 in zip(
+                package_info[_source],
+                package_info[_md5sums],
+            ):
+                file_name: str = source.split("::")[0]
+                url: str = source.split("::")[1]
                 file_path = os.path.join(
                     self.cache_dir, "extensions", package_info["name"], file_name
                 )
@@ -277,7 +375,7 @@ class PackageManager(GObject.Object):
 
             await asyncio.gather(*tasks)
 
-    async def install_package(self, name, version):
+    async def install_package(self, name: str, version: str):
         async with self._package_lock:
             self.emit("installation-started", name, version)
             package_info = self.get_package_info(name, version)
@@ -335,23 +433,17 @@ class PackageManager(GObject.Object):
             # desc_cache_path = os.path.join(startdir, "desc")
             local_dir = os.path.join(self.storage_dir, "local", f"{package_name}")
             desc_path = os.path.join(local_dir, "desc")
-            package_info = {
-                **package_info,
-                **{"installed_files": installed_files},
-            }
+            package_info.update({"installed_files": installed_files})
             # 应用 prop
             if os.path.exists(os.path.join(startdir, "prop.json")):
                 async with aiofiles.open(
                     os.path.join(startdir, "prop.json"), mode="r"
                 ) as f:
                     content = await f.read()
-                    props = json.loads(content)
+                    props: dict[str, Any] = json.loads(content)
                     await self.waydroid.set_extension_props(props)
 
-                package_info = {
-                    **package_info,
-                    **{"props": list(props.keys())},
-                }
+                package_info["props"] = list(props.keys())
 
             if "install" in package_info.keys():
                 cache_install = os.path.join(startdir, package_info["install"])
@@ -379,7 +471,7 @@ class PackageManager(GObject.Object):
             logger.info(f"Package {name} installed successfully.")
             self.emit("installation-completed", name, version)
 
-    async def execute_post_operations(self, info, operation_key: str):
+    async def execute_post_operations(self, info: PackageInfo, operation_key: str):
         if operation_key.endswith("install"):
             install_path = os.path.join(
                 self.cache_dir, "extensions", info["name"], info["install"]
@@ -427,8 +519,8 @@ class PackageManager(GObject.Object):
         #     },
         # )
 
-    async def get_apk_path(self, apks: list) -> str:
-        paths = []
+    async def get_apk_path(self, apks: list[str]) -> str:
+        paths: list[str] = []
         data_dir = os.path.join(GLib.get_user_data_dir(), "waydroid/data")
         package_path = os.path.join(data_dir, "system/packages.xml")
         async with aiofiles.open(package_path, "r") as f:
@@ -436,7 +528,7 @@ class PackageManager(GObject.Object):
         tree = ET.fromstring(content)
         for package in tree.findall("package"):
             name = package.get("name")
-            code_path = package.get("codePath")
+            code_path = package.get("codePath", "")
             if name in apks:
                 paths.append(f"app/{os.path.basename(os.path.dirname(code_path))}")
                 apks.remove(name)
@@ -445,7 +537,7 @@ class PackageManager(GObject.Object):
         paths = ['"' + path + '"' for path in paths]
         return " ".join(paths)
 
-    async def generate_command(self, func_name, args):
+    async def generate_command(self, func_name: str, args: Any):
         command_map = {
             "rm_overlay_rw": "pkexec {cli_path} rm_overlay_rw {paths}",
             "rm_data": "pkexec {cli_path} rm_data {paths}",
@@ -476,16 +568,16 @@ class PackageManager(GObject.Object):
 
         return None
 
-    async def pre_install(self, info):
+    async def pre_install(self, info: PackageInfo):
         await self.execute_post_operations(info, "pre_install")
 
-    async def post_install(self, info):
+    async def post_install(self, info: PackageInfo):
         await self.execute_post_operations(info, "post_install")
 
-    async def post_remove(self, info):
+    async def post_remove(self, info: PackageInfo):
         await self.execute_post_operations(info, "post_remove")
 
-    async def remove_package(self, package_name):
+    async def remove_package(self, package_name: str):
         """移除包"""
         async with self._package_lock:
             if package_name in self.installed_packages:
@@ -513,7 +605,7 @@ class PackageManager(GObject.Object):
             else:
                 logger.warning(f"Package {package_name} is not installed.")
 
-    async def remove_packages(self, package_names):
+    async def remove_packages(self, package_names: Iterable[str]):
         for pkg in package_names:
             logger.info(f"remove {pkg}")
             await self.remove_package(pkg)

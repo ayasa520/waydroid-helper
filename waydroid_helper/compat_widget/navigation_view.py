@@ -1,3 +1,16 @@
+# pyright: reportUnknownMemberType=false
+# pyright: reportUnknownParameterType=false
+# pyright: reportMissingParameterType=false
+# pyright: reportRedeclaration=false
+# pyright: reportUnknownVariableType=false
+# pyright: reportUnknownArgumentType=false
+# pyright: reportAny=false
+# pyright: reportCallIssue=false
+# pyright: reportMissingSuperCall=false
+# pyright: reportGeneralTypeIssues=false
+# pyright: reportUntypedBaseClass=false
+# pyright: reportReturnType=false
+
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -56,8 +69,8 @@ class NavigationViewMeta(type(GObject.Object)):
             def __init__(self):
                 super(self.__class__, self).__init__()
                 self.maybe_removed = None
-                self._pages: list[NavigationPage] = []
-                self._navigation_stack: list[NavigationPage] = []
+                self._pages = []
+                self._navigation_stack  = []
                 self._navigation_view = Adw.Leaflet()
                 self._navigation_view.set_can_unfold(False)
                 self._navigation_view.set_can_navigate_back(True)
@@ -155,6 +168,8 @@ class NavigationViewMeta(type(GObject.Object)):
                         self._navigation_view.get_page(page).set_navigatable(True)
                         self._navigation_view.set_visible_child(page)
 
+            attrs["_on_visible_child_changed"] = _on_visible_child_changed
+
         def on_destroy(self, widget):
             self._navigation_view.unparent()
             self._navigation_view = None
@@ -168,14 +183,12 @@ class NavigationViewMeta(type(GObject.Object)):
         attrs["pop"] = pop
         attrs["push_by_tag"] = push_by_tag
         attrs["on_destroy"] = on_destroy
-        if ADW_VERSION < (1, 4, 0):
-            attrs["_on_visible_child_changed"] = _on_visible_child_changed
 
         return super().__new__(mcs, name, bases, attrs)
 
 
 class NavigationView(Gtk.Widget, metaclass=NavigationViewMeta):
-    __gtype_name__ = "NavigationView"
+    __gtype_name__:str = "NavigationView"
 
     def __init__(self):
         pass
@@ -183,22 +196,22 @@ class NavigationView(Gtk.Widget, metaclass=NavigationViewMeta):
     def get_navigation_stack(self):
         pass
 
-    def find_page(self, tag):
+    def find_page(self, tag: str)->NavigationPage:
         pass
 
     def push(self, page: NavigationPage):
         pass
 
-    def add(self, page):
+    def add(self, page: NavigationPage):
         pass
 
-    def remove(self, page):
+    def remove(self, page: NavigationPage):
         pass
 
     def pop(self) -> bool:
         pass
 
-    def push_by_tag(self, tag):
+    def push_by_tag(self, tag: str):
         pass
 
     def on_destroy(self, widget):

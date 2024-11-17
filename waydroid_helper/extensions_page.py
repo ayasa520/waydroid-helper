@@ -1,10 +1,23 @@
+# pyright: reportMissingParameterType=false
+# pyright: reportUnknownArgumentType=false
+# pyright: reportUnknownParameterType=false
+
+from typing import TypeGuard, cast, final, TYPE_CHECKING
+
+from waydroid_helper.compat_widget import NavigationView
+
+
+if TYPE_CHECKING:
+    from waydroid_helper.tools.extensions_manager import (
+        PackageInfo,
+        PackageListItem,
+        VariantListItem,
+    )
+
 import gi
 
 from waydroid_helper.available_version_page import AvailableVersionPage
-from waydroid_helper.util.extensions_manager import (
-    PackageManager,
-    ExtensionManagerState,
-)
+from waydroid_helper.tools import PackageManager, ExtensionManagerState
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
@@ -16,16 +29,20 @@ from gi.repository import Gtk, GObject, Adw
 from waydroid_helper.compat_widget import Spinner
 
 
+@final
 class ExtensionsPage(Gtk.Box):
     __gtype_name__ = "ExtensionsPage"
-    waydroid: GObject.Property = GObject.Property(default=None, type=Waydroid)
-    stack: Gtk.Stack = ...
-    extensions_page: Adw.PreferencesPage = ...
-    extension_manager = ...
+    waydroid: Waydroid = GObject.Property(
+        default=None, type=Waydroid
+    )  # pyright:ignore[reportAssignmentType]
+    stack: Gtk.Stack
+    extensions_page: Adw.PreferencesPage
+    extension_manager: PackageManager
     extensions = []
 
-    def __init__(self, waydroid: Waydroid, **kargs):
+    def __init__(self, waydroid: Waydroid, navigation_view: NavigationView, **kargs):
         super().__init__(**kargs)
+        self._navigation_view = navigation_view
         self.set_orientation(Gtk.Orientation.VERTICAL)
         self.set_property("waydroid", waydroid)
         self.extensions_page = Adw.PreferencesPage.new()
@@ -33,7 +50,7 @@ class ExtensionsPage(Gtk.Box):
         self.stack.set_vexpand(True)
         self.stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
 
-        # 创建一个居中的容器用于 spinner
+        # 创建一个��中的容器用于 spinner
         spinner_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         spinner_box.set_halign(Gtk.Align.CENTER)
         spinner_box.set_valign(Gtk.Align.CENTER)
@@ -62,30 +79,36 @@ class ExtensionsPage(Gtk.Box):
         )
         self.append(self.stack)
 
-    def on_installation_started(self, obj, name, version):
-        page: AvailableVersionPage = self.get_root().view_find_page(name)
-        page.on_installation_started(obj, name, version)
+    def on_installation_started(self, obj: GObject.Object, name: str, version: str):
+        nav_page: AvailableVersionPage = self._navigation_view.find_page(name)
+        if isinstance(nav_page, AvailableVersionPage):
+            page = cast(AvailableVersionPage, nav_page)
+            page.on_installation_started(obj, name, version)
 
-    def on_installation_completed(self, obj, name, version):
-        page: AvailableVersionPage = self.get_root().view_find_page(name)
-        page.on_installation_completed(obj, name, version)
+    def on_installation_completed(self, obj: GObject.Object, name: str, version: str):
+        nav_page: AvailableVersionPage = self._navigation_view.find_page(name)
+        if isinstance(nav_page, AvailableVersionPage):
+            page = cast(AvailableVersionPage, nav_page)
+            page.on_installation_completed(obj, name, version)
 
-    def on_uninstallation_completed(self, obj, name, version):
-        page: AvailableVersionPage = self.get_root().view_find_page(name)
-        if page is not None:
+    def on_uninstallation_completed(self, obj: GObject.Object, name: str, version: str):
+        nav_page: AvailableVersionPage = self._navigation_view.find_page(name)
+        if isinstance(nav_page, AvailableVersionPage):
+            page = cast(AvailableVersionPage, nav_page)
             page.on_uninstallation_completed(obj, name, version)
 
-    def create_row(self, title, subtitle, info):
+    def create_row(
+        self, title: str, subtitle: str, info: list["PackageInfo"]
+    ) -> ExtensionRow:
 
-        def on_button_clicked(button):
-            root: Adw.Window = self.get_root()
-            if root.view_find_page(title) is None:
+        def on_button_clicked(button: Gtk.Button):
+            if self._navigation_view.find_page(title) is None:
                 page = AvailableVersionPage(info, self.extension_manager)
                 page.set_tag(title)
-                root.view_add(page)
-            root.view_push_by_tag(title)
+                self._navigation_view.add(page)
+            self._navigation_view.push_by_tag(title)
 
-        row = ExtensionRow.new()
+        row = ExtensionRow()
         row.set_title(title)
         row.set_subtitle(_(subtitle))
         row.set_info(info)
@@ -95,10 +118,21 @@ class ExtensionsPage(Gtk.Box):
         return row
 
     # TODO 换成 TreeListModel? 我找不到可用的资料或者样例
-    def init_page(self, w, param):
+    def init_page(self, w: GObject.Object | None, param: GObject.ParamSpec | None):
+
+        def is_package_list_item(
+            item: "PackageListItem|VariantListItem",
+        ) -> TypeGuard["PackageListItem"]:
+            return "name" not in item.keys()
+
+        def is_variant_list_item(
+            item: "PackageListItem|VariantListItem",
+        ) -> TypeGuard["VariantListItem"]:
+            return not is_package_list_item(item)
+
         if self.extension_manager.get_property("state") != ExtensionManagerState.READY:
             return
-        self.extensions = self.extension_manager.get_data()
+        self.extensions = self.extension_manager.get_package_data()
         self.stack.set_visible_child_name("content")
         for each_group in self.extensions:
             title = each_group["name"]
@@ -108,7 +142,8 @@ class ExtensionsPage(Gtk.Box):
             group.set_description(_(description))
             # TODO 想想怎么做更好
             for expander_row in sorted(each_group["list"], key=lambda x: x["path"]):
-                if "name" in expander_row.keys():
+                # if "name" in expander_row.keys():
+                if is_variant_list_item(expander_row):
                     title = expander_row["name"]
                     subtitle = expander_row["description"]
                     expanderrow = Adw.ExpanderRow.new()
@@ -124,7 +159,7 @@ class ExtensionsPage(Gtk.Box):
                         row = self.create_row(title, subtitle, each_row["list"])
                         expanderrow.add_row(row)
                     group.add(child=expanderrow)
-                else:
+                elif is_package_list_item(expander_row):
                     title = expander_row["list"][0]["name"]
                     subtitle = expander_row["list"][0]["description"]
                     row = self.create_row(title, subtitle, expander_row["list"])

@@ -1,12 +1,15 @@
-import os
-import sys
-import struct
+from enum import IntEnum
 import ctypes
 import ctypes.util
-import select
 import dbus
 import logging
+import os
+import select
 import signal
+import struct
+import sys
+from types import FrameType
+from typing import final
 
 logging.basicConfig(
     level=logging.INFO,
@@ -17,6 +20,7 @@ IN_MODIFY = 0x00000002
 EVENT_SIZE = struct.calcsize("iIII")
 
 
+@final
 class InotifyEvent(ctypes.Structure):
     _fields_ = [
         ("wd", ctypes.c_int),
@@ -28,16 +32,18 @@ class InotifyEvent(ctypes.Structure):
 
 def send_dbus_signal():
     system_bus = dbus.SystemBus()
-    mount_object = system_bus.get_object("id.waydro.Mount", "/org/waydro/Mount")
+    mount_object = system_bus.get_object( # pyright: ignore[reportUnknownMemberType]
+        "id.waydro.Mount", "/org/waydro/Mount"
+    )  
     mount_interface = dbus.Interface(mount_object, "id.waydro.Mount")
     try:
-        sources = os.environ.get("SOURCE").split(":")
-        targets = os.environ.get("TARGET").split(":")
+        sources = os.environ.get("SOURCE", "").split(":")
+        targets = os.environ.get("TARGET", "").split(":")
         for source, target in zip(sources, targets):
             if source != "" and target != "":
-                mount_interface.Unmount(target)
-                result = mount_interface.BindMount(source, target)
-                if int(result["returncode"]) == 0:
+                mount_interface.Unmount( target)  # pyright: ignore[reportUnknownMemberType]
+                result = mount_interface.BindMount(source, target) # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]
+                if int(result["returncode"]) == 0: # pyright: ignore[reportUnknownArgumentType]
                     logging.info(f"mount {source} to {target} succeeded")
                 else:
                     logging.error(
@@ -47,7 +53,7 @@ def send_dbus_signal():
         logging.error(f"Mount error: {e}")
 
 
-def check_new_content(fd):
+def check_new_content(fd: int):
     leftover = ""
     target = "Android with user 0 is ready"
 
@@ -67,17 +73,19 @@ def check_new_content(fd):
 
 
 class Monitor:
-    def __init__(self, filename="/var/lib/waydroid/waydroid.log"):
-        self.filename = filename
-        self.inotify_fd = None
-        self.file_fd = None
-        self.watch_fd = None
-        self.libc = None
-        self.running = True
-        # 创建管道用于中断 select
+    def __init__(self, filename: str = "/var/lib/waydroid/waydroid.log") -> None:
+        self.filename: str = filename
+        self.inotify_fd: int = -1
+        self.file_fd: int = -1
+        self.watch_fd: int = -1
+        self.libc: ctypes.CDLL = ctypes.CDLL(ctypes.util.find_library("c"))
+        self.running: bool = True
+        # Create pipe to interrupt select
+        self.pipe_r: int
+        self.pipe_w: int
         self.pipe_r, self.pipe_w = os.pipe()
 
-    def cleanup(self, signum=None, frame=None):
+    def cleanup(self, signum: int | IntEnum, frame: FrameType | None):
         self.running = False
         # 向管道写入数据以中断 select
         try:
@@ -86,19 +94,19 @@ class Monitor:
             pass
 
     def final_cleanup(self):
-        if self.watch_fd is not None and self.inotify_fd is not None and self.libc is not None:
+        if self.watch_fd >= 0 and self.inotify_fd >= 0:
             try:
                 self.libc.inotify_rm_watch(self.inotify_fd, self.watch_fd)
             except:
                 pass
-        
+
         for fd in [self.inotify_fd, self.file_fd, self.pipe_r, self.pipe_w]:
-            if fd is not None:
+            if fd >= 0:
                 try:
                     os.close(fd)
                 except:
                     pass
-        
+
         logging.info("Cleanup completed")
         sys.exit(0)
 
@@ -106,7 +114,6 @@ class Monitor:
         signal.signal(signal.SIGTERM, self.cleanup)
         signal.signal(signal.SIGINT, self.cleanup)
 
-        self.libc = ctypes.CDLL(ctypes.util.find_library("c"))
         self.inotify_fd = self.libc.inotify_init()
         if self.inotify_fd < 0:
             logging.error("inotify_init failed")
@@ -120,7 +127,9 @@ class Monitor:
 
         os.lseek(self.file_fd, 0, os.SEEK_END)
 
-        self.watch_fd = self.libc.inotify_add_watch(self.inotify_fd, self.filename.encode(), IN_MODIFY)
+        self.watch_fd = self.libc.inotify_add_watch(
+            self.inotify_fd, self.filename.encode(), IN_MODIFY
+        )
         if self.watch_fd < 0:
             logging.error("inotify_add_watch failed")
             return 1
@@ -134,12 +143,14 @@ class Monitor:
                 if not self.running:
                     break
                 if ready:
-                    for fd in ready:
+                    for fd in ready: # pyright: ignore[reportAny]
                         if fd == self.inotify_fd:
                             event_data = os.read(self.inotify_fd, EVENT_SIZE + 16)
-                            event = InotifyEvent.from_buffer_copy(event_data[:EVENT_SIZE])
+                            event = InotifyEvent.from_buffer_copy(
+                                event_data[:EVENT_SIZE]
+                            )
 
-                            if event.mask & IN_MODIFY:
+                            if event.mask & IN_MODIFY:  # pyright: ignore[reportAny]
                                 check_new_content(self.file_fd)
                         elif fd == self.pipe_r:
                             os.read(self.pipe_r, 1)

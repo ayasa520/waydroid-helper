@@ -2,7 +2,7 @@ import logging
 import sys
 
 
-def _reset_logger(log):
+def _reset_logger(log: logging.Logger):
     for handler in log.handlers:
         handler.close()
         log.removeHandler(handler)

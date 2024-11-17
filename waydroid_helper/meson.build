@@ -57,15 +57,16 @@ util_sources = [
     'util/__init__.py',
     'util/subprocess_manager.py',
     'util/task.py',
-    'util/extensions_manager.py',
     'util/arch.py',
     'util/log.py',
     'util/weak_ref.py',
+    'util/template.py',
 ]
 
 tools_sources = [
     'tools/__init__.py',
     'tools/monitor_service.py',
+    'tools/extensions_manager.py',
     'tools/mount_service.py',
 ]
 

@@ -1,3 +1,10 @@
+# pyright: reportAny=false
+# pyright: reportUnknownParameterType=false
+# pyright: reportMissingParameterType=false
+# pyright: reportUnknownArgumentType=false
+# pyright: reportUnknownParameterType=false
+
+from typing import Any, Callable
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -7,17 +14,17 @@ from gettext import gettext as _
 import json
 import os
 from waydroid_helper.infobar import InfoBar
-from waydroid_helper.util.task import Task
+from waydroid_helper.util import Task, template, logger
 from waydroid_helper.waydroid import PropsState, Waydroid
 from gi.repository import Gtk, GObject, Adw, GLib
 from functools import partial
 
 
-@Gtk.Template(resource_path="/com/jaoushingan/WaydroidHelper/ui/PropsPage.ui")
+@template(resource_path="/com/jaoushingan/WaydroidHelper/ui/PropsPage.ui")
 class PropsPage(Gtk.Box):
-    __gtype_name__ = "PropsPage"
+    __gtype_name__: str = "PropsPage"
 
-    items = dict()
+    items: dict[Any, Any] = dict()
 
     switch_1: Gtk.Switch = Gtk.Template.Child()
     switch_2: Gtk.Switch = Gtk.Template.Child()
@@ -32,20 +39,25 @@ class PropsPage(Gtk.Box):
     entry_6: Gtk.Switch = Gtk.Template.Child()
     switch_21: Gtk.Switch = Gtk.Template.Child()
     device_combo: Adw.ComboRow = Gtk.Template.Child()
-    overlay: Gtk.Overlay = None
-    waydroid: Waydroid = GObject.Property(default=None, type=Waydroid)
+    overlay: Gtk.Overlay | None = None
+    waydroid: Waydroid = GObject.Property(
+        default=None, type=Waydroid
+    )  # pyright:ignore[reportAssignmentType]
     reset_persist_prop_btn: Gtk.Button = Gtk.Template.Child()
     reset_privileged_prop_btn: Gtk.Button = Gtk.Template.Child()
 
-    timeout_id = dict()
+    timeout_id: dict[Any, Any] = dict()
 
-    _task = Task()
-    ids = dict()
+    _task: Task = Task()
+    ids: dict[Any, Any] = dict()
 
     def __init__(self, waydroid: Waydroid, **kargs):
         super().__init__(**kargs)
 
-        data_dir = os.getenv("PKGDATADIR")
+        default_dir = os.path.join(
+            "/usr/share", os.environ.get("PROJECT_NAME", "waydroid-helper")
+        )
+        data_dir = os.getenv("PKGDATADIR", default_dir)
 
         with open(os.path.join(data_dir, "data", "devices.json")) as f:
             self.items = json.load(f)
@@ -169,8 +181,8 @@ class PropsPage(Gtk.Box):
         #     self.on_device_info_changed,
         #     # partial(self.on_adw_combo_row_selected_item,prop_name="ro-product-model"),
         # )
-        self._model_changed = False
-        self._brand_changed = False
+        self._model_changed: bool = False
+        self._brand_changed: bool = False
         self.waydroid.privileged_props.connect(
             "notify::ro-product-model", self.__on_model_changed
         )
@@ -184,11 +196,11 @@ class PropsPage(Gtk.Box):
             self._brand_changed = False
             self.on_device_info_changed()
 
-    def __on_model_changed(self, obj, param_spec):
+    def __on_model_changed(self, obj: GObject.Object, param_spec: GObject.ParamSpec):
         self._model_changed = True
         self.check_both_properties_changed()
 
-    def __on_brand_changed(self, obj, param_spec):
+    def __on_brand_changed(self, obj: GObject.Object, param_spec: GObject.ParamSpec):
         self._brand_changed = True
         self.check_both_properties_changed()
 
@@ -197,7 +209,16 @@ class PropsPage(Gtk.Box):
         product_brand = self.waydroid.privileged_props.get_property("ro-product-brand")
         product_model = self.waydroid.privileged_props.get_property("ro-product-model")
         device = f"{product_brand} {product_model}"
-        current: str = self.device_combo.get_selected_item().get_string()
+
+        current = ""
+        match self.device_combo.get_selected_item():
+            case None:
+                current = ""
+            case Gtk.StringObject() as item:
+                current = item.get_string()
+            case _:
+                current = ""
+
         if device == current:
             return
         if device in self.items["index"].keys():
@@ -206,27 +227,39 @@ class PropsPage(Gtk.Box):
             self.device_combo.set_selected(0)
 
     # # selected to waydroid prop
-    def on_adw_combo_row_selected_item(self, comborow, GParamObject):
+    def on_adw_combo_row_selected_item(
+        self, comborow: Adw.ComboRow, GParamObject: GObject.ParamSpec
+    ):
         self.set_reveal(self.save_privileged_notification, True)
-        selected_item = comborow.get_selected_item()
-        self.waydroid.privileged_props.set_device_info(
-            self.items["devices"][self.items["index"][selected_item.get_string()]][
-                "properties"
-            ]
-        )
+        match comborow.get_selected_item():
+            case None:
+                logger.info("No device selected")
+                return
+            case Gtk.StringObject() as selected_item:
+                self.waydroid.privileged_props.set_device_info(
+                    self.items["devices"][
+                        self.items["index"][selected_item.get_string()]
+                    ]["properties"]
+                )
+            case _:
+                return
 
-    def __connect(self, source: GObject.Object, signal, handler):
+    def __connect(
+        self, source: GObject.Object, signal: str, handler: Callable[..., Any]
+    ):
         id = source.connect(signal, handler)
         self.ids[f"{hash(source)}_{signal}"] = id
 
-    def __disconnect(self, source: GObject.Object, signal):
+    def __disconnect(self, source: GObject.Object, signal: str):
         id = self.ids.get(f"{hash(source)}_{signal}", -1)
         if id == -1:
             return
         source.disconnect(id)
         self.ids.pop(f"{hash(source)}_{signal}")
 
-    def on_waydroid_privileged_state_changed(self, w, param):
+    def on_waydroid_privileged_state_changed(
+        self, w: GObject.Object, param: GObject.ParamSpec
+    ):
         if w.get_property("state") == PropsState.READY:
             self.switch_21.set_sensitive(True)
             self.device_combo.set_sensitive(True)
@@ -252,7 +285,9 @@ class PropsPage(Gtk.Box):
             self.device_combo.set_sensitive(False)
             self.reset_privileged_prop_btn.set_sensitive(False)
 
-    def on_waydroid_persist_state_changed(self, w, param):
+    def on_waydroid_persist_state_changed(
+        self, w: GObject.Object, param: GObject.ParamSpec
+    ):
         if w.get_property("state") == PropsState.READY:
             self.switch_1.set_sensitive(True)
             self.switch_2.set_sensitive(True)
@@ -383,18 +418,22 @@ class PropsPage(Gtk.Box):
                 self.overlay.add_overlay(self.save_notification)
         widget.set_reveal_child(reveal_child)
 
-    def on_privileged_switch_clicked(self, a, b, name):
+    def on_privileged_switch_clicked(
+        self, a: Gtk.Widget, b: GObject.ParamSpec, name: str
+    ):
         # 这种判断state==ready时再connect, state==uninitialized时候disconnect是不是更好?
         # if self.waydroid.privileged_props.get_property("state") != PropsState.READY:
         #     return
         self.set_reveal(self.save_privileged_notification, True)
         # self.save_privileged_notification.set_reveal_child(True)
 
-    def __on_persist_text_changed(self, name):
+    def __on_persist_text_changed(self, name: str):
         self._task.create_task(self.waydroid.save_persist_prop(name))
         self.timeout_id[name] = None
 
-    def on_persist_text_changed(self, a, b, name, flag=False):
+    def on_persist_text_changed(
+        self, a: Gtk.Widget, b: GObject.ParamSpec, name: str, flag: bool = False
+    ):
         # if self.waydroid.persist_props.get_property("state") != PropsState.READY:
         #     return
         if self.timeout_id.get(name) is not None:
@@ -406,7 +445,7 @@ class PropsPage(Gtk.Box):
         if flag:
             self.set_reveal(self.save_notification, True)
 
-    def on_perisit_switch_clicked(self, a: Gtk.Switch, b, name):
+    def on_perisit_switch_clicked(self, a: Gtk.Switch, b: GObject.ParamSpec, name: str):
         # print(a.get_widget().get_name())
         # if self.waydroid.persist_props.get_property("state") != PropsState.READY:
         #     return
@@ -418,29 +457,29 @@ class PropsPage(Gtk.Box):
 
     # def on_cancel_button_clicked(self, button):
     #     self.set_reveal(self.save_notification, False)
-        # self.save_notification.set_reveal_child(False)
+    # self.save_notification.set_reveal_child(False)
 
-    def on_restart_button_clicked(self, button):
+    def on_restart_button_clicked(self, button: Gtk.Button):
         # self.set_reveal(self.save_notification, False)
         # self.save_notification.set_reveal_child(False)
         self._task.create_task(self.waydroid.restart_session())
 
-    def on_restore_button_clicked(self, button):
+    def on_restore_button_clicked(self, button: Gtk.Button):
         # self.set_reveal(self.save_privileged_notification, False)
         # self.save_privileged_notification.set_reveal_child(False)
         self._task.create_task(self.waydroid.restore_privileged_props())
 
-    def on_apply_button_clicked(self, button):
+    def on_apply_button_clicked(self, button: Gtk.Button):
         # self.set_reveal(self.save_privileged_notification, False)
         # self.save_privileged_notification.set_reveal_child(False)
         self._task.create_task(self.waydroid.save_privileged_props())
 
     @Gtk.Template.Callback()
-    def on_reset_persist_clicked(self, button):
+    def on_reset_persist_clicked(self, button: Gtk.Button):
         self._task.create_task(self.waydroid.reset_persist_props())
 
     @Gtk.Template.Callback()
-    def on_reset_privileged_clicked(self, button):
+    def on_reset_privileged_clicked(self, button: Gtk.Button):
         self._task.create_task(self.waydroid.reset_privileged_props())
 
     # @Gtk.Template.Callback()

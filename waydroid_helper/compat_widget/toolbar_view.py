@@ -1,4 +1,14 @@
-from typing import Optional
+# pyright: reportUnknownMemberType=false
+# pyright: reportUnknownParameterType=false
+# pyright: reportMissingParameterType=false
+# pyright: reportRedeclaration=false
+# pyright: reportUnknownVariableType=false
+# pyright: reportUnknownArgumentType=false
+# pyright: reportAny=false
+# pyright: reportCallIssue=false
+# pyright: reportMissingSuperCall=false
+# pyright: reportGeneralTypeIssues=false
+# pyright: reportUntypedBaseClass=false
 
 import gi
 
@@ -17,6 +27,7 @@ class ToolbarViewMeta(type(GObject.Object)):
         replace = False
         if ADW_VERSION < (1, 4, 0) and (Gtk.Widget in bases):
             replace = True
+
             def __init__(self):
                 super(ToolbarView, self).__init__()
                 self._toolbar_view = Gtk.Box.new(
@@ -29,7 +40,7 @@ class ToolbarViewMeta(type(GObject.Object)):
                 self._toolbar_view.set_parent(self)
                 self.connect("destroy", self.on_destroy)
 
-            def set_content(self, content: Optional[Gtk.Widget] = None) -> None:
+            def set_content(self, content: Gtk.Widget|None = None) -> None:
                 if self._content:
                     self._toolbar_view.remove(self._content)
                 self._content = content
@@ -62,6 +73,7 @@ class ToolbarViewMeta(type(GObject.Object)):
             attrs["on_destroy"] = on_destroy
 
         if not replace:
+
             def __init__(self):
                 super(ToolbarView, self).__init__()
                 self._toolbar_view = Adw.ToolbarView.new()
@@ -69,7 +81,7 @@ class ToolbarViewMeta(type(GObject.Object)):
                 self._toolbar_view.set_parent(self)
                 self.connect("destroy", self.on_destroy)
 
-            def set_content(self, content: Optional[Gtk.Widget] = None) -> None:
+            def set_content(self, content:Gtk.Widget|None = None) -> None:
                 self._toolbar_view.set_content(content)
 
             def add_top_bar(self, widget: Gtk.Widget):
@@ -92,16 +104,16 @@ class ToolbarViewMeta(type(GObject.Object)):
 
 
 class ToolbarView(Gtk.Widget, metaclass=ToolbarViewMeta):
-    __gtype_name__ = "ToolbarView"
+    __gtype_name__: str = "ToolbarView"
 
     @classmethod
     def new(cls):
         return ToolbarView()
-    
+
     def __init__(self):
         pass
 
-    def set_content(self, content: Optional[Gtk.Widget] = None) -> None:
+    def set_content(self, content: Gtk.Widget|None = None) -> None:
         pass
 
     def add_top_bar(self, widget: Gtk.Widget):
@@ -109,5 +121,6 @@ class ToolbarView(Gtk.Widget, metaclass=ToolbarViewMeta):
 
     def add_bottom_bar(self, widget: Gtk.Widget):
         pass
+
 
 ToolbarView.set_css_name("compat-toolbarview")

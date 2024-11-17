@@ -1,23 +1,32 @@
+# pyright: reportCallIssue=false
+# pyright: reportUnknownVariableType=false
+# pyright: reportAny=false
+# pyright: reportUnknownMemberType=false
+# pyright: reportUnknownArgumentType=false
+
 from gettext import gettext as _
 
 import gi
-from gi.repository import Gtk, GObject
-
-from waydroid_helper.util import Task, logger
-from waydroid_helper.waydroid import WaydroidState, Waydroid
-from waydroid_helper.shared_folder import SharedFoldersWidget
-from waydroid_helper.infobar import InfoBar
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
+from gi.repository import Adw, Gtk, GObject
 
-@Gtk.Template(resource_path="/com/jaoushingan/WaydroidHelper/ui/GeneralPage.ui")
+from waydroid_helper.util import Task, logger, template
+from waydroid_helper.waydroid import WaydroidState, Waydroid
+from waydroid_helper.shared_folder import SharedFoldersWidget
+from waydroid_helper.infobar import InfoBar
+
+
+@template(resource_path="/com/jaoushingan/WaydroidHelper/ui/GeneralPage.ui")
 class GeneralPage(Gtk.Box):
-    __gtype_name__ = "GeneralPage"
-    waydroid: Waydroid = GObject.Property(default=None, type=Waydroid)
-    status = Gtk.Template.Child()
-    status_image = Gtk.Template.Child("status-image")
+    __gtype_name__: str = "GeneralPage"
+    waydroid: Waydroid = GObject.Property(
+        default=None, type=Waydroid
+    )  # pyright: ignore[reportAssignmentType]
+    status: Adw.ActionRow = Gtk.Template.Child()
+    status_image: Gtk.Image = Gtk.Template.Child("status-image")
     stop_button: Gtk.Button = Gtk.Template.Child("stop-button")
     start_button: Gtk.Button = Gtk.Template.Child("start-button")
     general_button_stack: Gtk.Stack = Gtk.Template.Child()
@@ -27,9 +36,9 @@ class GeneralPage(Gtk.Box):
     shared_folders_widget: SharedFoldersWidget = Gtk.Template.Child()
     # mount_list:Gtk.ListBox = Gtk.Template.Child()
 
-    _task = Task()
+    _task: Task = Task()
 
-    def update_menu(self, state):
+    def update_menu(self, state: WaydroidState):
         if state == WaydroidState.RUNNING:
             self.status.set_title(_("Connected"))
             self.status.set_subtitle(_("Waydroid session is running"))
@@ -63,16 +72,20 @@ class GeneralPage(Gtk.Box):
             self.status_image.set_from_icon_name("")
             self._disable_buttons()
 
-    def on_waydroid_state_changed(self, w, param):
+    def on_waydroid_state_changed(self, w: GObject.Object, param: GObject.ParamSpec):
         self.update_menu(w.get_property(param.name))
 
-    def __init__(self, waydroid: Waydroid, **kargs):
+    def __init__(
+        self,
+        waydroid: Waydroid,
+        **kargs  # pyright: ignore[reportMissingParameterType,reportUnknownParameterType]
+    ):
         super().__init__(**kargs)
         self.set_property("waydroid", waydroid)
         self.waydroid.connect("notify::state", self.on_waydroid_state_changed)
-        self.infobar = InfoBar(
+        self.infobar: InfoBar = InfoBar(
             label=_("Restart the systemd user service immediately"),
-            ok_callback=lambda *_:self.shared_folders_widget.restart_service(),
+            ok_callback=lambda *_: self.shared_folders_widget.restart_service(),
         )
         self.shared_folders_widget.connect(
             "updated", lambda _: self.infobar.set_reveal_child(True)
@@ -112,12 +125,12 @@ class GeneralPage(Gtk.Box):
             self.update_menu(self.waydroid.state)
 
     @Gtk.Template.Callback()
-    def on_stop_button_clicked(self, button):
+    def on_stop_button_clicked(self, button: Gtk.Button):
         logger.info("waydroid session stop")
         self._task.create_task(self.__on_stop_button_clicked())
 
     @Gtk.Template.Callback()
-    def on_show_full_ui_button_clicked(self, button):
+    def on_show_full_ui_button_clicked(self, button: Gtk.Button):
         logger.info("waydroid show-full-ui")
         self._task.create_task(self.waydroid.show_full_ui())
 
@@ -129,7 +142,7 @@ class GeneralPage(Gtk.Box):
             self.update_menu(self.waydroid.state)
 
     @Gtk.Template.Callback()
-    def on_start_upgrade_offline_clicked(self, button):
+    def on_start_upgrade_offline_clicked(self, button: Gtk.Button):
         logger.info("sudo waydroid upgrade -o")
         self._task.create_task(self.__on_start_upgrade_offline_clicked())
 

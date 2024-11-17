@@ -1,3 +1,16 @@
+# pyright: reportUnknownMemberType=false
+# pyright: reportUnknownParameterType=false
+# pyright: reportMissingParameterType=false
+# pyright: reportRedeclaration=false
+# pyright: reportUnknownVariableType=false
+# pyright: reportUnknownArgumentType=false
+# pyright: reportAny=false
+# pyright: reportCallIssue=false
+# pyright: reportMissingSuperCall=false
+# pyright: reportGeneralTypeIssues=false
+# pyright: reportUntypedBaseClass=false
+
+from typing import final
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -8,7 +21,6 @@ from gi.repository import Gtk, Adw, GLib
 GTK_VERSION = Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version()
 ADW_VERSION = Adw.get_major_version(), Adw.get_minor_version(), Adw.get_micro_version()
 GLIB_VERSION = GLib.MAJOR_VERSION, GLib.MINOR_VERSION, GLib.MICRO_VERSION
-
 
 class SpinnerMeta(type(Gtk.Widget)):
     def __new__(mcs, name, bases, attrs):
@@ -44,6 +56,7 @@ class SpinnerMeta(type(Gtk.Widget)):
         return super().__new__(mcs, name, bases, attrs)
 
 
+@final
 class Spinner(Gtk.Widget, metaclass=SpinnerMeta):
     __gtype_name__ = "Spinner"
 
