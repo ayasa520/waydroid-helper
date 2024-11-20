@@ -22,7 +22,7 @@ jobs:
           sudo apt-get upgrade -y
           sudo apt-get install desktop-file-utils software-properties-common -y
           sudo apt-get install libgtk-4-1 libgtk-4-dev libadwaita-1-dev libadwaita-1-0 libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-4.0 gir1.2-adw-1 -y
-          sudo apt-get install gettext ninja-build fakeroot attr libcap-dev -y
+          sudo apt-get install gettext ninja-build fakeroot attr libcap-dev libdbus-1-dev -y
           python3 -m pip install meson
           python3 -m pip install pycairo
           python3 -m pip install "PyGObject>=3.50.0"
