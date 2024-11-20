@@ -1,0 +1,52 @@
+Source: waydroid-helper
+Section: utils
+Priority: optional
+Maintainer: Takanashi Rikka <ayasa0520@gmail.com>
+Build-Depends: debhelper-compat (= 13),
+               meson,
+               ninja-build,
+               pkg-config,
+               libgtk-4-dev,
+               libadwaita-1-dev,
+               libgirepository1.0-dev,
+               gcc,
+               libcairo2-dev,
+               python3-dev,
+               gettext,
+               libcap-dev,
+               libdbus-1-dev,
+               desktop-file-utils
+
+Package: waydroid-helper
+Architecture: all
+Depends: ${misc:Depends},
+         ${python3:Depends},
+         python3,
+         libgtk-4-1,
+         libadwaita-1-0,
+         gir1.2-gtk-4.0,
+         gir1.2-adw-1,
+         waydroid,
+         fakeroot,
+         attr,
+         software-properties-common,
+         python3-aiofiles,
+         python3-bidict,
+         python3-httpx,
+         python3-cairo,
+         python3-gi (>= 3.50.0),
+         python3-pywayland,
+         python3-yaml,
+         python3-dbus
+Suggests: bindfs
+Description: GUI helper for Waydroid configuration and extensions
+ Waydroid Helper is a graphical user interface application that provides
+ a user-friendly way to configure Waydroid and install extensions,
+ including Magisk, ARM translation, and various Google services alternatives.
+ .
+ Features include:
+  * Configure Waydroid settings
+  * Install Magisk
+  * Install ARM translation (libhoudini/libndk)
+  * Install Google services (OpenGapps/MindTheGapps/MicroG)
+  * Install SmartDock 
