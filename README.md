@@ -18,10 +18,17 @@ Waydroid Helper is a graphical user interface application written in Python usin
 
 ### Installing from Releases
 1. Go to the [releases](https://github.com/ayasa520/waydroid-helper/releases) page
-2. Download the appropriate package for your distribution:
+2. Download the appropriate package for your distribution
 3. Install the package
 
-### AUR
+### Ubuntu
+
+```
+sudo add-apt-repository ppa:ichigo666/ppa
+sudo apt install waydroid-helper
+```
+
+### Arch
 
 For Arch users, Waydroid Helper is available in the AUR:
 ```
@@ -52,7 +59,7 @@ For manual installation, you'll need to install the dependencies and build the p
     pip install -r requirements.txt
     meson setup --prefix /usr build
     sudo ninja -C build install
-
+    
     # Uninstall waydroid helper
     # sudo ninja -C build uninstall
     ```
@@ -78,7 +85,7 @@ For manual installation, you'll need to install the dependencies and build the p
     pip install -r requirements.txt
     meson setup --prefix /usr build
     sudo ninja -C build install
-
+    
     # Uninstall waydroid helper
     # sudo ninja -C build uninstall
     ```
@@ -103,7 +110,7 @@ For manual installation, you'll need to install the dependencies and build the p
     pip install -r requirements.txt
     meson setup --prefix /usr build
     sudo ninja -C build install
-
+    
     # Uninstall waydroid helper
     # sudo ninja -C build uninstall
     ```
