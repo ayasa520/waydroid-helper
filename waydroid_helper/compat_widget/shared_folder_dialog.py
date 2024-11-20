@@ -57,7 +57,7 @@ class DialogMeta(type(GObject.Object)):
                 if method and instance:
                     shortcut = Gtk.Shortcut.new(
                         Gtk.ShortcutTrigger.parse_string("Escape"),
-                        Gtk.CallbackAction.new(lambda *_: method()(instance()) or True) ,
+                        Gtk.CallbackAction.new(lambda *_: method(instance) or True) ,
                     )
                     shortcut_controller = Gtk.ShortcutController()
                     shortcut_controller.add_shortcut(shortcut)
