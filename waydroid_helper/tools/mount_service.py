@@ -34,6 +34,8 @@ class MountService(dbus.service.Object):
             result = subprocess.run(
                 [
                     "bindfs",
+                    "-o",
+                    "nonempty",
                     "-u",
                     str(stat_info.st_uid),
                     "-g",
