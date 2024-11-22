@@ -18,7 +18,7 @@ BuildRequires:  libadwaita-devel
 BuildRequires:  gobject-introspection-devel
 BuildRequires:  gettext
 BuildRequires:  dbus-devel
-BuildRequires:  systemd-devel
+BuildRequires:  systemd
 BuildRequires:  libcap-devel
 BuildRequires:  desktop-file-utils
 

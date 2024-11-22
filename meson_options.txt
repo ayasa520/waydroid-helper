@@ -1,1 +1,9 @@
 option('build_appimage', type: 'boolean', value: false, description: 'Build AppImage')
+option('systemd-system-unit-dir', type: 'string', value: '',
+      description: 'Where to install the systemd system service files (absolute path)')
+option('systemd-user-unit-dir', type: 'string', value: '',
+      description: 'Where to install the systemd user service files (absolute path)')
+option('dbus-service-dir', type: 'string', value: '',
+      description: 'Where to install the dbus service files (absolute path)')
+option('dbus-policy-dir', type: 'string', value: '',
+      description: 'Where to install the dbus policy files (absolute path)')
