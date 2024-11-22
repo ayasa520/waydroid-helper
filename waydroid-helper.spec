@@ -5,7 +5,7 @@ Summary:        A GUI application for Waydroid configuration and extension insta
 
 License:        GPLv3+
 URL:            https://github.com/ayasa520/waydroid-helper
-Source0:        %{name}-%{version}.tar.gz
+Source:        {{{ git_dir_pack }}}
 
 BuildRequires:  meson
 BuildRequires:  ninja-build
