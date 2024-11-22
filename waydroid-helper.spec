@@ -37,6 +37,8 @@ Requires:       python3-pywayland
 Requires:       python3-yaml
 Requires:       python3-dbus
 
+Recommends:     bindfs
+
 %description
 Waydroid Helper is a graphical user interface application that provides
 a user-friendly way to configure Waydroid and install extensions,
