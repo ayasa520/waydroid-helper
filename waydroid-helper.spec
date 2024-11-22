@@ -42,7 +42,7 @@ a user-friendly way to configure Waydroid and install extensions,
 including Magisk, ARM translation, and various Google services alternatives.
 
 %prep
-%autosetup
+%autosetup -n %{name}
 
 %build
 %meson
