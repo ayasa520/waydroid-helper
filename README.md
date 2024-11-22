@@ -35,6 +35,13 @@ For Arch users, Waydroid Helper is available in the AUR:
 yay -S waydroid-helper
 ```
 
+### Fedora
+
+```
+sudo dnf copr enable cuteneko/waydroid-helper
+sudo dnf install waydroid-helper
+```
+
 ### Manual Installation
 
 For manual installation, you'll need to install the dependencies and build the project using Meson.
