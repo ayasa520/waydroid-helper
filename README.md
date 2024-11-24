@@ -154,6 +154,7 @@ For manual installation, you'll need to install the dependencies and build the p
 
 ## Screenshots
 
-![](./assets/img/README/1_en.png)
+![image-20241125011305536](assets/img/README/1_en.png)
+
 ![](./assets/img/README/2_en.png)
 ![](./assets/img/README/3_en.png)
