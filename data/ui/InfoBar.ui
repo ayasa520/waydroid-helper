@@ -3,6 +3,7 @@
   <template class="InfoBar" parent="GtkRevealer">
     <property name="visible">true</property>
     <property name="transition_type">4</property>
+    <property name="hexpand">true</property>
     <property name="valign">end</property>
     <child>
       <object class="GtkBox">
@@ -20,30 +21,34 @@
                 <child>
                   <object class="GtkLabel" id="label">
                     <property name="margin-start">10</property>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkButton" id="cancel_button">
-                    <property name="halign">end</property>
-                    <property name="valign">center</property>
-                    <property name="vexpand">true</property>
+                    <property name="wrap">true</property>
+                    <property name="wrap-mode">word-char</property>
+                    <property name="xalign">0.0</property>
                     <property name="hexpand">true</property>
-                    <property name="margin-top">6</property>
-                    <property name="margin-end">6</property>
-                    <property name="margin-bottom">6</property>
-                    <property name="label" translatable="yes">Cancel</property>
                   </object>
                 </child>
                 <child>
-                  <object class="GtkButton" id="ok_button">
-                    <property name="halign">end</property>
-                    <property name="valign">center</property>
-                    <property name="vexpand">true</property>
-                    <property name="margin-end">6</property>
-                    <property name="label" translatable="yes">OK</property>
-                    <style>
-                      <class name="suggested-action"/>
-                    </style>
+                  <object class="GtkBox">
+                    <property name="hexpand">false</property>
+                    <child>
+                      <object class="GtkButton" id="cancel_button">
+                        <property name="valign">center</property>
+                        <property name="margin-top">6</property>
+                        <property name="margin-end">6</property>
+                        <property name="margin-bottom">6</property>
+                        <property name="label" translatable="yes">Cancel</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="ok_button">
+                        <property name="valign">center</property>
+                        <property name="margin-end">10</property>
+                        <property name="label" translatable="yes">OK</property>
+                        <style>
+                          <class name="suggested-action"/>
+                        </style>
+                      </object>
+                    </child>
                   </object>
                 </child>
               </object>
