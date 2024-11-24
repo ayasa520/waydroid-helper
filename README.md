@@ -21,13 +21,6 @@ Waydroid Helper is a graphical user interface application written in Python usin
 2. Download the appropriate package for your distribution
 3. Install the package
 
-### Ubuntu
-
-```
-sudo add-apt-repository ppa:ichigo666/ppa
-sudo apt install waydroid-helper
-```
-
 ### Arch
 
 For Arch users, Waydroid Helper is available in the AUR:
@@ -35,11 +28,48 @@ For Arch users, Waydroid Helper is available in the AUR:
 yay -S waydroid-helper
 ```
 
+### Debian
+
+##### For **Debian Unstable** run the following:
+
+```
+echo 'deb http://download.opensuse.org/repositories/home:/CuteNeko:/waydroid-helper/Debian_Unstable/ /' | sudo tee /etc/apt/sources.list.d/home:CuteNeko:waydroid-helper.list
+curl -fsSL https://download.opensuse.org/repositories/home:CuteNeko:waydroid-helper/Debian_Unstable/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/home_CuteNeko_waydroid-helper.gpg > /dev/null
+sudo apt update
+sudo apt install waydroid-helper
+```
+
+##### For **Debian Testing** run the following
+
+```
+echo 'deb http://download.opensuse.org/repositories/home:/CuteNeko:/waydroid-helper/Debian_Testing/ /' | sudo tee /etc/apt/sources.list.d/home:CuteNeko:waydroid-helper.list
+curl -fsSL https://download.opensuse.org/repositories/home:CuteNeko:waydroid-helper/Debian_Testing/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/home_CuteNeko_waydroid-helper.gpg > /dev/null
+sudo apt update
+sudo apt install waydroid-helper
+```
+
+##### For **Debian 12** run the following:
+
+```
+echo 'deb http://download.opensuse.org/repositories/home:/CuteNeko:/waydroid-helper/Debian_12/ /' | sudo tee /etc/apt/sources.list.d/home:CuteNeko:waydroid-helper.list
+curl -fsSL https://download.opensuse.org/repositories/home:CuteNeko:waydroid-helper/Debian_12/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/home_CuteNeko_waydroid-helper.gpg > /dev/null
+sudo apt update
+sudo apt install waydroid-helper
+```
+
 ### Fedora
 
 ```
 sudo dnf copr enable cuteneko/waydroid-helper
 sudo dnf install waydroid-helper
+```
+
+### Ubuntu
+
+```
+sudo add-apt-repository ppa:ichigo666/ppa
+sudo apt update
+sudo apt install waydroid-helper
 ```
 
 ### Manual Installation
