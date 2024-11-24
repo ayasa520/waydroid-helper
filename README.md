@@ -72,7 +72,7 @@ sudo apt update
 sudo apt install waydroid-helper
 ```
 
-### Manual Installation
+### Manual Build and Installation
 
 For manual installation, you'll need to install the dependencies and build the project using Meson.
 
