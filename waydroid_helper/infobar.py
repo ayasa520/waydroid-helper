@@ -19,6 +19,7 @@ class InfoBar(Gtk.Revealer):
     def __init__(self, label: str, cancel_callback:Callable[[Gtk.Button],None]|None=None, ok_callback:Callable[[Gtk.Button],None]|None=None):
         super().__init__()
         self.label.set_text(label)
+        self.label.set_wrap(True)
         if cancel_callback:
             self.cancel_button.connect("clicked", cancel_callback)
         if ok_callback:
