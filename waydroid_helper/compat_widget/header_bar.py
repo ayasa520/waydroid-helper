@@ -14,7 +14,8 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Gtk, Adw, GLib, GObject
+from gi.repository import Adw, GLib, GObject, Gtk
+
 from .navigation_page import NavigationPage
 from .navigation_view import NavigationView
 

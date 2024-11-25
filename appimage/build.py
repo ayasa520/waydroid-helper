@@ -1,12 +1,11 @@
 from argparse import ArgumentParser
 from collections.abc import Callable
-from glob import glob
-from logging import getLogger, StreamHandler
-from os.path import dirname, exists, join
+from logging import StreamHandler, getLogger
+from os.path import dirname, join
 from platform import python_compiler
 from shlex import split
 from shutil import rmtree
-from subprocess import CalledProcessError, PIPE, Popen
+from subprocess import PIPE, CalledProcessError, Popen
 from sys import exit, stdout
 from typing import Any, Dict, Iterator
 from venv import create

@@ -6,18 +6,20 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
+import asyncio
 import configparser
 import copy
 import enum
 import os
-from gettext import gettext as _
-from gi.repository import GObject, GLib
-import asyncio
 from collections.abc import Awaitable
-from typing import Any, Callable
 from functools import partial
-from waydroid_helper.util import SubprocessError, SubprocessManager, Task, logger
+from gettext import gettext as _
+from typing import Any, Callable
 
+from gi.repository import GLib, GObject
+
+from waydroid_helper.util import (SubprocessError, SubprocessManager, Task,
+                                  logger)
 
 CONFIG_PATH = os.environ.get("WAYDROID_CONFIG", "/var/lib/waydroid/waydroid.cfg")
 

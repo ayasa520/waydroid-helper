@@ -3,14 +3,15 @@
 # pyright: reportUnknownParameterType=false
 # pyright: reportMissingParameterType=false
 
-import dbus
-import dbus.service
-import dbus.mainloop.glib
-from gi.repository import GLib
-import subprocess
 import os
-
+import subprocess
 from typing import final
+
+import dbus.mainloop.glib
+import dbus.service
+from gi.repository import GLib
+
+import dbus
 
 
 @final

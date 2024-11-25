@@ -8,17 +8,15 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from waydroid_helper.compat_widget import (
-    ToolbarView,
-    NavigationPage,
-    MessageDialog,
-    HeaderBar,
-    Spinner,
-)
-from waydroid_helper.util import Task, logger
-from waydroid_helper.tools import PackageManager
-from gi.repository import Gtk, Adw, GObject
 from gettext import gettext as _
+
+from gi.repository import Adw, GObject, Gtk
+
+from waydroid_helper.compat_widget import (HeaderBar, MessageDialog,
+                                           NavigationPage, Spinner,
+                                           ToolbarView)
+from waydroid_helper.tools import PackageManager
+from waydroid_helper.util import Task, logger
 
 if TYPE_CHECKING:
     from waydroid_helper.tools.extensions_manager import PackageInfo

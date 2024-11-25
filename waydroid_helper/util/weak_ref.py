@@ -5,8 +5,8 @@
 # pyright: reportUnknownVariableType=false
 
 
-from typing import final
 import weakref
+from typing import final
 
 from gi.repository import GObject
 

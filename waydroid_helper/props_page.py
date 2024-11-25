@@ -5,19 +5,22 @@
 # pyright: reportUnknownParameterType=false
 
 from typing import Any, Callable
+
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gettext import gettext as _
 import json
 import os
-from waydroid_helper.infobar import InfoBar
-from waydroid_helper.util import Task, template, logger
-from waydroid_helper.waydroid import PropsState, Waydroid
-from gi.repository import Gtk, GObject, Adw, GLib
 from functools import partial
+from gettext import gettext as _
+
+from gi.repository import Adw, GLib, GObject, Gtk
+
+from waydroid_helper.infobar import InfoBar
+from waydroid_helper.util import Task, logger, template
+from waydroid_helper.waydroid import PropsState, Waydroid
 
 
 @template(resource_path="/com/jaoushingan/WaydroidHelper/ui/PropsPage.ui")

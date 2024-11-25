@@ -6,17 +6,17 @@
 import asyncio
 import json
 import os
-from typing import Any, TypeGuard, TypedDict
-from collections.abc import Coroutine, Iterable
 import xml.etree.ElementTree as ET
-
-from gettext import gettext as _
+from collections.abc import Coroutine, Iterable
 from enum import IntEnum
+from gettext import gettext as _
+from typing import Any, TypedDict, TypeGuard
 
 import aiofiles
 import httpx
 import yaml
 from gi.repository import GLib, GObject
+
 from waydroid_helper.util.arch import host
 from waydroid_helper.util.log import logger
 from waydroid_helper.util.subprocess_manager import SubprocessManager
@@ -120,7 +120,6 @@ class PackageManager(GObject.Object):
                     return None
             except AssertionError as e:
                 logger.error(e)
-                pass
 
     async def save_extension_json(self):
         json_path = os.path.join(self.storage_dir, "extensions.json")

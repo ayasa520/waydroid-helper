@@ -4,15 +4,17 @@
 # pyright: reportRedeclaration=false
 # pyright: reportUnknownVariableType=false
 from typing import Any, Callable
+
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Gtk, GLib, GObject
-from waydroid_helper.util import logger
 from gettext import gettext as _
 
+from gi.repository import GLib, GObject, Gtk
+
+from waydroid_helper.util import logger
 
 GTK_VERSION = Gtk.get_major_version(), Gtk.get_minor_version(), Gtk.get_micro_version()
 

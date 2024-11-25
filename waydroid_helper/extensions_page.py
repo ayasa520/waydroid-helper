@@ -2,10 +2,9 @@
 # pyright: reportUnknownArgumentType=false
 # pyright: reportUnknownParameterType=false
 
-from typing import TypeGuard, cast, final, TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeGuard, cast, final
 
 from waydroid_helper.compat_widget import NavigationView
-
 
 if TYPE_CHECKING:
     from waydroid_helper.tools.extensions_manager import (
@@ -17,16 +16,18 @@ if TYPE_CHECKING:
 import gi
 
 from waydroid_helper.available_version_page import AvailableVersionPage
-from waydroid_helper.tools import PackageManager, ExtensionManagerState
+from waydroid_helper.tools import ExtensionManagerState, PackageManager
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
 from gettext import gettext as _
+
+from gi.repository import Adw, GObject, Gtk
+
+from waydroid_helper.compat_widget import Spinner
 from waydroid_helper.extension_row import ExtensionRow
 from waydroid_helper.waydroid import Waydroid
-from gi.repository import Gtk, GObject, Adw
-from waydroid_helper.compat_widget import Spinner
 
 
 @final

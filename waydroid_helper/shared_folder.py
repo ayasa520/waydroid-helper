@@ -1,17 +1,19 @@
-from enum import IntEnum
+import asyncio
 import os
 import re
-import gi
-import aiofiles
-import asyncio
+from enum import IntEnum
 
+import aiofiles
+import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Gtk, Adw, Gio, GObject
-from waydroid_helper.util import SubprocessManager, logger
-from waydroid_helper.compat_widget import SharedFolderDialog
 from gettext import gettext as _
+
+from gi.repository import Adw, Gio, GObject, Gtk
+
+from waydroid_helper.compat_widget import SharedFolderDialog
+from waydroid_helper.util import SubprocessManager, logger
 
 
 class SharedFolder(GObject.Object):

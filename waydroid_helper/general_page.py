@@ -11,12 +11,12 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Adw, Gtk, GObject
+from gi.repository import Adw, GObject, Gtk
 
-from waydroid_helper.util import Task, logger, template
-from waydroid_helper.waydroid import WaydroidState, Waydroid
-from waydroid_helper.shared_folder import SharedFoldersWidget
 from waydroid_helper.infobar import InfoBar
+from waydroid_helper.shared_folder import SharedFoldersWidget
+from waydroid_helper.util import Task, logger, template
+from waydroid_helper.waydroid import Waydroid, WaydroidState
 
 
 @template(resource_path="/com/jaoushingan/WaydroidHelper/ui/GeneralPage.ui")

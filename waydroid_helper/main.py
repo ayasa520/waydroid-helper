@@ -1,22 +1,23 @@
 # pyright: reportUnknownVariableType=false,reportMissingImports=false
 
-from typing import Callable #, override
+from typing import Callable
+
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
+import asyncio
 import os
-from .window import WaydroidHelperWindow
-from gi.repository import GObject, Gtk, Gio, Adw
-from gi.events import (
-    GLibEventLoopPolicy,
-)
+import sys
+
+from gi.events import GLibEventLoopPolicy
+from gi.repository import Adw, Gio, GObject, Gtk
+
 from waydroid_helper.compat_widget import GLIB_VERSION, MessageDialog
 from waydroid_helper.util import logger
-import sys
-import asyncio
 
+from .window import WaydroidHelperWindow
 
 Adw.init()
 

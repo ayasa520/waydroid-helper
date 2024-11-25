@@ -1,15 +1,16 @@
-from enum import IntEnum
 import ctypes
 import ctypes.util
-import dbus
 import logging
 import os
 import select
 import signal
 import struct
 import sys
+from enum import IntEnum
 from types import FrameType
 from typing import final
+
+import dbus
 
 logging.basicConfig(
     level=logging.INFO,

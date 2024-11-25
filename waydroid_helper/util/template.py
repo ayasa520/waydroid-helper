@@ -5,8 +5,9 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
+from typing import Callable, TypeVar
+
 from gi.repository import Gtk
-from typing import TypeVar, Callable
 
 T = TypeVar('T')
 
