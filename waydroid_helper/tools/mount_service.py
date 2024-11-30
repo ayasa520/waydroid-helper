@@ -32,18 +32,31 @@ class MountService(dbus.service.Object):
         target_str = str(target)
         try:
             stat_info = os.stat(target_str)
+            fuse_version_result = subprocess.run(
+                ["bindfs", "--fuse-version"],
+                capture_output=True,
+                text=True,
+            )
+            fuse_version = fuse_version_result.stdout.splitlines()[0].split()[4]
+            if int(fuse_version.split('.')[0]) < 3:
+                nonempty_option = "-o nonempty"
+            else:
+                nonempty_option = ""
+
+            command = [
+                "bindfs",
+                "-u",
+                str(stat_info.st_uid),
+                "-g",
+                str(stat_info.st_gid),
+                source_str,
+                target_str,
+            ]
+            if nonempty_option:
+                command.insert(1, nonempty_option)
+
             result = subprocess.run(
-                [
-                    "bindfs",
-                    "-o",
-                    "nonempty",
-                    "-u",
-                    str(stat_info.st_uid),
-                    "-g",
-                    str(stat_info.st_gid),
-                    source_str,
-                    target_str,
-                ],
+                command,
                 capture_output=True,
                 text=True,
             )
