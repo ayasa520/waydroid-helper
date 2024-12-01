@@ -167,20 +167,7 @@ Enable systemd service
 systemctl --user enable waydroid-monitor.service --now
 ```
 
-For AppImage users, you need to manually copy the D-Bus configuration files and systemd unit files to their respective system locations to enable proper functionality. Here's the suggested file stusr
-├── lib
-│   └── systemd
-│       ├── system
-│       │   └── waydroid-mount.service
-│       └── user
-│           └── waydroid-monitor.service
-└── share
-    ├── dbus-1
-    │   ├── system.d
-    │   │   └── id.waydro.Mount.conf
-    │   └── system-services
-    │       └── id.waydro.Mount.service
-ructure:
+For AppImage users, you need to manually copy the D-Bus configuration files and systemd unit files to their respective system locations to enable proper functionality. Here's the suggested file structure:
 
 ```
 usr
