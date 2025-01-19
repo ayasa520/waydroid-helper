@@ -1,6 +1,10 @@
 import logging
 import sys
 import os
+import gi
+
+gi.require_version("GLib", "2.0")
+from gi.repository import GLib
 
 
 def _reset_logger(log: logging.Logger):
@@ -19,7 +23,7 @@ def _reset_logger(log: logging.Logger):
     )
     file_handle = logging.FileHandler(
         os.path.join(
-            os.getenv("XDG_CACHE_HOME", os.path.join(os.getenv("HOME"), ".cache")),
+            os.getenv("XDG_CACHE_HOME", GLib.get_user_cache_dir()),
             "waydroid-helper.log",
         ),
         encoding="utf-8",
