@@ -38,10 +38,6 @@ class MountService(dbus.service.Object):
                 text=True,
             )
             fuse_version = fuse_version_result.stdout.splitlines()[0].split()[4]
-            if int(fuse_version.split('.')[0]) < 3:
-                nonempty_option = "-o nonempty"
-            else:
-                nonempty_option = ""
 
             command = [
                 "bindfs",
@@ -52,8 +48,11 @@ class MountService(dbus.service.Object):
                 source_str,
                 target_str,
             ]
-            if nonempty_option:
-                command.insert(1, nonempty_option)
+            if int(fuse_version.split('.')[0]) < 3:
+                command[1:1] = [
+                    "-o",
+                    "nonempty"
+                ]
 
             result = subprocess.run(
                 command,
