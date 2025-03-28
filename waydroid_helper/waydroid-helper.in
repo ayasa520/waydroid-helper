@@ -72,6 +72,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument("--start-mount", action="store_true", help="Start the mounting service")
     parser.add_argument("--start-monitor", action="store_true", help="Start the monitoring service")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
     args = parser.parse_args()
 
     if args.start_mount:
