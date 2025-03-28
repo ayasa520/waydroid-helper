@@ -30,8 +30,9 @@ else:
 class WaydroidHelperApplication(Adw.Application):
     """The main application singleton class."""
 
-    def __init__(self):
+    def __init__(self, version: str):
         super().__init__(application_id="com.jaoushingan.WaydroidHelper", flags=flags)
+        self.version = version
         self.create_action(
             "quit",
             lambda *_: self.quit(),  # pyright: ignore[reportUnknownArgumentType]
@@ -80,7 +81,7 @@ class WaydroidHelperApplication(Adw.Application):
             application_name="waydroid-helper",
             application_icon="com.jaoushingan.WaydroidHelper",
             developer_name="rikka",
-            version="0.1.2",
+            version=self.version,
             developers=["rikka"],
             copyright="© 2024 rikka",
         )
@@ -116,5 +117,5 @@ def main(version: str):
     asyncio.set_event_loop_policy(
         GLibEventLoopPolicy()  # pyright:ignore[reportUnknownArgumentType]
     )
-    app = WaydroidHelperApplication()
+    app = WaydroidHelperApplication(version)
     return app.run(sys.argv)
