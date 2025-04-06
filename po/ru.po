@@ -1,0 +1,319 @@
+#
+# Fraxinus Acer <>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: unnamed project\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-02-25 01:16+0800\n"
+"PO-Revision-Date: 2025-04-06 19:16+0300\n"
+"Last-Translator: Fraxinus Acer <>\n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Gtranslator 48.0\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: waydroid_helper/ui/GeneralPage.ui:13 waydroid_helper/generalpage.py:49
+msgid "Loading"
+msgstr "Загрузка"
+
+#: waydroid_helper/ui/GeneralPage.ui:47
+msgid "Start"
+msgstr "Старт"
+
+#: waydroid_helper/ui/GeneralPage.ui:54
+msgid "Stop"
+msgstr "Стоп"
+
+#: waydroid_helper/ui/GeneralPage.ui:61
+msgid "Show full ui"
+msgstr "Запуск полный экран"
+
+#: waydroid_helper/ui/GeneralPage.ui:61
+msgid "Restart(Update configs)"
+msgstr "Перезапуск(Обновить настройки)"
+
+#: waydroid_helper/ui/GeneralPage.ui:78
+msgid "Initialize"
+msgstr "Инициализация"
+
+#: waydroid_helper/ui/PropsPage.ui:235 waydroid_helper/ui/PropsPage.ui:246
+msgid "Reset"
+msgstr "Сброс"
+
+#: waydroid_helper/ui/PropsPage.ui:224
+msgid "spoof device"
+msgstr "Подменяемое устройство"
+
+#: waydroid_helper/ui/ExtensionRow.ui:6
+msgid "Show"
+msgstr "Показать"
+
+#: waydroid_helper/ui/InfoBar.ui:34
+msgid "Cancel"
+msgstr "Отмена"
+
+#: waydroid_helper/ui/InfoBar.ui:43
+msgid "OK"
+msgstr "ОК"
+
+#: waydroid_helper/ui/PropsPage.ui:10
+msgid ""
+"Effective only while Waydroid session is running. Some settings require "
+"restarting the Waydroid session to apply"
+msgstr ""
+"Действует только во время работы сеанса Waydroid. Для применения некоторых "
+"настроек требуется перезапустить сеанс Waydroid"
+
+#: waydroid_helper/ui/PropsPage.ui:15 waydroid_helper/waydroid.py:77
+msgid "Enable window integration with the desktop"
+msgstr "Включить интеграцию окна с рабочим столом"
+
+#: waydroid_helper/ui/PropsPage.ui:31 waydroid_helper/waydroid.py:84
+msgid ""
+"Workaround for showing the cursor inmulti_windows mode on some compositors"
+msgstr ""
+"Решение для отображения курсора в режиме inmulti_windows на некоторых ВМ"
+
+#: waydroid_helper/ui/PropsPage.ui:47 waydroid_helper/waydroid.py:92
+msgid ""
+"Swaps the color space from RGBA to BGRA (only works with our patched mutter "
+"so far)"
+msgstr ""
+"Меняет цветовое пространство с RGBA на BGRA (работает только с нашим "
+"исправленным mutter)"
+
+#: waydroid_helper/ui/PropsPage.ui:63 waydroid_helper/waydroid.py:100
+msgid ""
+"Let the Waydroid container sleep (after the display timeout) when no apps "
+"are active"
+msgstr ""
+"Оставлять контейнер Waydroid в спящем режиме (после истечения времени "
+"ожидания дисплея), когда никакие приложения не активны"
+
+#: waydroid_helper/ui/PropsPage.ui:79 waydroid_helper/waydroid.py:107
+msgid "Allow android direct access to hotplugged devices"
+msgstr ""
+"Разрешить Android прямой доступ к устройствам с подключением на горячую"
+
+#: waydroid_helper/ui/PropsPage.ui:94
+msgid ""
+"Interpret mouse inputs as touch inputs. Enter the package names separated by "
+"\",\". Use the wildcard \"*\" to match all Apps"
+msgstr ""
+"Интерпретируйте ввод данных с помощью мыши как сенсорный ввод. Введите "
+"названия пакетов, разделённые символами \",\". Используйте подстановочный "
+"знак \"*\" для всех приложений"
+
+#: waydroid_helper/ui/PropsPage.ui:101 waydroid_helper/ui/PropsPage.ui:121
+msgid "Package names"
+msgstr "Имена пакетов"
+
+#: waydroid_helper/ui/PropsPage.ui:112
+msgid ""
+"Make the Apps appear as if connected to WiFi. Enter the package names "
+"separated by \",\". Use the wildcard \"*\" to match all Apps"
+msgstr ""
+"Сделайте так, чтобы приложения отображались так, как если бы они были "
+"подключены к Wi-Fi. Введите названия пакетов, разделенные символами \",\". "
+"Используйте подстановочный знак \"*\", чтобы они соответствовали всем "
+"приложениям"
+
+#: waydroid_helper/waydroid.py:142 waydroid_helper/ui/PropsPage.ui:130
+msgid "Adjust height padding"
+msgstr "Отрегулируйте вертикальные отступы"
+
+#: waydroid_helper/waydroid.py:148 waydroid_helper/ui/PropsPage.ui:148
+msgid "Adjust width padding"
+msgstr "Отрегулируйте горизонтальные отступы"
+
+#: waydroid_helper/waydroid.py:154 waydroid_helper/waydroid.py:161
+#: waydroid_helper/ui/PropsPage.ui:166 waydroid_helper/ui/PropsPage.ui:184
+msgid "Used for user to override desired resolution"
+msgstr ""
+"Используется для того, чтобы пользователь мог изменить желаемое разрешение"
+
+#: waydroid_helper/ui/PropsPage.ui:135 waydroid_helper/waydroid.py:193
+msgid "hide navbar"
+msgstr "скрыть навигационную панель"
+
+#: waydroid_helper/gtk/help-overlay.ui:11
+msgctxt "shortcut window"
+msgid "General"
+msgstr "Общие"
+
+#: waydroid_helper/gtk/help-overlay.ui:14
+msgctxt "shortcut window"
+msgid "Show Shortcuts"
+msgstr "Показать ярлыки"
+
+#: waydroid_helper/gtk/help-overlay.ui:20
+msgctxt "shortcut window"
+msgid "Quit"
+msgstr "Выход"
+
+#: waydroid_helper/extensionwindow.py:22
+msgid "Available Versions"
+msgstr "Доступные версии"
+
+#: waydroid_helper/ui/window.ui:26
+msgid "Menu"
+msgstr "Меню"
+
+#: waydroid_helper/ui/window.ui:52
+msgid "_Preferences"
+msgstr "_Настройки"
+
+#: waydroid_helper/ui/window.ui:56
+msgid "_Keyboard Shortcuts"
+msgstr "_Клавиатурные ярлыки"
+
+#: waydroid_helper/ui/window.ui:60
+msgid "_About waydroid-helper"
+msgstr "_О waydroid-helper"
+
+#: waydroid_helper/generalpage.py:26
+msgid "Connected"
+msgstr "Подключённый"
+
+#: waydroid_helper/generalpage.py:27
+msgid "Waydroid session is running"
+msgstr "Сессия Waydroid запущена"
+
+#: waydroid_helper/generalpage.py:34
+msgid "Stopped"
+msgstr "Остановленный"
+
+#: waydroid_helper/generalpage.py:35
+msgid "Waydroid session is stopped"
+msgstr "Сессия Waydroid остановлена"
+
+#: waydroid_helper/generalpage.py:42
+msgid "Uninitialized"
+msgstr "Неинициализированный"
+
+#: waydroid_helper/generalpage.py:43
+msgid "Waydroid is not initialized"
+msgstr "Waydroid не инициализирован"
+
+#: waydroid_helper/propspage.py:134
+msgid "Restart the session to apply the changes"
+msgstr "Перезапустить сессию для применения изменений"
+
+#: waydroid_helper/propspage.py:139
+msgid "Save and restart the container"
+msgstr "Сохранить и перезапустить контейнер"
+
+#: waydroid_helper/waydroid.py:114
+msgid ""
+"Interpret mouse inputs as touch inputs. Enter the package names separated by "
+"','. Use the wildcard '*' to match all Apps"
+msgstr ""
+"Интерпретируйте ввод данных с помощью мыши как сенсорный ввод. Введите "
+"названия пакетов, разделенные символами \",\". Используйте подстановочный "
+"знак \"*\" для соответствия всем приложениям"
+
+#: waydroid_helper/waydroid.py:122
+msgid ""
+"Make the Apps appear as if connected to WiFi. Enter the package names "
+"separated by ','. Use the wildcard '*' to match all Apps"
+msgstr ""
+"Сделайте так, чтобы приложения отображались так, как если бы они были "
+"подключены к Wi-Fi. Введите названия пакетов, разделенные символами \",\". "
+"Используйте подстановочный знак \"*\", чтобы сопоставить все приложения"
+
+#: waydroid_helper/window.py:46
+msgid "Home"
+msgstr "Домой"
+
+#: waydroid_helper/window.py:52
+msgid "Settings"
+msgstr "Настройки"
+
+#: waydroid_helper/window.py:58
+msgid "Extensions"
+msgstr "Расширения"
+
+#: waydroid_helper/extensionwindow.py:123
+msgid "Extension Conflict"
+msgstr "Конфликт расширений"
+
+#: waydroid_helper/extensionwindow.py:140
+msgid "Uninstall Confirmation"
+msgstr "Подтверждение удаления"
+
+#: waydroid_helper/extensionwindow.py:124
+msgid "Do you want to uninstall the conflicting extensions"
+msgstr "Вы хотите удалить конфликтующие расширения"
+
+#: waydroid_helper/extensionwindow.py:141
+msgid "Do you want to uninstall"
+msgstr "Вы хотите удалить"
+
+#: waydroid_helper/extensionwindow.py:131
+msgid "Extension Installation"
+msgstr "Установка расширения"
+
+#: waydroid_helper/extensionwindow.py:132
+msgid "Do you want to install"
+msgstr "Вы хотите установить"
+
+# " waydroid_helper/available_version_page.py:282
+msgid "Installation Failed"
+msgstr "Установка неудалась"
+
+# " waydroid_helper/available_version_page.py:305
+msgid "Uninstallaion Failed"
+msgstr "Удаление неудалось"
+
+# " waydroid_helper/available_version_page.py:204
+msgid "Installation Complete"
+msgstr "Установка завершена"
+
+# " waydroid_helper/available_version_page.py:217
+msgid "Uninstallation Complete"
+msgstr "Удаление завершено"
+
+# " waydroid_helper/available_version_page.py:205
+msgid "{0} has been successfully installed."
+msgstr "{0} был успешно установлен"
+
+# " waydroid_helper/available_version_page.py:218
+msgid "{0} has been successfully uninstalled."
+msgstr "{0} был успешно удалён"
+
+msgid "Shared Folders"
+msgstr "Папки общего доступа"
+
+msgid ""
+"Use the button below to add your first shared folder. For file sharing to "
+"work, you need to have <a href='https://bindfs.org/'>bindfs</a> installed."
+msgstr ""
+"Используйте кнопку ниже, чтобы добавить свою первую общую папку. Для работы "
+"общего доступа вам нужно иметь установленным <a href='https://"
+"bindfs.org/'>bindfs</a>."
+
+msgid "Restart the systemd user service immediately"
+msgstr "Немедленно перезапустите пользовательскую службу systemd"
+
+msgid "Source"
+msgstr "Источник"
+
+msgid "Target"
+msgstr "Цель"
+
+msgid "Save"
+msgstr "Сохранить"
+
+msgid "Target Directory"
+msgstr "Целевая директория"
+
+msgid "Select Folder"
+msgstr "Выбрать папку"
+
+msgid "Select"
+msgstr "Выбрать"
