@@ -17,6 +17,7 @@ import httpx
 import yaml
 from gi.repository import GLib, GObject
 
+from waydroid_helper.util.abx_reader import AbxReader
 from waydroid_helper.util.arch import host
 from waydroid_helper.util.log import logger
 from waydroid_helper.util.subprocess_manager import SubprocessManager
@@ -522,8 +523,14 @@ class PackageManager(GObject.Object):
         paths: list[str] = []
         data_dir = os.path.join(GLib.get_user_data_dir(), "waydroid/data")
         package_path = os.path.join(data_dir, "system/packages.xml")
-        async with aiofiles.open(package_path, "r") as f:
-            content = await f.read()
+        async with aiofiles.open(package_path, "rb") as f:
+            header = await f.read(4)
+            if header == b'ABX\0':
+                content = AbxReader(package_path).to_xml_string()
+            else:
+                await f.seek(0)
+                content = await f.read()
+
         tree = ET.fromstring(content)
         for package in tree.findall("package"):
             name = package.get("name")

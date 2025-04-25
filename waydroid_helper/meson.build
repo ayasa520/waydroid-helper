@@ -61,6 +61,7 @@ util_sources = [
     'util/log.py',
     'util/weak_ref.py',
     'util/template.py',
+    'util/abx_reader.py', 
 ]
 
 tools_sources = [
