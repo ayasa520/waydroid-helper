@@ -4,6 +4,7 @@
 提供透明窗口的实现和窗口管理功能
 """
 
+from gettext import gettext as _
 from typing import TYPE_CHECKING
 
 import gi
@@ -12,7 +13,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 gi.require_version("Gdk", "4.0")
 
-from gi.repository import Gtk, Adw, Gdk, GObject
+from gi.repository import Gtk, Adw, Gdk, GObject, GLib
 
 from waydroid_helper.controller.app.workspace_manager import WorkspaceManager
 from waydroid_helper.controller.core import (
@@ -63,10 +64,28 @@ class TransparentWindow(Adw.Window):
 
         self.set_title(APP_TITLE)
 
-        # 创建主容器
+        # 创建主容器 (Overlay)
+        overlay = Gtk.Overlay.new()
+        self.set_content(overlay)
+
         self.fixed = Gtk.Fixed.new()
         self.fixed.set_name("mapping-widget")
-        self.set_content(self.fixed)
+        overlay.set_child(self.fixed)
+
+        # 创建模式切换提示
+        self.notification_label = Gtk.Label.new("")
+        self.notification_label.set_name("mode-notification-label")
+
+        self.notification_box = Gtk.Box()
+        self.notification_box.set_name("mode-notification-box")
+        self.notification_box.set_halign(Gtk.Align.CENTER)
+        self.notification_box.set_valign(Gtk.Align.START)
+        self.notification_box.set_margin_top(60)
+        self.notification_box.append(self.notification_label)
+        self.notification_box.set_opacity(0.0)
+        self.notification_box.set_can_target(False)  # 忽略鼠标事件
+
+        overlay.add_overlay(self.notification_box)
 
         # 初始化组件
         self.widget_factory = WidgetFactory()
@@ -95,6 +114,13 @@ class TransparentWindow(Adw.Window):
 
         # 设置UI（主要是事件控制器）
         self.setup_controllers()
+
+        # 初始提示
+        GLib.idle_add(self.show_notification, _("Edit Mode (F1: Switch Mode)"))
+    
+    def close(self):
+        self.server.close()
+        super().close()
 
     def setup_mode_system(self):
         """初始化双模式系统"""
@@ -468,8 +494,6 @@ class TransparentWindow(Adw.Window):
     def schedule_bring_to_front(self, widget):
         """延迟置顶 - 避免立即操作导致的状态问题"""
         # 使用GLib.idle_add来延迟执行置顶操作
-        from gi.repository import GLib
-
         GLib.idle_add(self._delayed_bring_to_front, widget)
 
     def _delayed_bring_to_front(self, widget):
@@ -660,19 +684,23 @@ class TransparentWindow(Adw.Window):
         """全局键盘事件 - 支持双模式，使用事件处理器链"""
         # 特殊按键：模式切换和调试功能 - 这些直接用原始keyval判断
         if keyval == Gdk.KEY_F1:
-            self.switch_mode(self.EDIT_MODE)
+            # F1在两个模式之间切换
+            if self.current_mode == self.EDIT_MODE:
+                self.switch_mode(self.MAPPING_MODE)
+            else:
+                self.switch_mode(self.EDIT_MODE)
             return True
-        elif keyval == Gdk.KEY_F2:
-            self.switch_mode(self.MAPPING_MODE)
-            return True
-        elif keyval == Gdk.KEY_F3:
-            # F3显示当前按键映射状态
-            self.print_key_mappings()
-            return True
-        elif keyval == Gdk.KEY_F4:
-            # F4显示事件处理器状态
-            self.print_event_handlers_status()
-            return True
+        # elif keyval == Gdk.KEY_F2:
+        #     self.switch_mode(self.MAPPING_MODE)
+        #     return True
+        # elif keyval == Gdk.KEY_F3:
+        #     # F3显示当前按键映射状态
+        #     self.print_key_mappings()
+        #     return True
+        # elif keyval == Gdk.KEY_F4:
+        #     # F4显示事件处理器状态
+        #     self.print_event_handlers_status()
+        #     return True
 
         # 在映射模式下使用事件处理器链
         if self.current_mode == self.MAPPING_MODE:
@@ -755,6 +783,41 @@ class TransparentWindow(Adw.Window):
         """删除所有选中的widget"""
         self.workspace_manager.delete_selected_widgets()
 
+    # ===================提示信息方法===================
+
+    def show_notification(self, text: str):
+        """显示带渐隐效果的提示信息"""
+        self.notification_label.set_label(text)
+
+        # 停止任何正在进行的动画
+        if hasattr(self, "_notification_fade_out_timer") and self._notification_fade_out_timer > 0:
+            GLib.source_remove(self._notification_fade_out_timer)
+        if hasattr(self, "_notification_animation"):
+            self._notification_animation.reset()
+
+        # 淡入动画
+        self.notification_box.set_opacity(0)
+        animation_target = Adw.PropertyAnimationTarget.new(self.notification_box, "opacity")
+        self._notification_animation = Adw.TimedAnimation.new(
+            self.notification_box, 0.0, 1.0, 300, animation_target
+        )
+        self._notification_animation.set_easing(Adw.Easing.LINEAR)
+        self._notification_animation.play()
+
+        # 计划淡出
+        self._notification_fade_out_timer = GLib.timeout_add(1500, self._fade_out_notification)
+
+    def _fade_out_notification(self):
+        """执行淡出动画"""
+        animation_target = Adw.PropertyAnimationTarget.new(self.notification_box, "opacity")
+        self._notification_animation = Adw.TimedAnimation.new(
+            self.notification_box, 1.0, 0.0, 500, animation_target
+        )
+        self._notification_animation.set_easing(Adw.Easing.LINEAR)
+        self._notification_animation.play()
+        self._notification_fade_out_timer = 0
+        return GLib.SOURCE_REMOVE
+
     # ===================双模式系统方法===================
 
     def _on_mode_changed(self, widget, pspec):
@@ -770,31 +833,33 @@ class TransparentWindow(Adw.Window):
         if new_mode == self.MAPPING_MODE:
             # 进入映射模式：取消所有选择，禁用编辑功能
             self.clear_all_selections()
-            logger.debug(f"Enter mapping mode, edit function disabled")
+            logger.debug("Enter mapping mode, edit function disabled")
+            
+            self.show_notification(_("Mapping Mode (F1: Switch Mode)"))
 
             # 可以在这里添加更多映射模式的UI调整
             # 比如改变窗口标题、显示状态指示器等
-            self.set_title(f"{APP_TITLE} - 映射模式 (F1:编辑 F3:查看映射)")
+            self.set_title(f"{APP_TITLE} - Mapping Mode (F1: Switch Mode)")
 
             # 显示映射模式帮助信息
-            logger.debug(f"Enter mapping mode!")
+            logger.debug("Enter mapping mode!")
             logger.debug(f"- Press configured key combination to trigger corresponding widget action")
-            logger.debug(f"- F1: Switch to edit mode")
-            logger.debug(f"- F3: Show current key mapping")
-            logger.debug(f"- ESC: Other operations")
+            logger.debug("- F1: Switch to edit mode")
+            logger.debug("- ESC: Other operations")
 
         else:
             # 进入编辑模式：恢复编辑功能
-            logger.debug(f"Enter edit mode, edit function enabled")
-            self.set_title(f"{APP_TITLE} - 编辑模式 (F2:映射 F3:查看映射)")
+            logger.debug("Enter edit mode, edit function enabled")
+            self.show_notification(_("Edit Mode (F1: Switch Mode)"))
+            self.set_title(f"{APP_TITLE} - Edit Mode (F1: Switch Mode)")
 
             # 显示编辑模式帮助信息
-            logger.debug(f"Enter edit mode!")
-            logger.debug(f"- Right click on blank area: create widget")
-            logger.debug(f"- Double click widget: edit key mapping")
-            logger.debug(f"- Left click drag: move widget")
-            logger.debug(f"- Delete: delete selected widget")
-            logger.debug(f"- F2: Switch to mapping mode")
+            logger.debug("Enter edit mode!")
+            logger.debug("- Right click on blank area: create widget")
+            logger.debug("- Double click widget: edit key mapping")
+            logger.debug("- Left click drag: move widget")
+            logger.debug("- Delete: delete selected widget")
+            logger.debug("- F1: Switch to mapping mode")
 
     def switch_mode(self, new_mode):
         """切换模式"""

@@ -5,7 +5,7 @@
 
 # 应用程序信息
 APP_ID = "com.example.advanced-transparent-widgets"
-APP_TITLE = "透明窗口 - 可拖动调整大小组件"
+APP_TITLE = "Waydroid Helper Key Mapper"
 
 # 组件默认尺寸
 DEFAULT_WIDGET_WIDTH = 150

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-06 17:32+0800\n"
+"POT-Creation-Date: 2025-07-06 18:14+0800\n"
 "PO-Revision-Date: 2024-02-25 15:37+0800\n"
 "Last-Translator: Takanashi Rikka<ayasa0520@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -220,6 +220,16 @@ msgid ""
 "version: {1}."
 msgstr "该扩展不支持您的安卓版本，需要 Android {0}，当前 Android {1}"
 
+#. 初始提示
+#: waydroid_helper/controller/app/window.py:119
+#: waydroid_helper/controller/app/window.py:853
+msgid "Edit Mode (F1: Switch Mode)"
+msgstr "编辑模式（F1：切换模式）"
+
+#: waydroid_helper/controller/app/window.py:838
+msgid "Mapping Mode (F1: Switch Mode)"
+msgstr "映射模式（F1：切换模式g）"
+
 #. 如果没有发现任何组件，显示提示
 #: waydroid_helper/controller/ui/menus.py:58
 msgid "No components found"
@@ -279,8 +289,8 @@ msgid ""
 "that the size of the blue frame of the direction key is consistent with the "
 "size of the game wheel."
 msgstr ""
-"拖动放置到游戏操作轮盘上，用于操作行走方向。"
-"添加按键后，拖动虚线框可以调整键位大小，需要保证方向按键的蓝色框大小与游戏轮盘大小一致。"
+"拖动放置到游戏操作轮盘上，用于操作行走方向。添加按键后，拖动虚线框可以调整键"
+"位大小，需要保证方向按键的蓝色框大小与游戏轮盘大小一致。"
 
 #: waydroid_helper/controller/widgets/components/fire.py:31
 #: waydroid_helper/controller/widgets/components/fire.py:55
@@ -294,7 +304,8 @@ msgid ""
 "Shooting game commonly used, add the key to the attack/fire key position, "
 "and use the mouse left button to click. It needs to be used with the aim key."
 msgstr ""
-"射击游戏常用，添加按键到攻击/开火键位置，实现使用鼠标左键点击，需要配合准星键使用。"
+"射击游戏常用，添加按键到攻击/开火键位置，实现使用鼠标左键点击，需要配合准星键"
+"使用。"
 
 #. 组件元数据
 #: waydroid_helper/controller/widgets/components/single_click.py:45

@@ -38,6 +38,11 @@ class Server:
         async with server:
             await server.serve_forever()
 
+    def close(self):
+        pass
+
+
+
     def send(self, msg: bytes):
         asyncio.create_task(self.message_queue.put(msg))
 

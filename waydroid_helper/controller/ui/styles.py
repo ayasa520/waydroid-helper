@@ -18,6 +18,17 @@ CSS_TRANSPARENT = """
 #mapping-widget {
     background-color: rgba(0, 0, 0, 0);
 }
+#mode-notification-box {
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    padding: 10px 20px;
+}
+
+#mode-notification-label {
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+}
 """
 
 
