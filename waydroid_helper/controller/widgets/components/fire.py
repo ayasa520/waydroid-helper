@@ -64,10 +64,12 @@ class Fire(BaseWidget):
 
     def _on_aim_triggered(self, event: Event[None]):
         """处理瞄准触发事件"""
+        logger.debug("Fire button aim triggered")
         self.aim_triggered = True
 
     def _on_aim_released(self, event: Event[None]):
         """处理瞄准释放事件"""
+        logger.debug("Fire button aim released")
         self.aim_triggered = False
 
     def draw_widget_content(self, cr: "Context[Surface]", width: int, height: int):
@@ -185,6 +187,7 @@ class Fire(BaseWidget):
 
     def on_key_triggered(self, key_combination: KeyCombination | None = None):
         """当映射的按键被触发时的行为 - 模拟点击效果（按键按下）"""
+        logger.debug("测试测试")
         if not self.aim_triggered:
             return False
         if key_combination:

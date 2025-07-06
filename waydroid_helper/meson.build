@@ -63,6 +63,7 @@ util_sources = [
     'util/weak_ref.py',
     'util/template.py',
     'util/abx_reader.py', 
+    'util/adb_helper.py',
 ]
 
 tools_sources = [
@@ -98,6 +99,11 @@ controller_android_sources = [
 controller_app_sources = [
     'controller/app/window.py',
     'controller/app/workspace_manager.py',
+]
+
+controller_scrcpy_sources = [
+    'controller/third_party/scrcpy-server',
+    'controller/third_party/LICENSE',
 ]
 
 controller_core_sources = [
@@ -175,6 +181,7 @@ install_data(tools_sources, install_dir: toolsdir)
 install_data(controller_root_sources, install_dir: controllerdir)
 install_data(controller_android_sources, install_dir: controllerdir / 'android')
 install_data(controller_app_sources, install_dir: controllerdir / 'app')
+install_data(controller_scrcpy_sources, install_dir: controllerdir / 'third_party')
 install_data(controller_core_sources, install_dir: controllerdir / 'core')
 install_data(controller_core_handler_sources, install_dir: controllerdir / 'core' / 'handler')
 install_data(controller_core_handler_default_sources, install_dir: controllerdir / 'core' / 'handler' / 'default')

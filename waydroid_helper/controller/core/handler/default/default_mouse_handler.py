@@ -21,9 +21,9 @@ if TYPE_CHECKING:
     from gi.repository import Gtk
 
 class PointerId(IntEnum):
-    MOUSE = -1
-    GENERIC_FINGER = -2
-    VIRTUAL_FINGER = -3
+    MOUSE = 2**64 -1
+    GENERIC_FINGER = 2**64 - 2
+    VIRTUAL_FINGER = 2**64 - 3
 
 
 class MouseBase(ABC):
@@ -172,7 +172,10 @@ class MouseDefault(MouseBase):
     ) -> bool:
         event = controller.get_current_event()
         event = cast(Gdk.ScrollEvent, event)
-        begin, x, y = event.get_position()
+        if event:
+            begin, x, y = event.get_position()
+        else:
+            return False
 
         widget = controller.get_widget()
         if widget is None:

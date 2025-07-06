@@ -34,12 +34,17 @@ from waydroid_helper.controller.ui.menus import ContextMenuManager
 from waydroid_helper.controller.widgets.factory import WidgetFactory
 
 from waydroid_helper.util.log import logger
+from waydroid_helper.util.adb_helper import AdbHelper
+import asyncio
 
 if TYPE_CHECKING:
     from waydroid_helper.controller.widgets.base import BaseWidget
 
 
 Adw.init()
+
+MAX_RETRY_ATTEMPTS = 5
+RETRY_DELAY_SECONDS = 3
 
 
 class TransparentWindow(Adw.Window):
@@ -61,6 +66,8 @@ class TransparentWindow(Adw.Window):
 
     def __init__(self, app):
         super().__init__(application=app)
+
+        self.connect("close-request", self._on_close_request)
 
         self.set_title(APP_TITLE)
 
@@ -96,7 +103,9 @@ class TransparentWindow(Adw.Window):
         # 创建全局事件处理器链
         self.event_handler_chain = EventHandlerChain()
         # 导入并添加默认处理器
-        self.server = Server("127.0.0.1", 10721)
+        self.server = Server("0.0.0.0", 10721)
+        self.adb_helper = AdbHelper()
+        self.scrcpy_setup_task = asyncio.create_task(self.setup_scrcpy())
         self.key_mapping_handler = KeyMappingEventHandler()
         self.default_handler = DefaultEventHandler()
 
@@ -118,9 +127,70 @@ class TransparentWindow(Adw.Window):
         # 初始提示
         GLib.idle_add(self.show_notification, _("Edit Mode (F1: Switch Mode)"))
     
+    def _on_close_request(self, window):
+        logger.info("Close request received, running cleanup...")
+        self.close()
+        return False
+
     def close(self):
         self.server.close()
+        if not self.scrcpy_setup_task.done():
+            self.scrcpy_setup_task.cancel()
+
+        asyncio.create_task(self.cleanup_scrcpy())
         super().close()
+
+    async def cleanup_scrcpy(self):
+        await self.adb_helper.remove_reverse_tunnel()
+        logger.info("Scrcpy cleanup finished.")
+
+    async def setup_scrcpy(self):
+        """Pushes scrcpy-server and starts it on the device, with retry logic."""
+        logger.info("Waiting for internal server to start...")
+        await self.server.wait_started()
+
+        if not self.server.server:
+            logger.error("Internal server failed to start. Aborting scrcpy setup.")
+            return
+
+        logger.info("Internal server started. Starting scrcpy setup...")
+
+        for attempt in range(MAX_RETRY_ATTEMPTS):
+            logger.info(f"Scrcpy setup attempt {attempt + 1}/{MAX_RETRY_ATTEMPTS}...")
+            try:
+                # 1. Get screen resolution. Not critical, so no retry on failure.
+                await self.adb_helper.get_screen_resolution()
+
+                # 2. Push server to device
+                if not await self.adb_helper.push_scrcpy_server():
+                    logger.warning(f"Failed to push scrcpy-server. Retrying in {RETRY_DELAY_SECONDS}s...")
+                    await asyncio.sleep(RETRY_DELAY_SECONDS)
+                    continue
+
+                # 3. Generate SCID and setup reverse tunnel
+                scid, socket_name = self.adb_helper.generate_scid()
+                if not await self.adb_helper.reverse_tunnel(socket_name, self.server.port):
+                    logger.warning(f"Failed to set up adb reverse. Retrying in {RETRY_DELAY_SECONDS}s...")
+                    await asyncio.sleep(RETRY_DELAY_SECONDS)
+                    continue
+
+                # 4. Start scrcpy-server on device
+                if not await self.adb_helper.start_scrcpy_server(scid):
+                    logger.warning(f"Failed to start scrcpy-server. Retrying in {RETRY_DELAY_SECONDS}s...")
+                    await asyncio.sleep(RETRY_DELAY_SECONDS)
+                    continue
+                
+                logger.info("Scrcpy setup process completed successfully.")
+                return  # Exit on success
+
+            except asyncio.CancelledError:
+                logger.info("Scrcpy setup task was cancelled.")
+                return  # Use return to exit immediately on cancellation
+            except Exception as e:
+                logger.error(f"An unexpected error occurred during setup attempt {attempt + 1}: {e}")
+                await asyncio.sleep(RETRY_DELAY_SECONDS)
+        
+        logger.error(f"Scrcpy setup failed after {MAX_RETRY_ATTEMPTS} attempts. Aborting.")
 
     def setup_mode_system(self):
         """初始化双模式系统"""
@@ -169,6 +239,13 @@ class TransparentWindow(Adw.Window):
         key_controller.connect("key-pressed", self.on_global_key_press)
         key_controller.connect("key-released", self.on_global_key_release)
         self.add_controller(key_controller)
+
+        # 窗口级别的鼠标滚动事件
+        scroll_controller = Gtk.EventControllerScroll.new(flags=Gtk.EventControllerScrollFlags.BOTH_AXES)
+        scroll_controller.connect("scroll-begin", self.on_window_mouse_scroll)
+        scroll_controller.connect("scroll", self.on_window_mouse_scroll)
+        scroll_controller.connect("scroll-end", self.on_window_mouse_scroll)
+        self.add_controller(scroll_controller)
 
         # 窗口级别的鼠标事件控制器
         click_controller = Gtk.GestureClick()
@@ -262,6 +339,14 @@ class TransparentWindow(Adw.Window):
 
         # 编辑模式下，委托给 workspace_manager
         self.workspace_manager.handle_mouse_motion(controller, x, y)
+    
+    def on_window_mouse_scroll(self, controller: Gtk.EventControllerScroll, dx: float|None = None, dy: float|None = None):
+        if self.current_mode == self.MAPPING_MODE:
+            event = InputEvent(
+                event_type="mouse_scroll",
+                raw_data={"controller": controller, "dx": dx, "dy": dy},
+            )
+            self.event_handler_chain.process_event(event)
 
     def fixed_put(self, widget, x, y):
         self.fixed.put(widget, x, y)

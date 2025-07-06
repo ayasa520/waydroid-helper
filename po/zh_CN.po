@@ -228,7 +228,7 @@ msgstr "编辑模式（F1：切换模式）"
 
 #: waydroid_helper/controller/app/window.py:838
 msgid "Mapping Mode (F1: Switch Mode)"
-msgstr "映射模式（F1：切换模式g）"
+msgstr "映射模式（F1：切换模式）"
 
 #. 如果没有发现任何组件，显示提示
 #: waydroid_helper/controller/ui/menus.py:58
