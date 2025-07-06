@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-02-25 01:16+0800\n"
+"POT-Creation-Date: 2025-07-06 17:32+0800\n"
 "PO-Revision-Date: 2024-02-25 15:37+0800\n"
 "Last-Translator: Takanashi Rikka<ayasa0520@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -11,279 +11,419 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: waydroid_helper/ui/GeneralPage.ui:13 waydroid_helper/generalpage.py:49
+#: waydroid_helper/window.py:100
+msgid "Click to refresh extension list"
+msgstr "点击刷新扩展列表"
+
+#: waydroid_helper/window.py:141
+msgid "_Preferences"
+msgstr "首选项"
+
+#: waydroid_helper/window.py:145
+msgid "_About waydroid-helper"
+msgstr "关于"
+
+#: waydroid_helper/window.py:200
+msgid "Home"
+msgstr "主页"
+
+#: waydroid_helper/window.py:206
+msgid "Settings"
+msgstr "设置"
+
+#: waydroid_helper/window.py:212
+msgid "Extensions"
+msgstr "扩展"
+
+#: waydroid_helper/general_page.py:48
+msgid "Connected"
+msgstr "已连接"
+
+#: waydroid_helper/general_page.py:49
+msgid "Waydroid session is running"
+msgstr "Waydroid session 正在运行"
+
+#: waydroid_helper/general_page.py:57
+msgid "Stopped"
+msgstr "已停止"
+
+#: waydroid_helper/general_page.py:58
+msgid "Waydroid session is stopped"
+msgstr "Waydroid session 已停止"
+
+#: waydroid_helper/general_page.py:67
+msgid "Uninitialized"
+msgstr "未初始化"
+
+#: waydroid_helper/general_page.py:68
+msgid "Waydroid is not initialized"
+msgstr "Waydroid 尚未初始化"
+
+#: waydroid_helper/general_page.py:75 data/ui/GeneralPage.ui:13
 msgid "Loading"
 msgstr "加载中"
 
-#: waydroid_helper/ui/GeneralPage.ui:47
-msgid "Start"
-msgstr "启动"
+#: waydroid_helper/general_page.py:95
+msgid "Restart the systemd user service immediately"
+msgstr "立即重启 systemd 用户级服务"
 
-#: waydroid_helper/ui/GeneralPage.ui:54
-msgid "Stop"
-msgstr "停止"
+#: waydroid_helper/props_page.py:156
+msgid "Restart the session to apply the changes"
+msgstr "重启 session 使修改生效"
 
+#: waydroid_helper/props_page.py:161
+msgid "Save and restart the container"
+msgstr "保存并重启 container"
 
-#: waydroid_helper/ui/GeneralPage.ui:61
-msgid "Show full ui"
-msgstr "显示完整界面"
+#: waydroid_helper/shared_folder.py:61
+msgid "Shared Folders"
+msgstr "共享文件夹"
 
-#: waydroid_helper/ui/GeneralPage.ui:61
-msgid "Restart(Update configs)"
-msgstr "重启（更新配置）"
+#: waydroid_helper/shared_folder.py:196
+msgid ""
+"Use the button below to add your first shared folder. For file sharing to "
+"work, you need to have <a href='https://bindfs.org/'>bindfs</a> installed."
+msgstr ""
+"点击下方按钮添加首个共享文件夹。需要安装 <a href='https://"
+"bindfs.org/'>bindfs</a> 才能共享文件夹。"
 
-#: waydroid_helper/ui/GeneralPage.ui:78
-msgid "Initialize"
-msgstr "初始化"
+#: waydroid_helper/available_version_page.py:148
+msgid "Available Versions"
+msgstr "可用版本"
 
-#: waydroid_helper/ui/PropsPage.ui:235 waydroid_helper/ui/PropsPage.ui:246
-msgid "Reset"
-msgstr "重置"
+# " waydroid_helper/available_version_page.py:204
+#: waydroid_helper/available_version_page.py:211
+msgid "Installation Complete"
+msgstr "安装完成"
 
-#: waydroid_helper/ui/PropsPage.ui:224
-msgid "spoof device"
-msgstr "伪装机型"
+# " waydroid_helper/available_version_page.py:205
+#: waydroid_helper/available_version_page.py:212
+#, python-brace-format
+msgid "{0} has been successfully installed."
+msgstr "{0} 已成功安装。"
 
-
-#: waydroid_helper/ui/ExtensionRow.ui:6
-msgid "Show"
-msgstr "查看"
-
-#: waydroid_helper/ui/InfoBar.ui:34
-msgid "Cancel"
-msgstr "取消"
-
-#: waydroid_helper/ui/InfoBar.ui:43
+#: waydroid_helper/available_version_page.py:216
+#: waydroid_helper/available_version_page.py:231
+#: waydroid_helper/available_version_page.py:241
+#: waydroid_helper/available_version_page.py:296
+#: waydroid_helper/available_version_page.py:319 data/ui/InfoBar.ui:46
 msgid "OK"
 msgstr "确认"
 
-#: waydroid_helper/ui/PropsPage.ui:10
-msgid ""
-"Effective only while Waydroid session is running. Some settings require "
-"restarting the Waydroid session to apply"
-msgstr "仅在 Waydroid session 运行时生效，部分设置需要重启 Waydroid session 才可应用"
+# " waydroid_helper/available_version_page.py:217
+#: waydroid_helper/available_version_page.py:226
+msgid "Uninstallation Complete"
+msgstr "卸载完成"
 
-#: waydroid_helper/ui/PropsPage.ui:15 waydroid_helper/waydroid.py:77
+# " waydroid_helper/available_version_page.py:218
+#: waydroid_helper/available_version_page.py:227
+#, python-brace-format
+msgid "{0} has been successfully uninstalled."
+msgstr "{0} 已成功卸载。"
+
+#: waydroid_helper/available_version_page.py:240 data/ui/InfoBar.ui:39
+msgid "Cancel"
+msgstr "取消"
+
+#: waydroid_helper/available_version_page.py:274
+msgid "Extension Installation"
+msgstr "安装扩展"
+
+#: waydroid_helper/available_version_page.py:275
+msgid "Do you want to install"
+msgstr "是否要安装"
+
+#: waydroid_helper/available_version_page.py:279
+msgid "Extension Conflict"
+msgstr "扩展冲突"
+
+#: waydroid_helper/available_version_page.py:280
+msgid "Do you want to uninstall the conflicting extensions"
+msgstr "是否卸载以下冲突的扩展"
+
+# " waydroid_helper/available_version_page.py:282
+#: waydroid_helper/available_version_page.py:294
+msgid "Installation Failed"
+msgstr "安装失败"
+
+#: waydroid_helper/available_version_page.py:307
+msgid "Uninstall Confirmation"
+msgstr "卸载确认"
+
+#: waydroid_helper/available_version_page.py:308
+msgid "Do you want to uninstall"
+msgstr "是否要卸载"
+
+#: waydroid_helper/available_version_page.py:317
+msgid "Uninstallation Failed"
+msgstr "卸载失败"
+
+#: waydroid_helper/waydroid.py:102 data/ui/PropsPage.ui:16
 msgid "Enable window integration with the desktop"
 msgstr "开启多窗口模式"
 
-#: waydroid_helper/ui/PropsPage.ui:31 waydroid_helper/waydroid.py:84
+#: waydroid_helper/waydroid.py:109 data/ui/PropsPage.ui:32
 msgid ""
 "Workaround for showing the cursor inmulti_windows mode on some compositors"
 msgstr "在某些合成器上多窗口模式模式显示光标的解决方法"
 
-#: waydroid_helper/ui/PropsPage.ui:47 waydroid_helper/waydroid.py:92
+#: waydroid_helper/waydroid.py:117 data/ui/PropsPage.ui:48
 msgid ""
 "Swaps the color space from RGBA to BGRA (only works with our patched mutter "
 "so far)"
 msgstr "将色彩空间从 RGBA 切换为 BGRA (目前仅适用于我们修补过的 mutter)"
 
-#: waydroid_helper/ui/PropsPage.ui:63 waydroid_helper/waydroid.py:100
+#: waydroid_helper/waydroid.py:125 data/ui/PropsPage.ui:64
 msgid ""
 "Let the Waydroid container sleep (after the display timeout) when no apps "
 "are active"
 msgstr "当没有应用运行时使 waydroid 容器休眠"
 
-#: waydroid_helper/ui/PropsPage.ui:79 waydroid_helper/waydroid.py:107
+#: waydroid_helper/waydroid.py:132 data/ui/PropsPage.ui:80
 msgid "Allow android direct access to hotplugged devices"
 msgstr "允许安卓系统直接访问热插拔设备"
 
-#: waydroid_helper/ui/PropsPage.ui:94
-msgid ""
-"Interpret mouse inputs as touch inputs. Enter the package names separated by "
-"\",\". Use the wildcard \"*\" to match all Apps"
-msgstr "将鼠标输入转为触摸输入。以\",\"分隔输入包名，使用通配符\"*\"匹配所有应用"
-
-#: waydroid_helper/ui/PropsPage.ui:101 waydroid_helper/ui/PropsPage.ui:121
-msgid "Package names"
-msgstr "包名"
-
-#: waydroid_helper/ui/PropsPage.ui:112
-msgid ""
-"Make the Apps appear as if connected to WiFi. Enter the package names "
-"separated by \",\". Use the wildcard \"*\" to match all Apps"
-msgstr "使应用连接虚拟 WiFi。以\",\"分隔输入包名，使用通配符\"*\"匹配所有应用"
-
-#: waydroid_helper/waydroid.py:142 waydroid_helper/ui/PropsPage.ui:130
-msgid "Adjust height padding"
-msgstr "调整高度填充"
-
-#: waydroid_helper/waydroid.py:148 waydroid_helper/ui/PropsPage.ui:148
-msgid "Adjust width padding"
-msgstr "调整宽度填充"
-
-#: waydroid_helper/waydroid.py:154 waydroid_helper/waydroid.py:161
-#: waydroid_helper/ui/PropsPage.ui:166 waydroid_helper/ui/PropsPage.ui:184
-msgid "Used for user to override desired resolution"
-msgstr "用于用户覆写所需的分辨率"
-
-#: waydroid_helper/ui/PropsPage.ui:135 waydroid_helper/waydroid.py:193
-msgid "hide navbar"
-msgstr "隐藏导航栏"
-
-#: waydroid_helper/gtk/help-overlay.ui:11
-msgctxt "shortcut window"
-msgid "General"
-msgstr "通用"
-
-#: waydroid_helper/gtk/help-overlay.ui:14
-msgctxt "shortcut window"
-msgid "Show Shortcuts"
-msgstr "显示快捷键"
-
-#: waydroid_helper/gtk/help-overlay.ui:20
-msgctxt "shortcut window"
-msgid "Quit"
-msgstr "退出"
-
-#: waydroid_helper/extensionwindow.py:22
-msgid "Available Versions"
-msgstr "可用版本"
-
-#: waydroid_helper/ui/window.ui:26
-msgid "Menu"
-msgstr "菜单"
-
-#: waydroid_helper/ui/window.ui:52
-msgid "_Preferences"
-msgstr "首选项"
-
-#: waydroid_helper/ui/window.ui:56
-msgid "_Keyboard Shortcuts"
-msgstr "快捷键"
-
-#: waydroid_helper/ui/window.ui:60
-msgid "_About waydroid-helper"
-msgstr "关于"
-
-#: waydroid_helper/generalpage.py:26
-msgid "Connected"
-msgstr "已连接"
-
-#: waydroid_helper/generalpage.py:27
-msgid "Waydroid session is running"
-msgstr "Waydroid session 正在运行"
-
-#: waydroid_helper/generalpage.py:34
-msgid "Stopped"
-msgstr "已停止"
-
-#: waydroid_helper/generalpage.py:35
-msgid "Waydroid session is stopped"
-msgstr "Waydroid session 已停止"
-
-#: waydroid_helper/generalpage.py:42
-msgid "Uninitialized"
-msgstr "未初始化"
-
-#: waydroid_helper/generalpage.py:43
-msgid "Waydroid is not initialized"
-msgstr "Waydroid 尚未初始化"
-
-#: waydroid_helper/propspage.py:134
-msgid "Restart the session to apply the changes"
-msgstr "重启 session 使修改生效"
-
-#: waydroid_helper/propspage.py:139
-msgid "Save and restart the container"
-msgstr "保存并重启 container"
-
-#: waydroid_helper/waydroid.py:114
+#: waydroid_helper/waydroid.py:139
 msgid ""
 "Interpret mouse inputs as touch inputs. Enter the package names separated by "
 "','. Use the wildcard '*' to match all Apps"
-msgstr "将鼠标输入转为触摸输入。以\",\"f分隔输入包名，使用通配符\"*\"匹配所有应用"
+msgstr ""
+"将鼠标输入转为触摸输入。以\",\"f分隔输入包名，使用通配符\"*\"匹配所有应用"
 
-#: waydroid_helper/waydroid.py:122
+#: waydroid_helper/waydroid.py:147
 msgid ""
 "Make the Apps appear as if connected to WiFi. Enter the package names "
 "separated by ','. Use the wildcard '*' to match all Apps"
 msgstr "使应用连接虚拟 WiFi。以\",\"f分隔输入包名，使用通配符\"*\"匹配所有应用"
 
-#: waydroid_helper/window.py:46
-msgid "Home"
-msgstr "主页"
+#: waydroid_helper/waydroid.py:154 data/ui/PropsPage.ui:129
+msgid "Adjust height padding"
+msgstr "调整高度填充"
 
-#: waydroid_helper/window.py:52
-msgid "Settings"
-msgstr "设置"
+#: waydroid_helper/waydroid.py:160 data/ui/PropsPage.ui:147
+msgid "Adjust width padding"
+msgstr "调整宽度填充"
 
-#: waydroid_helper/window.py:58
-msgid "Extensions"
-msgstr "扩展"
+#: waydroid_helper/waydroid.py:166 waydroid_helper/waydroid.py:173
+#: data/ui/PropsPage.ui:165 data/ui/PropsPage.ui:183
+msgid "Used for user to override desired resolution"
+msgstr "用于用户覆写所需的分辨率"
 
-#: waydroid_helper/extensionwindow.py:123
-msgid "Extension Conflict"
-msgstr "扩展冲突"
+#: waydroid_helper/waydroid.py:275 data/ui/PropsPage.ui:207
+msgid "hide navbar"
+msgstr "隐藏导航栏"
 
-#: waydroid_helper/extensionwindow.py:140
-msgid "Uninstall Confirmation"
-msgstr "卸载确认"
+#: waydroid_helper/tools/extensions_manager.py:396
+#, python-brace-format
+msgid ""
+"Your Android version is not supported. Required version: {0}. Current "
+"version: {1}."
+msgstr "该扩展不支持您的安卓版本，需要 Android {0}，当前 Android {1}"
 
-#: waydroid_helper/extensionwindow.py:124
-msgid "Do you want to uninstall the conflicting extensions"
-msgstr "是否卸载以下冲突的扩展"
+#. 如果没有发现任何组件，显示提示
+#: waydroid_helper/controller/ui/menus.py:58
+msgid "No components found"
+msgstr "没有发现任何组件"
 
-#: waydroid_helper/extensionwindow.py:141
-msgid "Do you want to uninstall"
-msgstr "是否要卸载"
+#: waydroid_helper/controller/ui/menus.py:84
+msgid "Refresh components"
+msgstr "刷新组件"
 
-#: waydroid_helper/extensionwindow.py:131
-msgid "Extension Installation"
-msgstr "安装扩展"
+#: waydroid_helper/controller/ui/menus.py:85
+msgid "Show component info"
+msgstr "显示组件信息"
 
-#: waydroid_helper/extensionwindow.py:132
-msgid "Do you want to install"
-msgstr "是否要安装"
+#: waydroid_helper/controller/ui/menus.py:86
+msgid "Clear all"
+msgstr "清空全部"
 
-#" waydroid_helper/available_version_page.py:282
-msgid "Installation Failed"
-msgstr "安装失败"
+#: waydroid_helper/controller/ui/menus.py:87
+msgid "Save layout"
+msgstr "保存布局"
 
-#" waydroid_helper/available_version_page.py:305
-msgid "Uninstallaion Failed"
-msgstr "卸载失败"
+#: waydroid_helper/controller/ui/menus.py:88
+msgid "Load layout"
+msgstr "加载布局"
 
+#: waydroid_helper/controller/widgets/components/aim.py:40
+#: waydroid_helper/controller/widgets/components/aim.py:65
+msgctxt "Controller Widgets"
+msgid "Aim"
+msgstr "准星键"
 
-#" waydroid_helper/available_version_page.py:204
-msgid "Installation Complete"
-msgstr "安装完成"
+#: waydroid_helper/controller/widgets/components/aim.py:43
+msgctxt "Controller Widgets"
+msgid ""
+"Commonly used in shooting games. Add to the draggable view position in the "
+"game. Combined with the fire button to achieve mouse movement view and "
+"aiming. After adding, please first drag the rectangle to adjust the "
+"effective range of view rotation, which needs to correspond to the effective "
+"range that can trigger view rotation operation in the game."
+msgstr ""
+"射击游戏常用，添加到游戏可拖动视角位置，配合开火键实现使用鼠标移动视角、瞄准"
+"射击。添加后请先拖拉矩形框调整视角转动有效范围，需要对应游戏中可以触发操作视"
+"角转动的有效范围。"
 
-#" waydroid_helper/available_version_page.py:217
-msgid "Uninstallation Complete"
-msgstr "卸载完成"
+#. 组件元数据
+#: waydroid_helper/controller/widgets/components/directional_pad.py:52
+#: waydroid_helper/controller/widgets/components/directional_pad.py:142
+msgctxt "Controller Widgets"
+msgid "Directional Pad"
+msgstr "方向按键"
 
-#" waydroid_helper/available_version_page.py:205
-msgid "{0} has been successfully installed."
-msgstr "{0} 已成功安装。"
+#: waydroid_helper/controller/widgets/components/directional_pad.py:55
+msgctxt "Controller Widgets"
+msgid ""
+"Drag and drop to the game operation wheel to operate the walking direction. "
+"After adding the key, drag the dashed box to adjust the key size, and ensure "
+"that the size of the blue frame of the direction key is consistent with the "
+"size of the game wheel."
+msgstr ""
+"拖动放置到游戏操作轮盘上，用于操作行走方向。"
+"添加按键后，拖动虚线框可以调整键位大小，需要保证方向按键的蓝色框大小与游戏轮盘大小一致。"
 
-#" waydroid_helper/available_version_page.py:218
-msgid "{0} has been successfully uninstalled."
-msgstr "{0} 已成功卸载。"
+#: waydroid_helper/controller/widgets/components/fire.py:31
+#: waydroid_helper/controller/widgets/components/fire.py:55
+msgctxt "Controller Widgets"
+msgid "Fire"
+msgstr "攻击/开火按键"
 
-msgid "Shared Folders"
-msgstr "共享文件夹"
+#: waydroid_helper/controller/widgets/components/fire.py:34
+msgctxt "Controller Widgets"
+msgid ""
+"Shooting game commonly used, add the key to the attack/fire key position, "
+"and use the mouse left button to click. It needs to be used with the aim key."
+msgstr ""
+"射击游戏常用，添加按键到攻击/开火键位置，实现使用鼠标左键点击，需要配合准星键使用。"
 
-msgid "Use the button below to add your first shared folder. For file sharing to work, you need to have <a href='https://bindfs.org/'>bindfs</a> installed."
-msgstr "点击下方按钮添加首个共享文件夹。需要安装 <a href='https://bindfs.org/'>bindfs</a> 才能共享文件夹。"
+#. 组件元数据
+#: waydroid_helper/controller/widgets/components/single_click.py:45
+#: waydroid_helper/controller/widgets/components/single_click.py:85
+msgctxt "Controller Widgets"
+msgid "Single Click"
+msgstr "点击按键"
 
-msgid "Restart the systemd user service immediately"
-msgstr "立即重启 systemd 用户级服务"
+#: waydroid_helper/controller/widgets/components/single_click.py:48
+msgctxt "Controller Widgets"
+msgid "Simulate a click operation at a specific position."
+msgstr "在某一位置模拟点击操作"
 
-msgid "Source"
-msgstr "源"
+#: data/ui/GeneralPage.ui:40
+msgid "Key Mapping"
+msgstr "按键映射"
 
-msgid "Target"
-msgstr "目标"
+#: data/ui/GeneralPage.ui:43
+msgid "Key Mapping Controller"
+msgstr "按键映射控制器"
 
-msgid "Save"
-msgstr "保存"
+#: data/ui/GeneralPage.ui:44
+msgid "Manage key mapping overlay window for game control"
+msgstr "管理游戏控制的按键映射覆盖窗口"
 
-msgid "Target Directory"
-msgstr "目标目录"
+#: data/ui/GeneralPage.ui:51
+msgid "Open"
+msgstr "打开"
 
-msgid "Select Folder"
-msgstr "选择文件夹"
+#: data/ui/GeneralPage.ui:61
+msgid "Close"
+msgstr "关闭"
 
-msgid "Select"
-msgstr "选择"
+#: data/ui/GeneralPage.ui:91
+msgid "Start"
+msgstr "启动"
+
+#: data/ui/GeneralPage.ui:98
+msgid "Stop"
+msgstr "停止"
+
+#: data/ui/GeneralPage.ui:105
+msgid "Show full ui"
+msgstr "显示完整界面"
+
+#: data/ui/GeneralPage.ui:112
+msgid "Restart(Update configs)"
+msgstr "重启（更新配置）"
+
+#: data/ui/GeneralPage.ui:129
+msgid "Initialize"
+msgstr "初始化"
+
+#: data/ui/PropsPage.ui:10
+msgid ""
+"Effective only while Waydroid session is running. Some settings require "
+"restarting the Waydroid session to apply"
+msgstr ""
+"仅在 Waydroid session 运行时生效，部分设置需要重启 Waydroid session 才可应用"
+
+#: data/ui/PropsPage.ui:95
+msgid ""
+"Interpret mouse inputs as touch inputs. Enter the package names separated by "
+"\",\". Use the wildcard \"*\" to match all Apps"
+msgstr ""
+"将鼠标输入转为触摸输入。以\",\"分隔输入包名，使用通配符\"*\"匹配所有应用"
+
+#: data/ui/PropsPage.ui:101 data/ui/PropsPage.ui:120
+msgid "Package names"
+msgstr "包名"
+
+#: data/ui/PropsPage.ui:112
+msgid ""
+"Make the Apps appear as if connected to WiFi. Enter the package names "
+"separated by \",\". Use the wildcard \"*\" to match all Apps"
+msgstr "使应用连接虚拟 WiFi。以\",\"分隔输入包名，使用通配符\"*\"匹配所有应用"
+
+#: data/ui/PropsPage.ui:138 data/ui/PropsPage.ui:156 data/ui/PropsPage.ui:174
+#: data/ui/PropsPage.ui:192
+msgid "empty or 0-9999"
+msgstr ""
+
+#: data/ui/PropsPage.ui:223
+msgid "spoof device"
+msgstr "伪装机型"
+
+#: data/ui/PropsPage.ui:234 data/ui/PropsPage.ui:241
+msgid "Reset"
+msgstr "重置"
+
+#: data/ui/ExtensionRow.ui:6
+msgid "Show"
+msgstr "查看"
+
+#: data/ui/help-overlay.ui:11
+msgctxt "shortcut window"
+msgid "General"
+msgstr "通用"
+
+#: data/ui/help-overlay.ui:14
+msgctxt "shortcut window"
+msgid "Show Shortcuts"
+msgstr "显示快捷键"
+
+#: data/ui/help-overlay.ui:20
+msgctxt "shortcut window"
+msgid "Quit"
+msgstr "退出"
+
+#~ msgid "Menu"
+#~ msgstr "菜单"
+
+#~ msgid "_Keyboard Shortcuts"
+#~ msgstr "快捷键"
+
+#~ msgid "Source"
+#~ msgstr "源"
+
+#~ msgid "Target"
+#~ msgstr "目标"
+
+#~ msgid "Save"
+#~ msgstr "保存"
+
+#~ msgid "Target Directory"
+#~ msgstr "目标目录"
+
+#~ msgid "Select Folder"
+#~ msgstr "选择文件夹"
+
+#~ msgid "Select"
+#~ msgstr "选择"

@@ -35,6 +35,43 @@
         <child>
           <object class="SharedFoldersWidget" id="shared_folders_widget"></object>
         </child>
+        <child>
+          <object class="AdwPreferencesGroup">
+                         <property name="title" translatable="yes">Key Mapping</property>
+            <child>
+              <object class="AdwActionRow">
+                                 <property name="title" translatable="yes">Key Mapping Controller</property>
+                 <property name="subtitle" translatable="yes">Manage key mapping overlay window for game control</property>
+                <child type="suffix">
+                  <object class="GtkBox">
+                    <property name="orientation">0</property>
+                    <property name="spacing">6</property>
+                    <child>
+                                             <object class="GtkButton" id="open-key-mapping-button">
+                         <property name="label" translatable="yes">Open</property>
+                         <property name="sensitive">False</property>
+                         <signal name="clicked" handler="on_open_key_mapping_clicked"/>
+                        <style>
+                          <class name="suggested-action"/>
+                        </style>
+                      </object>
+                    </child>
+                    <child>
+                                             <object class="GtkButton" id="close-key-mapping-button">
+                         <property name="label" translatable="yes">Close</property>
+                         <property name="sensitive">False</property>
+                         <signal name="clicked" handler="on_close_key_mapping_clicked"/>
+                        <style>
+                          <class name="destructive-action"/>
+                        </style>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
       </object>
     </child>
     <object class="GtkPopover" id="pop_power">

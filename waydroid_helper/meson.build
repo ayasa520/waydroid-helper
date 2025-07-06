@@ -1,6 +1,7 @@
 moduledir = pkgdatadir / 'waydroid_helper'
 utildir = moduledir / 'util'
 compatwidgetdir = moduledir / 'compat_widget'
+controllerdir = moduledir / 'controller'
 toolsdir = moduledir / 'tools'
 gnome = import('gnome')
 
@@ -82,7 +83,105 @@ compat_widget_sources = [
     'compat_widget/file_dialog.py',
     'compat_widget/shared_folder_dialog.py',
 ]
+
+# 按子目录分组的 controller 源文件
+controller_root_sources = [
+    'controller/__init__.py',
+]
+
+controller_android_sources = [
+    'controller/android/__init__.py',
+    'controller/android/input.py',
+    'controller/android/keycodes.py',
+]
+
+controller_app_sources = [
+    'controller/app/window.py',
+    'controller/app/workspace_manager.py',
+]
+
+controller_core_sources = [
+    'controller/core/constants.py',
+    'controller/core/control_msg.py',
+    'controller/core/event_bus.py',
+    'controller/core/__init__.py',
+    'controller/core/key_mapping_manager.py',
+    'controller/core/key_system.py',
+    'controller/core/server.py',
+    'controller/core/types.py',
+    'controller/core/utils.py',
+]
+
+controller_core_handler_sources = [
+    'controller/core/handler/__init__.py',
+    'controller/core/handler/event_handlers.py',
+    'controller/core/handler/key_mapping_event_handler.py',
+]
+
+controller_core_handler_default_sources = [
+    'controller/core/handler/default/__init__.py',
+    'controller/core/handler/default/default_event_handler.py',
+    'controller/core/handler/default/default_key_handler.py',
+    'controller/core/handler/default/default_mouse_handler.py',
+]
+
+controller_platform_sources = [
+    'controller/platform/__init__.py',
+    'controller/platform/base.py',
+]
+
+controller_platform_wayland_sources = [
+    'controller/platform/wayland/__init__.py',
+    'controller/platform/wayland/platform.py',
+]
+
+controller_ui_sources = [
+    'controller/ui/__init__.py',
+    'controller/ui/menus.py',
+    'controller/ui/styles.py',
+]
+
+controller_widgets_sources = [
+    'controller/widgets/__init__.py',
+    'controller/widgets/factory.py',
+]
+
+controller_widgets_base_sources = [
+    'controller/widgets/base/__init__.py',
+    'controller/widgets/base/base_widget.py',
+]
+
+controller_widgets_components_sources = [
+    'controller/widgets/components/__init__.py',
+    'controller/widgets/components/aim.py',
+    'controller/widgets/components/directional_pad.py',
+    'controller/widgets/components/fire.py',
+    'controller/widgets/components/single_click.py',
+]
+
+controller_widgets_decorators_sources = [
+    'controller/widgets/decorators/__init__.py',
+    'controller/widgets/decorators/base_decorator.py',
+    'controller/widgets/decorators/editable.py',
+    'controller/widgets/decorators/resizable.py',
+]
+
 install_data(waydroid_helper_sources, install_dir: moduledir)
 install_data(util_sources, install_dir: utildir)
 install_data(compat_widget_sources, install_dir: compatwidgetdir)
 install_data(tools_sources, install_dir: toolsdir)
+
+# 按子目录结构安装 controller 文件
+install_data(controller_root_sources, install_dir: controllerdir)
+install_data(controller_android_sources, install_dir: controllerdir / 'android')
+install_data(controller_app_sources, install_dir: controllerdir / 'app')
+install_data(controller_core_sources, install_dir: controllerdir / 'core')
+install_data(controller_core_handler_sources, install_dir: controllerdir / 'core' / 'handler')
+install_data(controller_core_handler_default_sources, install_dir: controllerdir / 'core' / 'handler' / 'default')
+install_data(controller_platform_sources, install_dir: controllerdir / 'platform')
+install_data(controller_platform_wayland_sources, install_dir: controllerdir / 'platform' / 'wayland')
+install_data(controller_ui_sources, install_dir: controllerdir / 'ui')
+install_data(controller_widgets_sources, install_dir: controllerdir / 'widgets')
+install_data(controller_widgets_base_sources, install_dir: controllerdir / 'widgets' / 'base')
+install_data(controller_widgets_components_sources, install_dir: controllerdir / 'widgets' / 'components')
+install_data(controller_widgets_decorators_sources, install_dir: controllerdir / 'widgets' / 'decorators')
