@@ -73,7 +73,15 @@ if __name__ == '__main__':
     parser.add_argument("--start-mount", action="store_true", help="Start the mounting service")
     parser.add_argument("--start-monitor", action="store_true", help="Start the monitoring service")
     parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
+    parser.add_argument(
+        "--log-level",
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+        default='INFO',
+        help="Set the logging level (default: INFO)"
+    )
     args = parser.parse_args()
+
+    os.environ['LOG_LEVEL'] = args.log_level.upper()
 
     if args.start_mount:
         from waydroid_helper.tools import start_monitor, start_mount
