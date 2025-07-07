@@ -315,10 +315,8 @@ class Aim(BaseWidget):
         """获取删除按钮的边界 (x, y, w, h) - 将按钮定位在中心圆的右上角边缘"""
         # 删除按钮应该在中心圆右上角, 恰好在圆边上
         size = 16
-        width = self.get_allocated_width()
-        height = self.get_allocated_height()
-        center_x = width / 2
-        center_y = height / 2
+        center_x = self.width / 2
+        center_y = self.height / 2
 
         # 45度角 (-pi/4)
         angle = -math.pi / 4

@@ -624,23 +624,23 @@ class TransparentWindow(Adw.Window):
 
         return False  # 不重复执行
 
-    def update_cursor_for_position(self, x, y):
-        """根据位置更新鼠标指针 - 已移至 workspace_manager"""
-        pass  # 此方法已移至 workspace_manager，保留空方法以保持兼容性
+    # def update_cursor_for_position(self, x, y):
+    #     """根据位置更新鼠标指针 - 已移至 workspace_manager"""
+    #     pass  # 此方法已移至 workspace_manager，保留空方法以保持兼容性
 
-    def get_cursor_name_for_resize_direction(self, direction):
-        """根据调整大小方向获取鼠标指针名称"""
-        cursor_map = {
-            "se": "se-resize",
-            "sw": "sw-resize",
-            "ne": "ne-resize",
-            "nw": "nw-resize",
-            "e": "e-resize",
-            "w": "w-resize",
-            "s": "s-resize",
-            "n": "n-resize",
-        }
-        return cursor_map.get(direction, "default")
+    # def get_cursor_name_for_resize_direction(self, direction):
+    #     """根据调整大小方向获取鼠标指针名称"""
+    #     cursor_map = {
+    #         "se": "se-resize",
+    #         "sw": "sw-resize",
+    #         "ne": "ne-resize",
+    #         "nw": "nw-resize",
+    #         "e": "e-resize",
+    #         "w": "w-resize",
+    #         "s": "s-resize",
+    #         "n": "n-resize",
+    #     }
+    #     return cursor_map.get(direction, "default")
 
     def clear_all_selections(self):
         """取消所有组件的选择状态"""
@@ -904,6 +904,7 @@ class TransparentWindow(Adw.Window):
             # 可以在这里添加更多映射模式的UI调整
             # 比如改变窗口标题、显示状态指示器等
             self.set_title(f"{APP_TITLE} - Mapping Mode (F1: Switch Mode)")
+            self.set_cursor_from_name("default")
 
             # 显示映射模式帮助信息
             logger.debug("Enter mapping mode!")

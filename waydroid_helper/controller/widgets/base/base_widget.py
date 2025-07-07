@@ -6,9 +6,12 @@
 
 import gi
 import math
+import cairo
+
+from waydroid_helper.controller.core.event_bus import Event, EventType, event_bus
 
 gi.require_version("Gdk", "4.0")
-from gi.repository import Gtk, GObject
+from gi.repository import Gtk, GObject, Gdk
 
 from waydroid_helper.controller.core.key_system import KeyCombination
 from waydroid_helper.util.log import logger
@@ -117,7 +120,24 @@ class BaseWidget(Gtk.DrawingArea):
         self.delete_button_controller = Gtk.EventControllerMotion.new()
         self.delete_button_controller.connect("motion", self._on_delete_button_motion)
         self.delete_button_controller.connect("leave", self._on_delete_button_leave)
+        # click
+        self.delete_button_click_controller = Gtk.GestureClick.new()
+        self.delete_button_click_controller.set_button(Gdk.BUTTON_PRIMARY)  # 只处理左键
+        self.delete_button_click_controller.connect("pressed", self._on_delete_button_clicked)
         self.add_controller(self.delete_button_controller)
+        self.add_controller(self.delete_button_click_controller)
+
+    def _on_delete_button_clicked(self, controller, n_press, x, y):
+        """处理删除按钮的点击事件"""
+        if not self.is_selected or self.mapping_mode:
+            return False
+            
+        # 直接判断点击位置是否在删除按钮区域内
+        if self.is_point_in_delete_button(x, y):
+            event_bus.emit(Event(EventType.DELETE_WIDGET, self, None))
+            return True  # 阻止事件继续传播
+        
+        return False
 
     def _on_delete_button_motion(self, controller, x, y):
         """处理删除按钮的鼠标移动事件"""
@@ -142,8 +162,8 @@ class BaseWidget(Gtk.DrawingArea):
         if self.delete_button_hovered:
             self.delete_button_hovered = False
             self.queue_draw()
-            # 恢复默认指针
-            self.set_cursor_from_name("grab")
+        # 清除widget级别的指针设置，让窗口级别的指针生效
+        self.set_cursor(None)
 
     def draw_func(self, widget:Gtk.DrawingArea, cr:'Context[Surface]', width:int, height:int, user_data:Any):
         """基础绘制函数 - 调用子类的具体绘制方法"""
@@ -168,7 +188,7 @@ class BaseWidget(Gtk.DrawingArea):
         elif hasattr(self, "title") and self.title and self.title != "组件":
             # 如果没有text但有标题，绘制标题
             cr.set_source_rgba(0, 0, 0, 1)
-            cr.select_font_face("Arial", 0, 1)
+            cr.select_font_face("Arial", cairo.FontSlant.NORMAL, cairo.FontWeight.BOLD)
             cr.set_font_size(12)
             text_extents = cr.text_extents(self.title)
             x = (width - text_extents.width) / 2
@@ -296,7 +316,15 @@ class BaseWidget(Gtk.DrawingArea):
     def get_delete_button_bounds(self) -> tuple[int, int, int, int]:
         """获取删除按钮的边界 (x, y, w, h) - 子类可以重写"""
         size = 16
-        return (self.width - size, self.height - size, size, size)
+        center_x = self.width / 2
+        center_y = self.height / 2
+        radius = min(self.width, self.height) / 2   # 留出边距
+        angle = -math.pi / 4
+        button_center_x = center_x + radius * math.cos(angle)
+        button_center_y = center_y + radius * math.sin(angle)
+        x = button_center_x - size / 2
+        y = button_center_y - size / 2
+        return (int(x), int(y), size, size)
 
     def on_widget_clicked(self, x, y):
         """widget被点击时的回调 - 子类可以重写"""

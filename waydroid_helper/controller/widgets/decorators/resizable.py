@@ -187,16 +187,16 @@ class ResizableDecorator(WidgetDecorator):
         height = self._wrapped_widget.get_allocated_height()
         return self.can_resize_at_position(x, y, width, height)
     
-    def update_cursor_for_position(self, x, y):
-        """根据鼠标位置更新指针样式"""
-        resize_direction = self.check_resize_direction(x, y)
-        if resize_direction:
-            cursor_name = self.get_cursor_for_resize_area(resize_direction)
-            if cursor_name:
-                cursor = Gdk.Cursor.new_from_name(cursor_name)
-                self._wrapped_widget.set_cursor(cursor)
-        else:
-            self._wrapped_widget.set_cursor(None)
+    # def update_cursor_for_position(self, x, y):
+    #     """根据鼠标位置更新指针样式"""
+    #     resize_direction = self.check_resize_direction(x, y)
+    #     if resize_direction:
+    #         cursor_name = self.get_cursor_for_resize_area(resize_direction)
+    #         if cursor_name:
+    #             cursor = Gdk.Cursor.new_from_name(cursor_name)
+    #             self._wrapped_widget.set_cursor(cursor)
+    #     else:
+    #         self._wrapped_widget.set_cursor(None)
     
     def start_resize(self, x, y, resize_direction):
         """开始调整大小"""

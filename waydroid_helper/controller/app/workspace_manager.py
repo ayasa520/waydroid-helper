@@ -7,7 +7,7 @@ import logging
 
 from gi.repository import Gtk, Gdk, GLib
 
-from waydroid_helper.controller.core import is_point_in_rect
+from waydroid_helper.controller.core import event_bus, is_point_in_rect, EventType
 from waydroid_helper.util.log import logger
 
 class WorkspaceManager:
@@ -31,6 +31,7 @@ class WorkspaceManager:
         self.interaction_start_x = 0
         self.interaction_start_y = 0
         self.pending_resize_direction = None
+        event_bus.subscribe(EventType.DELETE_WIDGET, lambda event: self.delete_selected_widgets())
 
     def handle_mouse_press(self, controller, n_press, x, y):
         """处理鼠标按下事件"""
@@ -258,6 +259,21 @@ class WorkspaceManager:
         self.dragging_widget = None
         self.resizing_widget = None
 
+    def delete_specific_widget(self, widget):
+        """删除特定的widget"""
+        if widget and widget.get_parent() == self.fixed:
+            self.window.unregister_widget_key_mapping(widget)
+            self.fixed.remove(widget)
+            logger.debug(f"已删除widget {type(widget).__name__}(id={id(widget)}) 及其按键映射")
+            
+            # 如果删除的是当前正在操作的widget，清除状态
+            if self.dragging_widget == widget:
+                self.dragging_widget = None
+            if self.resizing_widget == widget:
+                self.resizing_widget = None
+            if self.selected_widget == widget:
+                self.selected_widget = None
+
     def delete_selected_widgets(self):
         """删除所有选中的widget"""
         widgets_to_delete = []
@@ -268,9 +284,7 @@ class WorkspaceManager:
             child = child.get_next_sibling()
         
         for widget in widgets_to_delete:
-            self.window.unregister_widget_key_mapping(widget)
-            self.fixed.remove(widget)
-            logger.debug(f"已删除widget {type(widget).__name__}(id={id(widget)}) 及其按键映射")
+            self.delete_specific_widget(widget)
         
         self.dragging_widget = None
         self.resizing_widget = None
@@ -316,22 +330,22 @@ class WorkspaceManager:
         
         return False
 
-    def update_cursor_for_position(self, x, y):
-        """根据位置更新鼠标指针"""
-        widget_at_position = self.get_widget_at_position(x, y)
-        if widget_at_position:
-            local_x, local_y = self.global_to_local_coords(widget_at_position, x, y)
+    # def update_cursor_for_position(self, x, y):
+        # """根据位置更新鼠标指针"""
+        # widget_at_position = self.get_widget_at_position(x, y)
+        # if widget_at_position:
+        #     local_x, local_y = self.global_to_local_coords(widget_at_position, x, y)
             
-            if hasattr(widget_at_position, 'check_resize_direction'):
-                resize_direction = widget_at_position.check_resize_direction(local_x, local_y)
-                if resize_direction:
-                    cursor_name = self.get_cursor_name_for_resize_direction(resize_direction)
-                    self.set_cursor_from_name(cursor_name)
-                    return
+        #     if hasattr(widget_at_position, 'check_resize_direction'):
+        #         resize_direction = widget_at_position.check_resize_direction(local_x, local_y)
+        #         if resize_direction:
+        #             cursor_name = self.get_cursor_name_for_resize_direction(resize_direction)
+        #             self.set_cursor_from_name(cursor_name)
+        #             return
             
-            self.set_cursor_from_name("grab")
-        else:
-            self.set_cursor_from_name("default")
+        #     self.set_cursor_from_name("grab")
+        # else:
+        #     self.set_cursor_from_name("default")
 
     def get_cursor_name_for_resize_direction(self, direction):
         """根据调整大小方向获取鼠标指针名称"""
