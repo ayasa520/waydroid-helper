@@ -625,29 +625,8 @@ class TransparentWindow(Adw.Window):
         return False  # 不重复执行
 
     def update_cursor_for_position(self, x, y):
-        """根据位置更新鼠标指针"""
-        widget_at_position = self.get_widget_at_position(x, y)
-        if widget_at_position:
-            local_x, local_y = self.global_to_local_coords(widget_at_position, x, y)
-
-            # 检查是否有调整大小功能
-            if hasattr(widget_at_position, "check_resize_direction"):
-                resize_direction = widget_at_position.check_resize_direction(
-                    local_x, local_y
-                )
-                if resize_direction:
-                    # 设置调整大小的鼠标指针
-                    cursor_name = self.get_cursor_name_for_resize_direction(
-                        resize_direction
-                    )
-                    self.set_cursor_from_name(cursor_name)
-                    return
-
-            # 默认鼠标指针（可拖拽）
-            self.set_cursor_from_name("grab")
-        else:
-            # 空白区域，默认指针
-            self.set_cursor_from_name("default")
+        """根据位置更新鼠标指针 - 已移至 workspace_manager"""
+        pass  # 此方法已移至 workspace_manager，保留空方法以保持兼容性
 
     def get_cursor_name_for_resize_direction(self, direction):
         """根据调整大小方向获取鼠标指针名称"""

@@ -51,6 +51,11 @@ class WorkspaceManager:
 
     def handle_mouse_motion(self, controller, x, y):
         """处理鼠标移动事件"""
+        # 只在编辑模式下处理
+        if hasattr(self.window, 'current_mode') and hasattr(self.window, 'EDIT_MODE'):
+            if self.window.current_mode != self.window.EDIT_MODE:
+                return
+
         if self.dragging_widget:
             self.handle_widget_drag(x, y)
         elif self.resizing_widget:
@@ -68,9 +73,25 @@ class WorkspaceManager:
                 else:
                     logger.debug(f"开始拖拽: widget={type(self.selected_widget).__name__}")
                     self.start_widget_drag(self.selected_widget, self.interaction_start_x, self.interaction_start_y)
+
+        # 更新鼠标指针样式
+        widget_at_position = self.get_widget_at_position(x, y)
+        if widget_at_position:
+            local_x, local_y = self.global_to_local_coords(widget_at_position, x, y)
+
+            # 检查是否有调整大小功能
+            if hasattr(widget_at_position, "check_resize_direction"):
+                resize_direction = widget_at_position.check_resize_direction(local_x, local_y)
+                if resize_direction:
+                    cursor_name = self.get_cursor_name_for_resize_direction(resize_direction)
+                    self.set_cursor_from_name(cursor_name)
+                    return
+
+            # 默认鼠标指针（可拖拽）
+            self.set_cursor_from_name("grab")
         else:
-            # 更新鼠标指针样式
-            self.update_cursor_for_position(x, y)
+            # 空白区域，默认指针
+            self.set_cursor_from_name("default")
 
     def handle_mouse_release(self, controller, n_press, x, y):
         """处理鼠标释放事件"""

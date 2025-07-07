@@ -5,6 +5,7 @@
 """
 
 import gi
+import math
 
 gi.require_version("Gdk", "4.0")
 from gi.repository import Gtk, GObject
@@ -90,6 +91,9 @@ class BaseWidget(Gtk.DrawingArea):
         # 设置大小
         self.set_size_request(width, height)
 
+        # 添加删除按钮悬停状态
+        self.delete_button_hovered = False
+        
         # 设置绘制函数
         self.set_draw_func(self.draw_func, None)
 
@@ -108,6 +112,38 @@ class BaseWidget(Gtk.DrawingArea):
         """设置基础事件控制器 - 只处理widget特定的事件"""
         # 使组件可获得焦点（用于键盘事件）
         self.set_focusable(True)
+
+        # 添加删除按钮的鼠标事件控制器
+        self.delete_button_controller = Gtk.EventControllerMotion.new()
+        self.delete_button_controller.connect("motion", self._on_delete_button_motion)
+        self.delete_button_controller.connect("leave", self._on_delete_button_leave)
+        self.add_controller(self.delete_button_controller)
+
+    def _on_delete_button_motion(self, controller, x, y):
+        """处理删除按钮的鼠标移动事件"""
+        if not self.is_selected or self.mapping_mode:
+            return
+            
+        if self.is_point_in_delete_button(x, y):
+            if not self.delete_button_hovered:
+                self.delete_button_hovered = True
+                self.queue_draw()
+                # 设置鼠标指针
+                self.set_cursor_from_name("pointer")
+        else:
+            if self.delete_button_hovered:
+                self.delete_button_hovered = False
+                self.queue_draw()
+                # 恢复默认指针
+                self.set_cursor_from_name("grab")
+
+    def _on_delete_button_leave(self, controller):
+        """处理鼠标离开删除按钮事件"""
+        if self.delete_button_hovered:
+            self.delete_button_hovered = False
+            self.queue_draw()
+            # 恢复默认指针
+            self.set_cursor_from_name("grab")
 
     def draw_func(self, widget:Gtk.DrawingArea, cr:'Context[Surface]', width:int, height:int, user_data:Any):
         """基础绘制函数 - 调用子类的具体绘制方法"""
@@ -145,6 +181,7 @@ class BaseWidget(Gtk.DrawingArea):
         if self.is_selected:
             # 绘制默认的矩形选择边框
             self.draw_selection_border(cr, width, height)
+            self.draw_delete_button(cr)
 
     def draw_selection_border(self, cr:'Context[Surface]', width:int, height:int)->None:
         """绘制选择边框 - 子类可以重写此方法来自定义边框样式"""
@@ -224,6 +261,43 @@ class BaseWidget(Gtk.DrawingArea):
             return x, y, width, height
         return 0, 0, self.width, self.height
 
+    def draw_delete_button(self, cr:'Context[Surface]'):
+        """绘制删除按钮"""
+        if self.mapping_mode:
+            return
+
+        bounds = self.get_delete_button_bounds()
+        x, y, w, h = bounds
+
+        # 绘制白色圆形背景
+        cr.set_source_rgba(1, 1, 1, 0.9)
+        cr.arc(x + w / 2, y + h / 2, w / 2, 0, 2 * math.pi)
+        cr.fill()
+        
+        # 如果鼠标悬停，绘制蓝色背景
+        if self.delete_button_hovered:
+            cr.set_source_rgba(0.2, 0.6, 1.0, 0.9)  # 蓝色
+            cr.arc(x + w / 2, y + h / 2, w / 2, 0, 2 * math.pi)
+            cr.fill()
+        
+        # 绘制黑色或白色 'X'，根据悬停状态决定颜色
+        if self.delete_button_hovered:
+            cr.set_source_rgba(1, 1, 1, 1)  # 白色
+        else:
+            cr.set_source_rgba(0, 0, 0, 0.7)  # 黑色
+        cr.set_line_width(2)
+        padding = 4
+        cr.move_to(x + padding, y + padding)
+        cr.line_to(x + w - padding, y + h - padding)
+        cr.move_to(x + w - padding, y + padding)
+        cr.line_to(x + padding, y + h - padding)
+        cr.stroke()
+
+    def get_delete_button_bounds(self) -> tuple[int, int, int, int]:
+        """获取删除按钮的边界 (x, y, w, h) - 子类可以重写"""
+        size = 16
+        return (self.width - size, self.height - size, size, size)
+
     def on_widget_clicked(self, x, y):
         """widget被点击时的回调 - 子类可以重写"""
         pass
@@ -284,3 +358,18 @@ class BaseWidget(Gtk.DrawingArea):
                 if rx <= x <= rx + rw and ry <= y <= ry + rh:
                     return region
         return None
+
+    def is_point_in_delete_button(self, x:int|float, y:int|float) -> bool:
+        """检查点是否在删除按钮区域内"""
+        if not self.is_selected or self.mapping_mode:
+            return False
+            
+        bounds = self.get_delete_button_bounds()
+        bx, by, bw, bh = bounds
+        center_x = bx + bw / 2
+        center_y = by + bh / 2
+        radius = bw / 2  # 按钮是圆形的，所以用半径判断
+        
+        # 计算点到圆心的距离
+        distance = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
+        return distance <= radius

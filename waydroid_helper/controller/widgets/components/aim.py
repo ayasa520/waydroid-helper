@@ -55,7 +55,7 @@ class Aim(BaseWidget):
         width: int = 200,
         height: int = 150,
         text: str = "",
-        default_keys: list[KeyCombination] | None = None,
+        default_keys: set[KeyCombination] | None = None,
     ):
         super().__init__(
             x,
@@ -310,6 +310,28 @@ class Aim(BaseWidget):
         # else:
         #     used_key = "未知按键"
         # logging.debug(f"[RELEASE]🎯 瞄准按钮通过按键 {used_key} 被释放!")
+
+    def get_delete_button_bounds(self) -> tuple[int, int, int, int]:
+        """获取删除按钮的边界 (x, y, w, h) - 将按钮定位在中心圆的右上角边缘"""
+        # 删除按钮应该在中心圆右上角, 恰好在圆边上
+        size = 16
+        width = self.get_allocated_width()
+        height = self.get_allocated_height()
+        center_x = width / 2
+        center_y = height / 2
+
+        # 45度角 (-pi/4)
+        angle = -math.pi / 4
+
+        # 删除按钮的中心点
+        button_center_x = center_x + self.CIRCLE_RADIUS * math.cos(angle)
+        button_center_y = center_y + self.CIRCLE_RADIUS * math.sin(angle)
+
+        # 计算左上角坐标
+        x = button_center_x - size / 2
+        y = button_center_y - size / 2
+
+        return (int(x), int(y), size, size)
 
     def get_editable_regions(self) -> list["EditableRegion"]:
         """获取可编辑区域列表 - 中心50*50圆形区域为可编辑区域"""
