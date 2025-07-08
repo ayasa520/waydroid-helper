@@ -296,6 +296,12 @@ class ContextMenuManager:
                                 self._serialize_key_combination(kc)
                                 for kc in child.final_keys
                             ]
+                    
+                    # 保存组件配置
+                    if hasattr(child, "get_config_manager"):
+                        config_manager = child.get_config_manager()
+                        if config_manager.configs:
+                            widget_data["config"] = config_manager.serialize()
 
                     widgets_data.append(widget_data)
                     child = child.get_next_sibling()
@@ -410,6 +416,35 @@ class ContextMenuManager:
                                 if key_combo:
                                     default_keys.append(key_combo)
                         create_kwargs["default_keys"] = default_keys
+
+                    # 创建widget
+                    widget = widget_factory.create_widget(widget_type, **create_kwargs)
+
+                    if widget:
+                        # 在缩放后的位置创建widget
+                        if hasattr(self.parent_window, "create_widget_at_position"):
+                            self.parent_window.create_widget_at_position(widget, x, y)
+                            
+                            # 恢复配置
+                            if "config" in widget_data and hasattr(widget, "get_config_manager"):
+                                config_manager = widget.get_config_manager()
+                                config_manager.deserialize(widget_data["config"])
+                                logger.debug(f"Restored configuration for {widget_type} widget")
+                            
+                            widgets_created += 1
+                            logger.debug(
+                                f"Restored {widget_type} widget: original position ({original_x}, {original_y}) -> new position ({x}, {y}), original size ({original_width}x{original_height}) -> new size ({width}x{height})"
+                            )
+                        else:
+                            logger.error(
+                                "Failed to create widget, missing create_widget_at_position method"
+                            )
+                    else:
+                        logger.error(f"Failed to create {widget_type} widget")
+
+                except Exception as e:
+                    logger.error(f"Failed to create widget: {e}")
+                    continue
 
                     # 创建widget
                     widget = widget_factory.create_widget(widget_type, **create_kwargs)

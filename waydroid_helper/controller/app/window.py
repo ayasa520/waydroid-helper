@@ -153,58 +153,28 @@ class TransparentWindow(Adw.Window):
         title_label.set_halign(Gtk.Align.CENTER)
         main_box.append(title_label)
   
-        # Content
-        content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=15)
-        content_box.set_margin_top(10)
-        content_box.set_margin_bottom(10)
-        content_box.set_margin_start(10)
-        content_box.set_margin_end(10)
-        main_box.append(content_box)
+        # 使用新的配置系统
+        config_manager = widget.get_config_manager()
         
-        config = widget.get_config()
-        ui_controls = {}
-
-        if not config:
+        if not config_manager.configs:
             label = Gtk.Label(label=_("This widget has no settings."))
-            content_box.append(label)
+            main_box.append(label)
         else:
-            for key, definition in config.items():
-                row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10, halign=Gtk.Align.FILL)
-                label = Gtk.Label(label=definition["label"], xalign=0)
-                row.append(label)
-
-                control = None
-                if definition["type"] == ConfigType.SLIDER:
-                    adj = Gtk.Adjustment(
-                        value=definition["value"],
-                        lower=definition["min"],
-                        upper=definition["max"],
-                        step_increment=definition["step"],
-                    )
-                    control = Gtk.Scale(orientation=Gtk.Orientation.HORIZONTAL, adjustment=adj)
-                    control.set_draw_value(True)  # Ensure the value is drawn on the slider
-                    control.set_value_pos(Gtk.PositionType.RIGHT)
-                    control.set_digits(0)
-                    control.set_hexpand(True)
-                
-                if control:
-                    row.append(control)
-                    content_box.append(row)
-                    ui_controls[key] = control
-        
-        # Save Button
-        if config:
+            # 使用配置管理器生成UI面板
+            config_panel = config_manager.create_ui_panel()
+            main_box.append(config_panel)
+            
+            # Save Button
             save_button = Gtk.Button(label=_("Save"), halign=Gtk.Align.END)
             save_button.add_css_class("suggested-action")
             
             def on_save_clicked(btn):
-                new_config = {}
-                for key, control in ui_controls.items():
-                    if isinstance(control, Gtk.Scale):
-                        new_config[key] = control.get_value()
-                
-                widget.set_config(new_config)
-                popover.popdown()
+                success = config_manager.apply_values_from_ui()
+                if success:
+                    logger.info("Configuration applied successfully")
+                    popover.popdown()
+                else:
+                    logger.error("Failed to apply configuration")
 
             save_button.connect("clicked", on_save_clicked)
             main_box.append(save_button)

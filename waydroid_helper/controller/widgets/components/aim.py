@@ -18,7 +18,7 @@ from waydroid_helper.controller.core import (
 from waydroid_helper.controller.core.control_msg import InjectTouchEventMsg
 from waydroid_helper.controller.platform import get_platform
 from waydroid_helper.controller.widgets import BaseWidget
-from waydroid_helper.controller.widgets.config import ConfigType, ConfigOption
+from waydroid_helper.controller.widgets.config import create_slider_config, create_text_config
 from waydroid_helper.controller.widgets.decorators import (
     Editable,
     Resizable,
@@ -73,38 +73,44 @@ class Aim(BaseWidget):
         self.platform: "PlatformBase" | None = None
         self._current_pos: tuple[int | float | None, int | float | None] = (None, None)
         self.sensitivity: int = 20
+        self.setup_config()
 
-        self.add_config_handler("sensitivity", self._set_sensitivity)
-
-    def _set_sensitivity(self, value) -> None:
-        """Handler for setting sensitivity with validation."""
-        try:
-            new_sensitivity = int(value)
-            # Get the valid range from the config definition itself
-            config_def = self.get_config()["sensitivity"]
-            min_val, max_val = config_def["min"], config_def["max"]
-
-            if min_val <= new_sensitivity <= max_val:
-                self.sensitivity = new_sensitivity
-                logger.debug(f"Aim sensitivity set to: {self.sensitivity}")
-            else:
-                logger.error(f"Sensitivity value {new_sensitivity} is out of valid range ({min_val}-{max_val}).")
+    def setup_config(self) -> None:
+        """设置配置项"""
         
-        except (ValueError, TypeError):
-            logger.error(f"Invalid value provided for sensitivity: {value}")
+        # 添加灵敏度配置
+        sensitivity_config = create_slider_config(
+            key="sensitivity",
+            label="Aim Sensitivity",
+            value=self.sensitivity,
+            min_value=1,
+            max_value=100,
+            step=1,
+            description="Adjusts the sensitivity of aim movement"
+        )
+        
+        comment_config = create_text_config(
+            key="comment",
+            label="Comment",
+            value="",
+            placeholder="Enter comment...",
+            max_length=20,
+            description="Comment to display"
+        )
+        
+        self.add_config_item(sensitivity_config)
+        self.add_config_item(comment_config)
+        
+        # 添加配置变更回调
+        self.add_config_change_callback("sensitivity", self._on_sensitivity_changed)
 
-    def get_config(self) -> dict[str, ConfigOption]:
-        """Return the configuration schema for the Aim widget."""
-        return {
-            "sensitivity": {
-                "label": "Aim Sensitivity",
-                "type": ConfigType.SLIDER,
-                "value": self.sensitivity,
-                "min": 1,
-                "max": 100,
-                "step": 1,
-            }
-        }
+    def _on_sensitivity_changed(self, key: str, value: int) -> None:
+        """处理灵敏度配置变更"""
+        try:
+            self.sensitivity = int(value)
+            logger.debug(f"Aim sensitivity changed to: {self.sensitivity}")
+        except (ValueError, TypeError):
+            logger.error(f"Invalid sensitivity value: {value}")
 
     def on_relative_pointer_motion(
         self, dx: float, dy: float, dx_unaccel: float, dy_unaccel: float
@@ -233,7 +239,7 @@ class Aim(BaseWidget):
             center_y = height / 2
 
             cr.set_source_rgba(1, 1, 1, 1)  # 白色文字
-            cr.select_font_face("Arial", 0, 1)
+            cr.select_font_face("Arial")
             cr.set_font_size(12)
             text_extents = cr.text_extents(self.text)
             x = center_x - text_extents.width / 2
@@ -391,7 +397,7 @@ class Aim(BaseWidget):
             {
                 "id": "aim_center",
                 "name": "瞄准区域",
-                "bounds": (circle_left, circle_top, self.CIRCLE_SIZE, self.CIRCLE_SIZE),
+                "bounds": (int(circle_left), int(circle_top), self.CIRCLE_SIZE, self.CIRCLE_SIZE),
                 "get_keys": lambda: self.final_keys.copy(),
                 "set_keys": lambda keys: setattr(
                     self, "final_keys", set(keys) if keys else set()

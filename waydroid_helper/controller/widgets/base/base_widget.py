@@ -1,32 +1,40 @@
 #!/usr/bin/env python3
 """
-基础组件模块
-提供可拖动和调整大小的基础组件类
+基础组件类
+提供可拖动、可调整大小的组件基类
 """
 
-import gi
+from __future__ import annotations
+
 import math
-import cairo
-
-from waydroid_helper.controller.core.event_bus import Event, EventType, event_bus
-
-gi.require_version("Gdk", "4.0")
-from gi.repository import Gtk, GObject, Gdk
-
-from waydroid_helper.controller.core.key_system import KeyCombination
-from waydroid_helper.util.log import logger
 from typing import TYPE_CHECKING, Any, Callable, TypedDict, cast
 
-if TYPE_CHECKING:
-    from cairo import Context, Surface
+import gi
 
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
+gi.require_version("Gdk", "4.0")
+
+from gi.repository import Gdk, GObject, Gtk
+
+from waydroid_helper.controller.core import (
+    Event,
+    EventType,
+    KeyCombination,
+    event_bus,
+)
+from waydroid_helper.controller.widgets.config import ConfigManager
+from waydroid_helper.util.log import logger
+
+if TYPE_CHECKING:
+    from waydroid_helper.controller.widgets.config import ConfigItem
 
 class EditableRegion(TypedDict):
-    """可编辑区域信息"""
+    """可编辑区域类型定义"""
 
     id: str
     name: str
-    bounds: tuple[int|float, int|float, int|float, int|float]
+    bounds: tuple[int, int, int, int]
     get_keys: Callable[[], set[KeyCombination]]
     set_keys: Callable[[set[KeyCombination]], None]
 
@@ -104,8 +112,28 @@ class BaseWidget(Gtk.DrawingArea):
         # 添加事件控制器
         self.setup_event_controllers()
 
-        # 配置处理
-        self._config_handlers: dict[str, Callable[[Any], None]] = {}
+        # 配置管理器
+        self.config_manager = ConfigManager()
+
+    def add_config_item(self, config_item: "ConfigItem") -> None:
+        """添加配置项"""
+        self.config_manager.add_config(config_item)
+
+    def get_config_manager(self) -> ConfigManager:
+        """获取配置管理器"""
+        return self.config_manager
+
+    def set_config_value(self, key: str, value: Any) -> bool:
+        """设置配置值"""
+        return self.config_manager.set_value(key, value)
+
+    def get_config_value(self, key: str) -> Any:
+        """获取配置值"""
+        return self.config_manager.get_value(key)
+
+    def add_config_change_callback(self, key: str, callback: Callable[[str, Any], None]) -> None:
+        """添加配置变更回调"""
+        self.config_manager.add_change_callback(key, callback)
 
     @property
     def mapping_start_x(self)->float:
@@ -473,31 +501,24 @@ class BaseWidget(Gtk.DrawingArea):
         """
         raise NotImplementedError("子类必须实现on_key_released方法")
 
+    # 为了向后兼容，保留原有的方法
     def get_config(self) -> dict[str, Any]:
-        """获取widget的配置信息"""
+        """获取widget的配置信息 - 已弃用，请使用get_config_manager()"""
+        logger.warning(f"get_config() is deprecated, use get_config_manager() instead")
         return {}
 
     def set_config(self, config: dict[str, Any]) -> None:
-        """
-        Sets the widget's configuration by dispatching to registered handlers.
-        """
-        if not hasattr(self, "_config_handlers"):
-            logger.warning(f"Widget {type(self).__name__} has no config handlers to process set_config.")
-            return
-
+        """设置widget的配置信息 - 已弃用，请使用set_config_value()"""
+        logger.warning(f"set_config() is deprecated, use set_config_value() instead")
         for key, value in config.items():
-            handler = self._config_handlers.get(key)
-            if handler and callable(handler):
-                try:
-                    handler(value)
-                except Exception as e:
-                    logger.error(f"Error calling config handler for '{key}' with value '{value}': {e}")
-            else:
-                logger.warning(f"No valid handler found for config key: '{key}' on {type(self).__name__}")
+            self.set_config_value(key, value)
 
     def add_config_handler(self, key: str, handler: Callable[[Any], None]) -> None:
-        """添加配置处理函数"""
-        self._config_handlers[key] = handler
+        """添加配置处理函数 - 已弃用，请使用add_config_change_callback()"""
+        logger.warning(f"add_config_handler() is deprecated, use add_config_change_callback() instead")
+        def wrapper(config_key: str, value: Any) -> None:
+            handler(value)
+        self.add_config_change_callback(key, wrapper)
 
     def get_editable_regions(self) -> list[EditableRegion]:
         """获取可编辑区域列表 - 支持多区域编辑的widget应重写此方法
