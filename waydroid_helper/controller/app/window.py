@@ -22,6 +22,9 @@ from waydroid_helper.controller.core import (
     key_mapping_manager,
     Server,
     is_point_in_rect,
+    event_bus,
+    EventType,
+    Event,
 )
 from waydroid_helper.controller.core.constants import APP_TITLE
 from waydroid_helper.controller.core.handler import EventHandlerChain, InputEvent
@@ -32,10 +35,12 @@ from waydroid_helper.controller.core.handler.default import DefaultEventHandler
 from waydroid_helper.controller.ui.styles import StyleManager
 from waydroid_helper.controller.ui.menus import ContextMenuManager
 from waydroid_helper.controller.widgets.factory import WidgetFactory
+from waydroid_helper.controller.widgets.config import ConfigType
 
 from waydroid_helper.util.log import logger
 from waydroid_helper.util.adb_helper import AdbHelper
 import asyncio
+import weakref
 
 if TYPE_CHECKING:
     from waydroid_helper.controller.widgets.base import BaseWidget
@@ -100,6 +105,9 @@ class TransparentWindow(Adw.Window):
         self.menu_manager = ContextMenuManager(self)
         self.workspace_manager = WorkspaceManager(self, self.fixed)
 
+        # 订阅事件
+        event_bus.subscribe(EventType.SETTINGS_WIDGET, self._on_widget_settings_requested)
+
         # 创建全局事件处理器链
         self.event_handler_chain = EventHandlerChain()
         # 导入并添加默认处理器
@@ -127,6 +135,95 @@ class TransparentWindow(Adw.Window):
         # 初始提示
         GLib.idle_add(self.show_notification, _("Edit Mode (F1: Switch Mode)"))
     
+    def _on_widget_settings_requested(self, event: "Event"):
+        """当一个widget请求设置时的回调, 弹出一个Popover"""
+        widget = event.source
+        logger.info(f"Widget {type(widget).__name__} (id={id(widget)}) requested settings.")
+
+        popover = Gtk.Popover()
+        popover.set_parent(widget)
+
+        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        main_box.set_size_request(250, -1)  # Set a minimum width for the popover
+        popover.set_child(main_box)
+
+        # Header Label
+        title_label = Gtk.Label()
+        title_label.set_markup(f"<b>{widget.WIDGET_NAME} Settings</b>")
+        title_label.set_halign(Gtk.Align.CENTER)
+        main_box.append(title_label)
+  
+        # Content
+        content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=15)
+        content_box.set_margin_top(10)
+        content_box.set_margin_bottom(10)
+        content_box.set_margin_start(10)
+        content_box.set_margin_end(10)
+        main_box.append(content_box)
+        
+        config = widget.get_config()
+        ui_controls = {}
+
+        if not config:
+            label = Gtk.Label(label=_("This widget has no settings."))
+            content_box.append(label)
+        else:
+            for key, definition in config.items():
+                row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10, halign=Gtk.Align.FILL)
+                label = Gtk.Label(label=definition["label"], xalign=0)
+                row.append(label)
+
+                control = None
+                if definition["type"] == ConfigType.SLIDER:
+                    adj = Gtk.Adjustment(
+                        value=definition["value"],
+                        lower=definition["min"],
+                        upper=definition["max"],
+                        step_increment=definition["step"],
+                    )
+                    control = Gtk.Scale(orientation=Gtk.Orientation.HORIZONTAL, adjustment=adj)
+                    control.set_draw_value(True)  # Ensure the value is drawn on the slider
+                    control.set_value_pos(Gtk.PositionType.RIGHT)
+                    control.set_digits(0)
+                    control.set_hexpand(True)
+                
+                if control:
+                    row.append(control)
+                    content_box.append(row)
+                    ui_controls[key] = control
+        
+        # Save Button
+        if config:
+            save_button = Gtk.Button(label=_("Save"), halign=Gtk.Align.END)
+            save_button.add_css_class("suggested-action")
+            
+            def on_save_clicked(btn):
+                new_config = {}
+                for key, control in ui_controls.items():
+                    if isinstance(control, Gtk.Scale):
+                        new_config[key] = control.get_value()
+                
+                widget.set_config(new_config)
+                popover.popdown()
+
+            save_button.connect("clicked", on_save_clicked)
+            main_box.append(save_button)
+
+        # Pointing and Display
+        settings_button_rect = Gdk.Rectangle()
+        bounds = widget.get_settings_button_bounds()
+        settings_button_rect.x = bounds[0]
+        settings_button_rect.y = bounds[1]
+        settings_button_rect.width = bounds[2]
+        settings_button_rect.height = bounds[3]
+        
+        popover.set_pointing_to(settings_button_rect)
+        popover.set_position(Gtk.PositionType.BOTTOM)
+        
+        popover.connect("closed", lambda p: popover.unparent())
+        popover.popup()
+
+
     def _on_close_request(self, window):
         logger.info("Close request received, running cleanup...")
         self.close()

@@ -96,12 +96,16 @@ class BaseWidget(Gtk.DrawingArea):
 
         # 添加删除按钮悬停状态
         self.delete_button_hovered = False
-        
+        self.settings_button_hovered = False
+
         # 设置绘制函数
         self.set_draw_func(self.draw_func, None)
 
         # 添加事件控制器
         self.setup_event_controllers()
+
+        # 配置处理
+        self._config_handlers: dict[str, Callable[[Any], None]] = {}
 
     @property
     def mapping_start_x(self)->float:
@@ -117,17 +121,17 @@ class BaseWidget(Gtk.DrawingArea):
         self.set_focusable(True)
 
         # 添加删除按钮的鼠标事件控制器
-        self.delete_button_controller = Gtk.EventControllerMotion.new()
-        self.delete_button_controller.connect("motion", self._on_delete_button_motion)
-        self.delete_button_controller.connect("leave", self._on_delete_button_leave)
+        self._motion_controller = Gtk.EventControllerMotion.new()
+        self._motion_controller.connect("motion", self._on_motion)
+        self._motion_controller.connect("leave", self._on_leave)
         # click
-        self.delete_button_click_controller = Gtk.GestureClick.new()
-        self.delete_button_click_controller.set_button(Gdk.BUTTON_PRIMARY)  # 只处理左键
-        self.delete_button_click_controller.connect("pressed", self._on_delete_button_clicked)
-        self.add_controller(self.delete_button_controller)
-        self.add_controller(self.delete_button_click_controller)
+        self._click_controller = Gtk.GestureClick.new()
+        self._click_controller.set_button(Gdk.BUTTON_PRIMARY)  # 只处理左键
+        self._click_controller.connect("pressed", self._on_clicked)
+        self.add_controller(self._motion_controller)
+        self.add_controller(self._click_controller)
 
-    def _on_delete_button_clicked(self, controller, n_press, x, y):
+    def _on_clicked(self, controller, n_press, x, y):
         """处理删除按钮的点击事件"""
         if not self.is_selected or self.mapping_mode:
             return False
@@ -137,31 +141,48 @@ class BaseWidget(Gtk.DrawingArea):
             event_bus.emit(Event(EventType.DELETE_WIDGET, self, None))
             return True  # 阻止事件继续传播
         
+        if self.is_point_in_settings_button(x, y):
+            event_bus.emit(Event(EventType.SETTINGS_WIDGET, self, None))
+            return True
+
         return False
 
-    def _on_delete_button_motion(self, controller, x, y):
+    def _on_motion(self, controller, x, y):
         """处理删除按钮的鼠标移动事件"""
         if not self.is_selected or self.mapping_mode:
             return
-            
-        if self.is_point_in_delete_button(x, y):
-            if not self.delete_button_hovered:
-                self.delete_button_hovered = True
-                self.queue_draw()
-                # 设置鼠标指针
-                self.set_cursor_from_name("pointer")
-        else:
-            if self.delete_button_hovered:
-                self.delete_button_hovered = False
-                self.queue_draw()
-                # 恢复默认指针
-                self.set_cursor_from_name("grab")
 
-    def _on_delete_button_leave(self, controller):
+        # 统一处理悬停状态
+        on_delete = self.is_point_in_delete_button(x, y)
+        if self.delete_button_hovered != on_delete:
+            self.delete_button_hovered = on_delete
+            self.queue_draw()
+
+        on_settings = self.is_point_in_settings_button(x, y)
+        if self.settings_button_hovered != on_settings:
+            self.settings_button_hovered = on_settings
+            self.queue_draw()
+
+        # 更新鼠标指针
+        if on_delete or on_settings:
+            self.set_cursor_from_name("pointer")
+        else:
+            self.set_cursor(None)
+
+    def _on_leave(self, controller):
         """处理鼠标离开删除按钮事件"""
+        changed = False
         if self.delete_button_hovered:
             self.delete_button_hovered = False
+            changed = True
+        
+        if self.settings_button_hovered:
+            self.settings_button_hovered = False
+            changed = True
+
+        if changed:
             self.queue_draw()
+
         # 清除widget级别的指针设置，让窗口级别的指针生效
         self.set_cursor(None)
 
@@ -202,6 +223,7 @@ class BaseWidget(Gtk.DrawingArea):
             # 绘制默认的矩形选择边框
             self.draw_selection_border(cr, width, height)
             self.draw_delete_button(cr)
+            self.draw_settings_button(cr)
 
     def draw_selection_border(self, cr:'Context[Surface]', width:int, height:int)->None:
         """绘制选择边框 - 子类可以重写此方法来自定义边框样式"""
@@ -313,6 +335,87 @@ class BaseWidget(Gtk.DrawingArea):
         cr.line_to(x + padding, y + h - padding)
         cr.stroke()
 
+    def draw_settings_button(self, cr:'Context[Surface]'):
+        """绘制一个更清晰的齿轮设置按钮"""
+        if self.mapping_mode:
+            return
+
+        bounds = self.get_settings_button_bounds()
+        x, y, w, h = bounds
+        center_x, center_y = x + w / 2, y + h / 2
+
+        # 1. 绘制圆形背景
+        cr.set_source_rgba(1, 1, 1, 0.9)
+        cr.arc(center_x, center_y, w / 2, 0, 2 * math.pi)
+        cr.fill()
+        
+        # 2. 如果鼠标悬停，绘制蓝色背景
+        if self.settings_button_hovered:
+            cr.set_source_rgba(0.2, 0.6, 1.0, 0.9)
+            cr.arc(center_x, center_y, w / 2, 0, 2 * math.pi)
+            cr.fill()
+        
+        # 3. 绘制齿轮图标
+        # 根据悬停状态设置齿轮颜色
+        if self.settings_button_hovered:
+            cr.set_source_rgba(1, 1, 1, 1)  # 白色
+        else:
+            cr.set_source_rgba(0.2, 0.2, 0.2, 0.8)  # 深灰色
+        
+        num_teeth = 6
+        outer_radius = w / 2 - 2  # 齿轮外径
+        inner_radius = outer_radius * 0.6  # 齿轮内径
+        hole_radius = outer_radius * 0.4 # 中心孔径
+
+        cr.set_line_width(1.5)
+        
+        # 绘制齿
+        for i in range(num_teeth):
+            angle = i * (2 * math.pi / num_teeth)
+            
+            # 计算齿的四个角
+            start_angle = angle - math.pi / num_teeth / 2
+            end_angle = angle + math.pi / num_teeth / 2
+            
+            # 外顶点
+            x1 = center_x + outer_radius * math.cos(start_angle)
+            y1 = center_y + outer_radius * math.sin(start_angle)
+            x2 = center_x + outer_radius * math.cos(end_angle)
+            y2 = center_y + outer_radius * math.sin(end_angle)
+            
+            # 内顶点
+            x3 = center_x + inner_radius * math.cos(end_angle)
+            y3 = center_y + inner_radius * math.sin(end_angle)
+            x4 = center_x + inner_radius * math.cos(start_angle)
+            y4 = center_y + inner_radius * math.sin(start_angle)
+            
+            # 绘制一个齿 (梯形)
+            cr.new_path()
+            cr.move_to(x1, y1)
+            cr.line_to(x2, y2)
+            cr.line_to(x3, y3)
+            cr.line_to(x4, y4)
+            cr.close_path()
+            cr.fill()
+            
+        # 绘制齿轮主体（覆盖内侧）
+        cr.new_path()
+        cr.arc(center_x, center_y, inner_radius, 0, 2 * math.pi)
+        cr.fill()
+
+        # 4. 绘制中心孔（用背景色覆盖）
+        cr.save()
+        if self.settings_button_hovered:
+            cr.set_source_rgba(0.2, 0.6, 1.0, 1.0) # 悬停时的背景色
+        else:
+            cr.set_source_rgba(1, 1, 1, 1.0) # 默认背景色
+            
+        cr.new_path()
+        cr.arc(center_x, center_y, hole_radius, 0, 2 * math.pi)
+        cr.fill()
+        cr.restore()
+
+
     def get_delete_button_bounds(self) -> tuple[int, int, int, int]:
         """获取删除按钮的边界 (x, y, w, h) - 子类可以重写"""
         size = 16
@@ -320,6 +423,19 @@ class BaseWidget(Gtk.DrawingArea):
         center_y = self.height / 2
         radius = min(self.width, self.height) / 2   # 留出边距
         angle = -math.pi / 4
+        button_center_x = center_x + radius * math.cos(angle)
+        button_center_y = center_y + radius * math.sin(angle)
+        x = button_center_x - size / 2
+        y = button_center_y - size / 2
+        return (int(x), int(y), size, size)
+
+    def get_settings_button_bounds(self) -> tuple[int, int, int, int]:
+        """获取设置按钮的边界 (x, y, w, h) - 子类可以重写"""
+        size = 16
+        center_x = self.width / 2
+        center_y = self.height / 2
+        radius = min(self.width, self.height) / 2
+        angle = math.pi / 4  # 右下角
         button_center_x = center_x + radius * math.cos(angle)
         button_center_y = center_y + radius * math.sin(angle)
         x = button_center_x - size / 2
@@ -356,6 +472,32 @@ class BaseWidget(Gtk.DrawingArea):
             key_combination: 弹起的按键组合
         """
         raise NotImplementedError("子类必须实现on_key_released方法")
+
+    def get_config(self) -> dict[str, Any]:
+        """获取widget的配置信息"""
+        return {}
+
+    def set_config(self, config: dict[str, Any]) -> None:
+        """
+        Sets the widget's configuration by dispatching to registered handlers.
+        """
+        if not hasattr(self, "_config_handlers"):
+            logger.warning(f"Widget {type(self).__name__} has no config handlers to process set_config.")
+            return
+
+        for key, value in config.items():
+            handler = self._config_handlers.get(key)
+            if handler and callable(handler):
+                try:
+                    handler(value)
+                except Exception as e:
+                    logger.error(f"Error calling config handler for '{key}' with value '{value}': {e}")
+            else:
+                logger.warning(f"No valid handler found for config key: '{key}' on {type(self).__name__}")
+
+    def add_config_handler(self, key: str, handler: Callable[[Any], None]) -> None:
+        """添加配置处理函数"""
+        self._config_handlers[key] = handler
 
     def get_editable_regions(self) -> list[EditableRegion]:
         """获取可编辑区域列表 - 支持多区域编辑的widget应重写此方法
@@ -399,5 +541,19 @@ class BaseWidget(Gtk.DrawingArea):
         radius = bw / 2  # 按钮是圆形的，所以用半径判断
         
         # 计算点到圆心的距离
+        distance = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
+        return distance <= radius
+
+    def is_point_in_settings_button(self, x: int | float, y: int | float) -> bool:
+        """检查点是否在设置按钮区域内"""
+        if not self.is_selected or self.mapping_mode:
+            return False
+            
+        bounds = self.get_settings_button_bounds()
+        bx, by, bw, bh = bounds
+        center_x = bx + bw / 2
+        center_y = by + bh / 2
+        radius = bw / 2
+        
         distance = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
         return distance <= radius

@@ -18,6 +18,7 @@ from waydroid_helper.controller.core import (
 from waydroid_helper.controller.core.control_msg import InjectTouchEventMsg
 from waydroid_helper.controller.platform import get_platform
 from waydroid_helper.controller.widgets import BaseWidget
+from waydroid_helper.controller.widgets.config import ConfigType, ConfigOption
 from waydroid_helper.controller.widgets.decorators import (
     Editable,
     Resizable,
@@ -72,6 +73,38 @@ class Aim(BaseWidget):
         self.platform: "PlatformBase" | None = None
         self._current_pos: tuple[int | float | None, int | float | None] = (None, None)
         self.sensitivity: int = 20
+
+        self.add_config_handler("sensitivity", self._set_sensitivity)
+
+    def _set_sensitivity(self, value) -> None:
+        """Handler for setting sensitivity with validation."""
+        try:
+            new_sensitivity = int(value)
+            # Get the valid range from the config definition itself
+            config_def = self.get_config()["sensitivity"]
+            min_val, max_val = config_def["min"], config_def["max"]
+
+            if min_val <= new_sensitivity <= max_val:
+                self.sensitivity = new_sensitivity
+                logger.debug(f"Aim sensitivity set to: {self.sensitivity}")
+            else:
+                logger.error(f"Sensitivity value {new_sensitivity} is out of valid range ({min_val}-{max_val}).")
+        
+        except (ValueError, TypeError):
+            logger.error(f"Invalid value provided for sensitivity: {value}")
+
+    def get_config(self) -> dict[str, ConfigOption]:
+        """Return the configuration schema for the Aim widget."""
+        return {
+            "sensitivity": {
+                "label": "Aim Sensitivity",
+                "type": ConfigType.SLIDER,
+                "value": self.sensitivity,
+                "min": 1,
+                "max": 100,
+                "step": 1,
+            }
+        }
 
     def on_relative_pointer_motion(
         self, dx: float, dy: float, dx_unaccel: float, dy_unaccel: float
@@ -326,6 +359,21 @@ class Aim(BaseWidget):
         button_center_y = center_y + self.CIRCLE_RADIUS * math.sin(angle)
 
         # 计算左上角坐标
+        x = button_center_x - size / 2
+        y = button_center_y - size / 2
+
+        return (int(x), int(y), size, size)
+    
+    def get_settings_button_bounds(self) -> tuple[int, int, int, int]:
+        size = 16
+        center_x = self.width / 2
+        center_y = self.height / 2
+
+        angle = math.pi / 4
+
+        button_center_x = center_x + self.CIRCLE_RADIUS * math.cos(angle)
+        button_center_y = center_y + self.CIRCLE_RADIUS * math.sin(angle)
+
         x = button_center_x - size / 2
         y = button_center_y - size / 2
 

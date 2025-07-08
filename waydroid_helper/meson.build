@@ -150,6 +150,7 @@ controller_ui_sources = [
 controller_widgets_sources = [
     'controller/widgets/__init__.py',
     'controller/widgets/factory.py',
+    'controller/widgets/config.py',
 ]
 
 controller_widgets_base_sources = [
