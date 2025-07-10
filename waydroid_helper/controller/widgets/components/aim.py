@@ -81,26 +81,15 @@ class Aim(BaseWidget):
         # 添加灵敏度配置
         sensitivity_config = create_slider_config(
             key="sensitivity",
-            label="Aim Sensitivity",
+            label=pgettext("Controller Widgets", "Sensitivity"),
             value=self.sensitivity,
             min_value=1,
             max_value=100,
             step=1,
-            description="Adjusts the sensitivity of aim movement"
-        )
-        
-        comment_config = create_text_config(
-            key="comment",
-            label="Comment",
-            value="",
-            placeholder="Enter comment...",
-            max_length=20,
-            description="Comment to display"
+            description=pgettext("Controller Widgets", "Adjusts the sensitivity of aim movement")
         )
         
         self.add_config_item(sensitivity_config)
-        self.add_config_item(comment_config)
-        
         # 添加配置变更回调
         self.add_config_change_callback("sensitivity", self._on_sensitivity_changed)
 
@@ -122,8 +111,8 @@ class Aim(BaseWidget):
                 f"[RELATIVE_MOTION] Aim button triggered by relative mouse motion {dx}, {dy} at {self.center_x}, {self.center_y}"
             )
 
-            _dx = dx_unaccel * 20 / self.sensitivity
-            _dy = dy_unaccel * 20 / self.sensitivity
+            _dx = dx_unaccel * self.sensitivity / 50
+            _dy = dy_unaccel * self.sensitivity / 50
 
             root = self.get_root()
             root = cast("Gtk.Window", root)

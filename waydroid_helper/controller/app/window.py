@@ -164,20 +164,18 @@ class TransparentWindow(Adw.Window):
             config_panel = config_manager.create_ui_panel()
             main_box.append(config_panel)
             
-            # Save Button
-            save_button = Gtk.Button(label=_("Save"), halign=Gtk.Align.END)
-            save_button.add_css_class("suggested-action")
+            # # Save Button
+            # save_button = Gtk.Button(label=_("Save"), halign=Gtk.Align.END)
+            # save_button.add_css_class("suggested-action")
             
-            def on_save_clicked(btn):
-                success = config_manager.apply_values_from_ui()
-                if success:
-                    logger.info("Configuration applied successfully")
-                    popover.popdown()
-                else:
-                    logger.error("Failed to apply configuration")
+            # def on_save_clicked(btn):
+            #     # 在新的配置系统中，UI值变化会自动同步到配置管理器
+            #     # 所以这里只需要确认配置已经保存并关闭弹窗
+            #     logger.info("Configuration applied successfully")
+            #     popover.popdown()
 
-            save_button.connect("clicked", on_save_clicked)
-            main_box.append(save_button)
+            # save_button.connect("clicked", on_save_clicked)
+            # main_box.append(save_button)
 
         # Pointing and Display
         settings_button_rect = Gdk.Rectangle()

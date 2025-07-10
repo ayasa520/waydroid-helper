@@ -55,7 +55,7 @@ class ContextMenuManager:
 
         if not available_types:
             # 如果没有发现任何组件，显示提示
-            label = Gtk.Label(label=_("No components found"))
+            label = Gtk.Label(label=_("No widgets found"))
             menu_box.append(label)
         else:
             # 为每个发现的组件类型创建菜单项
@@ -81,8 +81,8 @@ class ContextMenuManager:
 
         # 添加工具菜单项
         tool_items = [
-            (_("Refresh components"), lambda: self._refresh_widgets(widget_factory)),
-            (_("Show component info"), lambda: self._show_widget_info(widget_factory)),
+            (_("Refresh widgets"), lambda: self._refresh_widgets(widget_factory)),
+            (_("Show widget info"), lambda: self._show_widget_info(widget_factory)),
             (_("Clear all"), lambda: self._clear_all_widgets()),
             (_("Save layout"), lambda: self._save_layout()),
             (_("Load layout"), lambda: self._load_layout(widget_factory)),

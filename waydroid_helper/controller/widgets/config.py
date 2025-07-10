@@ -12,7 +12,7 @@ import json
 
 import gi
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk
+from gi.repository import Gtk, GObject
 
 from waydroid_helper.util.log import logger
 
@@ -36,8 +36,8 @@ class ConfigItem(ABC):
     value: Any = None
     
     @abstractmethod
-    def create_ui_widget(self) -> Gtk.Widget:
-        """创建对应的UI控件"""
+    def create_ui_widget(self, on_change_callback: Callable[[str, Any], None]) -> Gtk.Widget:
+        """创建对应的UI控件，并连接变更回调"""
         pass
     
     @abstractmethod
@@ -47,7 +47,7 @@ class ConfigItem(ABC):
     
     @abstractmethod
     def set_value_to_ui(self, widget: Gtk.Widget, value: Any) -> None:
-        """设置值到UI控件"""
+        """设置值到UI控件（不触发信号）"""
         pass
     
     @abstractmethod
@@ -79,7 +79,7 @@ class SliderConfig(ConfigItem):
     step: float = 1.0
     show_value: bool = True
     
-    def create_ui_widget(self) -> Gtk.Widget:
+    def create_ui_widget(self, on_change_callback: Callable[[str, Any], None]) -> Gtk.Widget:
         """创建滑动条UI控件"""
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         
@@ -101,6 +101,11 @@ class SliderConfig(ConfigItem):
         scale.set_digits(0 if self.step >= 1 else 1)
         scale.set_hexpand(True)
         
+        # 连接信号并存储信号ID
+        signal_id = scale.connect("value-changed", lambda s: on_change_callback(self.key, s.get_value()))
+        # 将信号ID存储到widget中以便后续使用
+        setattr(scale, '_config_signal_id', signal_id)
+        
         box.append(scale)
         return box
     
@@ -113,11 +118,17 @@ class SliderConfig(ConfigItem):
         return self.value
     
     def set_value_to_ui(self, widget: Gtk.Widget, value: Any) -> None:
-        """设置值到滑动条"""
+        """设置值到滑动条（不触发信号）"""
         if isinstance(widget, Gtk.Box):
             scale = widget.get_last_child()
             if isinstance(scale, Gtk.Scale):
+                # 使用信号ID来阻塞和解除阻塞信号
+                signal_id = getattr(scale, '_config_signal_id', None)
+                if signal_id is not None:
+                    scale.handler_block(signal_id)
                 scale.set_value(float(value))
+                if signal_id is not None:
+                    scale.handler_unblock(signal_id)
     
     def validate(self, value: Any) -> bool:
         """验证值是否在有效范围内"""
@@ -145,7 +156,7 @@ class DropdownConfig(ConfigItem):
     options: List[str] = field(default_factory=list)
     option_labels: Optional[Dict[str, str]] = None
     
-    def create_ui_widget(self) -> Gtk.Widget:
+    def create_ui_widget(self, on_change_callback: Callable[[str, Any], None]) -> Gtk.Widget:
         """创建下拉选择UI控件"""
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         
@@ -169,6 +180,12 @@ class DropdownConfig(ConfigItem):
         if self.value in self.options:
             dropdown.set_selected(self.options.index(self.value))
         
+        # 连接信号并存储信号ID
+        signal_id = dropdown.connect("notify::selected", lambda d, _: on_change_callback(
+            self.key, self.options[d.get_selected()] if d.get_selected() < len(self.options) else self.value
+        ))
+        setattr(dropdown, '_config_signal_id', signal_id)
+        
         dropdown.set_hexpand(True)
         box.append(dropdown)
         return box
@@ -184,11 +201,17 @@ class DropdownConfig(ConfigItem):
         return self.value
     
     def set_value_to_ui(self, widget: Gtk.Widget, value: Any) -> None:
-        """设置值到下拉框"""
+        """设置值到下拉框（不触发信号）"""
         if isinstance(widget, Gtk.Box):
             dropdown = widget.get_last_child()
             if isinstance(dropdown, Gtk.DropDown) and value in self.options:
+                # 使用信号ID来阻塞和解除阻塞信号
+                signal_id = getattr(dropdown, '_config_signal_id', None)
+                if signal_id is not None:
+                    dropdown.handler_block(signal_id)
                 dropdown.set_selected(self.options.index(value))
+                if signal_id is not None:
+                    dropdown.handler_unblock(signal_id)
     
     def validate(self, value: Any) -> bool:
         """验证值是否在选项列表中"""
@@ -210,7 +233,7 @@ class TextConfig(ConfigItem):
     placeholder: str = ""
     max_length: int = 0
     
-    def create_ui_widget(self) -> Gtk.Widget:
+    def create_ui_widget(self, on_change_callback: Callable[[str, Any], None]) -> Gtk.Widget:
         """创建文本输入UI控件"""
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         
@@ -227,6 +250,10 @@ class TextConfig(ConfigItem):
         if self.value:
             entry.set_text(str(self.value))
         
+        # 连接信号并存储信号ID
+        signal_id = entry.connect("changed", lambda e: on_change_callback(self.key, e.get_text()))
+        setattr(entry, '_config_signal_id', signal_id)
+        
         entry.set_hexpand(True)
         box.append(entry)
         return box
@@ -240,11 +267,17 @@ class TextConfig(ConfigItem):
         return self.value or ""
     
     def set_value_to_ui(self, widget: Gtk.Widget, value: Any) -> None:
-        """设置值到文本框"""
+        """设置值到文本框（不触发信号）"""
         if isinstance(widget, Gtk.Box):
             entry = widget.get_last_child()
             if isinstance(entry, Gtk.Entry):
+                # 使用信号ID来阻塞和解除阻塞信号
+                signal_id = getattr(entry, '_config_signal_id', None)
+                if signal_id is not None:
+                    entry.handler_block(signal_id)
                 entry.set_text(str(value) if value is not None else "")
+                if signal_id is not None:
+                    entry.handler_unblock(signal_id)
     
     def validate(self, value: Any) -> bool:
         """验证文本长度"""
@@ -269,7 +302,7 @@ class SwitchConfig(ConfigItem):
     """开关配置项"""
     default_value: bool = False
     
-    def create_ui_widget(self) -> Gtk.Widget:
+    def create_ui_widget(self, on_change_callback: Callable[[str, Any], None]) -> Gtk.Widget:
         """创建开关UI控件"""
         box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         
@@ -283,6 +316,10 @@ class SwitchConfig(ConfigItem):
         switch.set_active(self.value if self.value is not None else self.default_value)
         switch.set_halign(Gtk.Align.END)
         
+        # 连接信号并存储信号ID
+        signal_id = switch.connect("state-set", lambda s, state: on_change_callback(self.key, state))
+        setattr(switch, '_config_signal_id', signal_id)
+        
         box.append(switch)
         return box
     
@@ -295,11 +332,17 @@ class SwitchConfig(ConfigItem):
         return self.value if self.value is not None else self.default_value
     
     def set_value_to_ui(self, widget: Gtk.Widget, value: Any) -> None:
-        """设置值到开关"""
+        """设置值到开关（不触发信号）"""
         if isinstance(widget, Gtk.Box):
             switch = widget.get_last_child()
             if isinstance(switch, Gtk.Switch):
+                # 使用信号ID来阻塞和解除阻塞信号
+                signal_id = getattr(switch, '_config_signal_id', None)
+                if signal_id is not None:
+                    switch.handler_block(signal_id)
                 switch.set_active(bool(value))
+                if signal_id is not None:
+                    switch.handler_unblock(signal_id)
     
     def validate(self, value: Any) -> bool:
         """验证是否为布尔值"""
@@ -314,24 +357,29 @@ class SwitchConfig(ConfigItem):
         return data
 
 
-class ConfigManager:
-    """配置管理器"""
+class ConfigManager(GObject.Object):
+    """配置管理器，使用GObject信号机制"""
+    
+    __gsignals__ = {
+        'config-changed': (GObject.SignalFlags.RUN_FIRST, None, (str, object)),
+        'config-validated': (GObject.SignalFlags.RUN_FIRST, None, (str, bool)),
+    }
     
     def __init__(self):
+        super().__init__()
         self.configs: Dict[str, ConfigItem] = {}
         self.ui_widgets: Dict[str, Gtk.Widget] = {}
-        self.change_callbacks: Dict[str, List[Callable[[str, Any], None]]] = {}
+        self._updating_ui = False  # 标记是否正在更新UI，防止循环
     
     def add_config(self, config: ConfigItem) -> None:
         """添加配置项"""
         self.configs[config.key] = config
-        self.change_callbacks[config.key] = []
     
     def get_config(self, key: str) -> Optional[ConfigItem]:
         """获取配置项"""
         return self.configs.get(key)
     
-    def set_value(self, key: str, value: Any) -> bool:
+    def set_value(self, key: str, value: Any, update_ui: bool = True) -> bool:
         """设置配置值"""
         if key not in self.configs:
             logger.warning(f"Config key not found: {key}")
@@ -340,21 +388,23 @@ class ConfigManager:
         config = self.configs[key]
         if not config.validate(value):
             logger.warning(f"Invalid value for config {key}: {value}")
+            self.emit('config-validated', key, False)
             return False
         
         old_value = config.value
         config.value = value
         
-        # 更新UI
-        if key in self.ui_widgets:
-            config.set_value_to_ui(self.ui_widgets[key], value)
-        
-        # 触发回调
-        for callback in self.change_callbacks.get(key, []):
+        # 更新UI（如果需要且不在UI更新过程中）
+        if update_ui and not self._updating_ui and key in self.ui_widgets:
+            self._updating_ui = True
             try:
-                callback(key, value)
-            except Exception as e:
-                logger.error(f"Error calling config change callback: {e}")
+                config.set_value_to_ui(self.ui_widgets[key], value)
+            finally:
+                self._updating_ui = False
+        
+        # 发送配置变更信号
+        self.emit('config-changed', key, value)
+        self.emit('config-validated', key, True)
         
         logger.debug(f"Config {key} changed: {old_value} -> {value}")
         return True
@@ -366,10 +416,19 @@ class ConfigManager:
         return None
     
     def add_change_callback(self, key: str, callback: Callable[[str, Any], None]) -> None:
-        """添加配置变更回调"""
-        if key not in self.change_callbacks:
-            self.change_callbacks[key] = []
-        self.change_callbacks[key].append(callback)
+        """添加配置变更回调（向后兼容方法）"""
+        # 连接到config-changed信号
+        def signal_handler(config_manager, changed_key, value):
+            if changed_key == key:
+                callback(changed_key, value)
+        
+        self.connect("config-changed", signal_handler)
+        logger.debug(f"Added change callback for config key: {key}")
+    
+    def _on_ui_value_changed(self, key: str, value: Any) -> None:
+        """UI控件值变更回调"""
+        if not self._updating_ui:
+            self.set_value(key, value, update_ui=False)
     
     def create_ui_panel(self, parent: Optional[Gtk.Widget] = None) -> Gtk.Widget:
         """创建配置面板UI"""
@@ -387,7 +446,7 @@ class ConfigManager:
         # 为每个配置项创建UI
         for key, config in self.configs.items():
             try:
-                widget = config.create_ui_widget()
+                widget = config.create_ui_widget(self._on_ui_value_changed)
                 self.ui_widgets[key] = widget
                 main_box.append(widget)
             except Exception as e:
@@ -407,17 +466,6 @@ class ConfigManager:
                     logger.error(f"Failed to get value from UI for config {key}: {e}")
         return values
     
-    def apply_values_from_ui(self) -> bool:
-        """从UI应用所有配置值"""
-        values = self.collect_values_from_ui()
-        success = True
-        
-        for key, value in values.items():
-            if not self.set_value(key, value):
-                success = False
-        
-        return success
-    
     def serialize(self) -> Dict[str, Any]:
         """序列化所有配置"""
         return {
@@ -428,14 +476,14 @@ class ConfigManager:
         """反序列化配置"""
         for key, config_data in data.items():
             if key in self.configs:
-                self.configs[key].value = config_data.get("value")
-                self.set_value(key, config_data.get("value"))
+                value = config_data.get("value")
+                if value is not None:
+                    self.set_value(key, value)
     
     def clear(self) -> None:
         """清空所有配置"""
         self.configs.clear()
         self.ui_widgets.clear()
-        self.change_callbacks.clear()
 
 
 # 配置项工厂函数，方便创建常用配置项

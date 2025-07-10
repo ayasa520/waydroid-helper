@@ -502,23 +502,23 @@ class BaseWidget(Gtk.DrawingArea):
         raise NotImplementedError("子类必须实现on_key_released方法")
 
     # 为了向后兼容，保留原有的方法
-    def get_config(self) -> dict[str, Any]:
-        """获取widget的配置信息 - 已弃用，请使用get_config_manager()"""
-        logger.warning(f"get_config() is deprecated, use get_config_manager() instead")
-        return {}
+    # def get_config(self) -> dict[str, Any]:
+    #     """获取widget的配置信息 - 已弃用，请使用get_config_manager()"""
+    #     logger.warning(f"get_config() is deprecated, use get_config_manager() instead")
+    #     return {}
 
-    def set_config(self, config: dict[str, Any]) -> None:
-        """设置widget的配置信息 - 已弃用，请使用set_config_value()"""
-        logger.warning(f"set_config() is deprecated, use set_config_value() instead")
-        for key, value in config.items():
-            self.set_config_value(key, value)
+    # def set_config(self, config: dict[str, Any]) -> None:
+    #     """设置widget的配置信息 - 已弃用，请使用set_config_value()"""
+    #     logger.warning(f"set_config() is deprecated, use set_config_value() instead")
+    #     for key, value in config.items():
+    #         self.set_config_value(key, value)
 
-    def add_config_handler(self, key: str, handler: Callable[[Any], None]) -> None:
-        """添加配置处理函数 - 已弃用，请使用add_config_change_callback()"""
-        logger.warning(f"add_config_handler() is deprecated, use add_config_change_callback() instead")
-        def wrapper(config_key: str, value: Any) -> None:
-            handler(value)
-        self.add_config_change_callback(key, wrapper)
+    # def add_config_handler(self, key: str, handler: Callable[[Any], None]) -> None:
+    #     """添加配置处理函数 - 已弃用，请使用add_config_change_callback()"""
+    #     logger.warning(f"add_config_handler() is deprecated, use add_config_change_callback() instead")
+    #     def wrapper(config_key: str, value: Any) -> None:
+    #         handler(value)
+    #     self.add_config_change_callback(key, wrapper)
 
     def get_editable_regions(self) -> list[EditableRegion]:
         """获取可编辑区域列表 - 支持多区域编辑的widget应重写此方法

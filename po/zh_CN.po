@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-06 18:14+0800\n"
+"POT-Creation-Date: 2025-07-10 10:12+0800\n"
 "PO-Revision-Date: 2024-02-25 15:37+0800\n"
 "Last-Translator: Takanashi Rikka<ayasa0520@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -121,7 +121,10 @@ msgstr "卸载完成"
 msgid "{0} has been successfully uninstalled."
 msgstr "{0} 已成功卸载。"
 
-#: waydroid_helper/available_version_page.py:240 data/ui/InfoBar.ui:39
+#: waydroid_helper/available_version_page.py:240
+#: waydroid_helper/compat_widget/file_dialog.py:70
+#: waydroid_helper/compat_widget/shared_folder_dialog.py:231
+#: data/ui/InfoBar.ui:39
 msgid "Cancel"
 msgstr "取消"
 
@@ -220,27 +223,54 @@ msgid ""
 "version: {1}."
 msgstr "该扩展不支持您的安卓版本，需要 Android {0}，当前 Android {1}"
 
-#. 初始提示
-#: waydroid_helper/controller/app/window.py:119
-#: waydroid_helper/controller/app/window.py:853
+#: waydroid_helper/compat_widget/file_dialog.py:71
+msgid "Select"
+msgstr "选择"
+
+#: waydroid_helper/compat_widget/shared_folder_dialog.py:177
+msgid "Source"
+msgstr "源"
+
+#: waydroid_helper/compat_widget/shared_folder_dialog.py:195
+msgid "Target"
+msgstr "目标"
+
+#: waydroid_helper/compat_widget/shared_folder_dialog.py:200
+msgid "Target Directory"
+msgstr "目标目录"
+
+#: waydroid_helper/compat_widget/shared_folder_dialog.py:236
+#: waydroid_helper/controller/app/window.py:168
+msgid "Save"
+msgstr "保存"
+
+#: waydroid_helper/compat_widget/shared_folder_dialog.py:264
+msgid "Select Folder"
+msgstr "选择文件夹"
+
+#: waydroid_helper/controller/app/window.py:136
+#: waydroid_helper/controller/app/window.py:985
 msgid "Edit Mode (F1: Switch Mode)"
 msgstr "编辑模式（F1：切换模式）"
 
-#: waydroid_helper/controller/app/window.py:838
+#: waydroid_helper/controller/app/window.py:160
+msgid "This widget has no settings."
+msgstr "这个部件没有设置项"
+
+#: waydroid_helper/controller/app/window.py:969
 msgid "Mapping Mode (F1: Switch Mode)"
 msgstr "映射模式（F1：切换模式）"
 
-#. 如果没有发现任何组件，显示提示
 #: waydroid_helper/controller/ui/menus.py:58
-msgid "No components found"
+msgid "No widgets found"
 msgstr "没有发现任何组件"
 
 #: waydroid_helper/controller/ui/menus.py:84
-msgid "Refresh components"
+msgid "Refresh widgets"
 msgstr "刷新组件"
 
 #: waydroid_helper/controller/ui/menus.py:85
-msgid "Show component info"
+msgid "Show widget info"
 msgstr "显示组件信息"
 
 #: waydroid_helper/controller/ui/menus.py:86
@@ -255,13 +285,13 @@ msgstr "保存布局"
 msgid "Load layout"
 msgstr "加载布局"
 
-#: waydroid_helper/controller/widgets/components/aim.py:40
-#: waydroid_helper/controller/widgets/components/aim.py:65
+#: waydroid_helper/controller/widgets/components/aim.py:41
+#: waydroid_helper/controller/widgets/components/aim.py:66
 msgctxt "Controller Widgets"
 msgid "Aim"
 msgstr "准星键"
 
-#: waydroid_helper/controller/widgets/components/aim.py:43
+#: waydroid_helper/controller/widgets/components/aim.py:44
 msgctxt "Controller Widgets"
 msgid ""
 "Commonly used in shooting games. Add to the draggable view position in the "
@@ -274,7 +304,6 @@ msgstr ""
 "射击。添加后请先拖拉矩形框调整视角转动有效范围，需要对应游戏中可以触发操作视"
 "角转动的有效范围。"
 
-#. 组件元数据
 #: waydroid_helper/controller/widgets/components/directional_pad.py:52
 #: waydroid_helper/controller/widgets/components/directional_pad.py:142
 msgctxt "Controller Widgets"
@@ -307,7 +336,6 @@ msgstr ""
 "射击游戏常用，添加按键到攻击/开火键位置，实现使用鼠标左键点击，需要配合准星键"
 "使用。"
 
-#. 组件元数据
 #: waydroid_helper/controller/widgets/components/single_click.py:45
 #: waydroid_helper/controller/widgets/components/single_click.py:85
 msgctxt "Controller Widgets"
@@ -386,7 +414,7 @@ msgstr "使应用连接虚拟 WiFi。以\",\"分隔输入包名，使用通配�
 #: data/ui/PropsPage.ui:138 data/ui/PropsPage.ui:156 data/ui/PropsPage.ui:174
 #: data/ui/PropsPage.ui:192
 msgid "empty or 0-9999"
-msgstr ""
+msgstr "空或 0-9999"
 
 #: data/ui/PropsPage.ui:223
 msgid "spoof device"
@@ -420,21 +448,3 @@ msgstr "退出"
 
 #~ msgid "_Keyboard Shortcuts"
 #~ msgstr "快捷键"
-
-#~ msgid "Source"
-#~ msgstr "源"
-
-#~ msgid "Target"
-#~ msgstr "目标"
-
-#~ msgid "Save"
-#~ msgstr "保存"
-
-#~ msgid "Target Directory"
-#~ msgstr "目标目录"
-
-#~ msgid "Select Folder"
-#~ msgstr "选择文件夹"
-
-#~ msgid "Select"
-#~ msgstr "选择"

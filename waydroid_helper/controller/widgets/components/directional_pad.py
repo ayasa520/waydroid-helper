@@ -5,6 +5,7 @@
 """
 
 from __future__ import annotations
+from enum import Enum
 from gettext import pgettext
 import math
 from typing import TYPE_CHECKING, Callable, cast, TypedDict
@@ -20,6 +21,7 @@ from waydroid_helper.controller.core import KeyCombination, key_registry
 from waydroid_helper.controller.core.control_msg import InjectTouchEventMsg
 from waydroid_helper.controller.core.utils import pointer_id_manager
 from waydroid_helper.controller.widgets import BaseWidget
+from waydroid_helper.controller.widgets.config import create_dropdown_config
 from waydroid_helper.controller.widgets.decorators import (
     Resizable,
     ResizableDecorator,
@@ -32,6 +34,9 @@ from waydroid_helper.controller.android.input import (
 from waydroid_helper.controller.core.event_bus import event_bus, Event, EventType
 from waydroid_helper.util.log import logger
 
+class MovementMode(Enum):
+    SMOOTH = "smooth"
+    INSTANT = "instant"
 
 class DirectionalPadEditableRegion(TypedDict):
     """可编辑区域信息"""
@@ -73,6 +78,7 @@ class DirectionalPad(BaseWidget):
         text: str = "",
         direction_keys: dict[str, KeyCombination | None] | None = None,
     ):
+
         self.direction_keys: dict[str, KeyCombination | None] = {
             "up": None,
             "down": None,
@@ -94,6 +100,18 @@ class DirectionalPad(BaseWidget):
             if key_combo:
                 all_keys.add(key_combo)
 
+        # 调用基类的初始化
+        super().__init__(
+            x,
+            y,
+            width,
+            height,
+            pgettext("Controller Widgets", "Directional Pad"),
+            text,
+            set(all_keys),
+            min_width=60,
+            min_height=60,
+        )
         # 当前按下的方向状态
         self.pressed_directions: dict[str, bool] = {
             direction: False for direction in self.DIRECTIONS
@@ -133,20 +151,21 @@ class DirectionalPad(BaseWidget):
         # 初始化编辑区域字典
         self.edit_regions: dict[str, DirectionalPadEditableRegion] = {}
 
-        # 调用基类的初始化
-        super().__init__(
-            x,
-            y,
-            width,
-            height,
-            pgettext("Controller Widgets", "Directional Pad"),
-            text,
-            set(all_keys),
-            min_width=60,
-            min_height=60,
-        )
+        
         # 计算四个方向按钮的区域（用于编辑）
         self._update_edit_regions()
+
+        # 移动模式设置
+        self._movement_mode: MovementMode = MovementMode.SMOOTH
+        movement_mode_config = create_dropdown_config(
+            key="movement_mode",
+            label=pgettext("Controller Widgets", "Movement Mode"),
+            options=[MovementMode.SMOOTH.value, MovementMode.INSTANT.value],
+            value=MovementMode.SMOOTH.value,
+            description=pgettext("Controller Widgets", "Adjusts the movement mode of the directional pad")
+        )
+        self.add_config_item(movement_mode_config)
+        self.add_config_change_callback("movement_mode", lambda key, value: self.set_movement_mode(value)))
 
     def set_movement_params(self, interval: int, max_steps: int):
         """设置平滑移动的参数"""
@@ -155,6 +174,14 @@ class DirectionalPad(BaseWidget):
         logger.info(
             f"Directional pad movement parameters updated: interval={interval}ms, steps={max_steps}"
         )
+
+    def set_movement_mode(self, mode: str):
+        if mode not in [MovementMode.SMOOTH.value, MovementMode.INSTANT.value]:
+            logger.warning(f"Invalid movement mode: {mode}, using 'smooth'")
+            self._movement_mode = MovementMode.SMOOTH
+            return
+        self._movement_mode = MovementMode(mode)
+        logger.info(f"Directional pad movement mode set to: {mode}")
 
     def __del__(self):
         if self._timer:
@@ -176,7 +203,10 @@ class DirectionalPad(BaseWidget):
             # 如果正在平滑移动，只需更新目标点，让定时器完成
             return
 
-        if smooth:
+        # 根据移动模式决定是否使用平滑移动
+        use_smooth = smooth and self._movement_mode == MovementMode.SMOOTH
+        
+        if use_smooth:
             self._move_steps_count = 0
             self._timer = GLib.timeout_add(
                 self._timer_interval, self._update_smooth_move
