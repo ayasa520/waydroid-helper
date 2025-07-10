@@ -376,23 +376,6 @@ class TextAreaConfig(ConfigItem):
         text_view = Gtk.TextView()
         text_view.set_accepts_tab(True)  # 允许输入 tab
         
-        # 添加自定义样式
-        css_provider = Gtk.CssProvider()
-        css_provider.load_from_data(b"""
-        textview {
-            border: 1px solid #cccccc;
-            border-radius: 4px;
-            padding: 6px;
-            background-color: #ffffff;
-        }
-        textview text {
-            padding: 4px;
-        }
-        """)
-        Gtk.StyleContext.add_provider_for_display(
-            text_view.get_display(), css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER
-        )
-        
         # 设置初始文本
         buffer = text_view.get_buffer()
         if self.value:

@@ -35,8 +35,6 @@ from waydroid_helper.controller.widgets.decorators import (
 )
 
 
-# 使用带参数的 Resizable 装饰器，设置中心缩放策略
-@Resizable(resize_strategy=ResizableDecorator.RESIZE_CENTER)
 @Editable
 class SingleClick(BaseWidget):
     """单击按钮组件 - 圆形半透明按钮"""

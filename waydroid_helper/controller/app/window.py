@@ -141,7 +141,8 @@ class TransparentWindow(Adw.Window):
         logger.info(f"Widget {type(widget).__name__} (id={id(widget)}) requested settings.")
 
         popover = Gtk.Popover()
-        popover.set_parent(widget)
+        # "fix: Tried to map a grabbing popup with a non-top most parent" 错误
+        popover.set_parent(self)
 
         main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         main_box.set_size_request(250, -1)  # Set a minimum width for the popover
@@ -149,7 +150,7 @@ class TransparentWindow(Adw.Window):
 
         # Header Label
         title_label = Gtk.Label()
-        title_label.set_markup(f"<b>{widget.WIDGET_NAME} Settings</b>")
+        title_label.set_markup(f"<b>{widget.WIDGET_NAME}{_("Settings")}</b>")
         title_label.set_halign(Gtk.Align.CENTER)
         main_box.append(title_label)
   
@@ -179,8 +180,8 @@ class TransparentWindow(Adw.Window):
         # Pointing and Display
         settings_button_rect = Gdk.Rectangle()
         bounds = widget.get_settings_button_bounds()
-        settings_button_rect.x = bounds[0]
-        settings_button_rect.y = bounds[1]
+        settings_button_rect.x = bounds[0]+widget.x
+        settings_button_rect.y = bounds[1]+widget.y
         settings_button_rect.width = bounds[2]
         settings_button_rect.height = bounds[3]
         

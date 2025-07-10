@@ -224,24 +224,40 @@ class KeyMappingManager:
                     if is_subset_of_triggered:
                         continue
 
+                    # 【重要】为了避免循环调用，先预记录到 _triggered_mappings 中
+                    # 这样在回调函数执行过程中，如果再次触发相同的按键事件，就不会重复触发
+                    self._triggered_mappings[key_combination] = set(combo_tuple)
+                    logger.debug(f"预记录映射: {key_combination}")
+                    
                     combo_triggered_this_time = False
-                    for subscription in self._key_subscriptions[key_combination]:
-                        if not self._check_subscription_conditions(subscription):
-                            logger.debug("跳过触发: 条件不满足")
-                            continue
+                    try:
+                        for subscription in self._key_subscriptions[key_combination]:
+                            if not self._check_subscription_conditions(subscription):
+                                logger.debug("跳过触发: 条件不满足")
+                                continue
 
-                        if hasattr(subscription.widget, subscription.callback):
-                            callback = getattr(
-                                subscription.widget, subscription.callback
-                            )
-                            # 假设回调返回True表示事件被处理
-                            if callback(key_combination):
-                                combo_triggered_this_time = True
+                            if hasattr(subscription.widget, subscription.callback):
+                                callback = getattr(
+                                    subscription.widget, subscription.callback
+                                )
+                                # 假设回调返回True表示事件被处理
+                                if callback(key_combination):
+                                    combo_triggered_this_time = True
 
-                    if combo_triggered_this_time:
-                        self._triggered_mappings[key_combination] = set(combo_tuple)
-                        triggered_any = True
-                        logger.debug(f"记录触发的映射: {key_combination}")
+                        if combo_triggered_this_time:
+                            triggered_any = True
+                            logger.debug(f"映射成功触发: {key_combination}")
+                        else:
+                            # 如果没有成功触发，则从 _triggered_mappings 中移除预记录
+                            del self._triggered_mappings[key_combination]
+                            logger.debug(f"移除预记录映射: {key_combination}")
+                    except Exception as e:
+                        # 如果回调函数执行过程中出现异常，确保清理预记录的映射
+                        logger.error(f"回调函数执行异常: {e}")
+                        if key_combination in self._triggered_mappings:
+                            del self._triggered_mappings[key_combination]
+                            logger.debug(f"异常清理预记录映射: {key_combination}")
+                        raise
 
         return triggered_any
 
