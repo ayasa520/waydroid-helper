@@ -165,7 +165,7 @@ class DirectionalPad(BaseWidget):
             description=pgettext("Controller Widgets", "Adjusts the movement mode of the directional pad")
         )
         self.add_config_item(movement_mode_config)
-        self.add_config_change_callback("movement_mode", lambda key, value: self.set_movement_mode(value)))
+        self.add_config_change_callback("movement_mode", lambda key, value: self.set_movement_mode(value))
 
     def set_movement_params(self, interval: int, max_steps: int):
         """设置平滑移动的参数"""

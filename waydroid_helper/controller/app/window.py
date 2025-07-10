@@ -164,18 +164,17 @@ class TransparentWindow(Adw.Window):
             config_panel = config_manager.create_ui_panel()
             main_box.append(config_panel)
             
-            # # Save Button
-            # save_button = Gtk.Button(label=_("Save"), halign=Gtk.Align.END)
-            # save_button.add_css_class("suggested-action")
+            # Confirm Button
+            confirm_button = Gtk.Button(label=_("OK"), halign=Gtk.Align.END)
+            confirm_button.add_css_class("suggested-action")
             
-            # def on_save_clicked(btn):
-            #     # 在新的配置系统中，UI值变化会自动同步到配置管理器
-            #     # 所以这里只需要确认配置已经保存并关闭弹窗
-            #     logger.info("Configuration applied successfully")
-            #     popover.popdown()
+            def on_confirm_clicked(btn):
+                # UI值变化已自动同步到配置管理器，这里只需关闭弹窗
+                logger.info("Configuration popover closed by user.")
+                popover.popdown()
 
-            # save_button.connect("clicked", on_save_clicked)
-            # main_box.append(save_button)
+            confirm_button.connect("clicked", on_confirm_clicked)
+            main_box.append(confirm_button)
 
         # Pointing and Display
         settings_button_rect = Gdk.Rectangle()
@@ -188,7 +187,13 @@ class TransparentWindow(Adw.Window):
         popover.set_pointing_to(settings_button_rect)
         popover.set_position(Gtk.PositionType.BOTTOM)
         
-        popover.connect("closed", lambda p: popover.unparent())
+        def on_popover_closed(p):
+            # 清理ConfigManager中对UI控件的引用，防止内存泄漏
+            config_manager.clear_ui_references()
+            # 从父容器解除对popover的引用
+            p.unparent()
+
+        popover.connect("closed", on_popover_closed)
         popover.popup()
 
 

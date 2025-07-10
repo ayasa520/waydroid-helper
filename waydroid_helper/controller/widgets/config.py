@@ -480,6 +480,10 @@ class ConfigManager(GObject.Object):
                 if value is not None:
                     self.set_value(key, value)
     
+    def clear_ui_references(self) -> None:
+        """清空UI控件引用，防止内存泄漏"""
+        self.ui_widgets.clear()
+
     def clear(self) -> None:
         """清空所有配置"""
         self.configs.clear()
