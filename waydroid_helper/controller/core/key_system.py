@@ -250,3 +250,49 @@ def parse_key_combination(text: str) -> KeyCombination | None:
 def create_key_combination(*key_names: str) -> KeyCombination:
     """创建按键组合的便捷函数"""
     return KeyCombination.from_names(list(key_names), key_registry)
+
+def deserialize_key(key_name: str) -> Key|None:
+    # 首先尝试从注册表获取
+    key = key_registry.get_by_name(key_name)
+    if key:
+        return key
+    # 如果注册表中没有，尝试重新创建
+    key_created = None
+
+    # 对于单字符按键，直接从字符创建
+    if len(key_name) == 1 and 32 <= ord(key_name) <= 126:
+        char = key_name.upper()
+        keyval = ord(char)
+        key_created = Key(char, keyval, KeyType.CHARACTER)
+
+    # 对于鼠标按键
+    elif key_name.startswith("Mouse"):
+        try:
+            button_num = int(key_name.replace("Mouse", ""))
+            key_created = Key(key_name, button_num, KeyType.MOUSE)
+        except ValueError:
+            pass
+
+    # 对于其他按键，尝试通过 Gdk.keyval_from_name 获取 keyval
+    else:
+        try:
+            keyval = Gdk.keyval_from_name(key_name)
+            if keyval != Gdk.KEY_VoidSymbol:  # 如果找到有效的 keyval
+                # 判断按键类型
+                if 32 <= keyval <= 126:
+                    key_created = Key(key_name, keyval, KeyType.CHARACTER)
+                else:
+                    key_created = Key(key_name, keyval, KeyType.SPECIAL)
+        except:
+            pass
+
+    # 如果还是无法创建，创建一个临时按键（用于向后兼容）
+    if not key_created:
+        key_created = Key(key_name, 0, KeyType.SPECIAL)
+
+    if key_created:
+        # 将动态创建的按键添加到注册表中，避免重复创建
+        key_registry.register_key(
+            key_created.name, key_created.keyval, key_created.key_type
+        )
+    return key_created

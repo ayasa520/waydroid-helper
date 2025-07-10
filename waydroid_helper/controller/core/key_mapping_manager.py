@@ -8,6 +8,7 @@ from typing import Any, Callable, TYPE_CHECKING
 
 from waydroid_helper.controller.core.key_system import Key, KeyCombination
 from waydroid_helper.util.log import logger
+from waydroid_helper.controller.core.event_bus import Event, EventBus, EventType, event_bus
 
 if TYPE_CHECKING:
     from gi.repository import Gtk
@@ -54,6 +55,15 @@ class KeyMappingManager:
         # 为了检查依赖状态，需要一个对widget状态的引用，暂时留空
         self._widget_states: dict[int, dict[str, Any]] = {}
         logger.info("KeyMappingManager initialized")
+
+        event_bus.subscribe(EventType.MACRO_KEY_PRESSED, self._on_macro_key_pressed)
+        event_bus.subscribe(EventType.MACRO_KEY_RELEASED, self._on_macro_key_released)
+
+    def _on_macro_key_pressed(self, event: Event[Key]):
+        self.handle_key_press(event.data)
+
+    def _on_macro_key_released(self, event: Event[Key]):
+        self.handle_key_release(event.data)
 
     def subscribe(
         self,

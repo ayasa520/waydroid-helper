@@ -27,6 +27,10 @@ class EventType(Enum):
     # ControlMsg
     CONTROL_MSG = auto()  # 控制消息
 
+    # 宏命令事件
+    MACRO_KEY_PRESSED = auto()  # 宏命令按键按下
+    MACRO_KEY_RELEASED = auto()  # 宏命令按键释放
+
     # 自定义事件（组件可以定义自己的事件）
     CUSTOM = auto()  # 自定义事件基类
     DELETE_WIDGET = auto()  # 删除组件

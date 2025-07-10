@@ -13,6 +13,7 @@ from typing import Any, TYPE_CHECKING
 import gi
 from gi.repository import Gdk, Gtk
 
+from waydroid_helper.controller.core import key_system
 from waydroid_helper.controller.core.key_system import (
     Key,
     KeyCombination,
@@ -181,55 +182,9 @@ class ContextMenuManager:
         """从字符串列表反序列化按键组合"""
         keys: list[Key] = []
         for key_name in key_names:
-            # 首先尝试从注册表获取
-            key = key_registry.get_by_name(key_name)
+            key =  key_system.deserialize_key(key_name)
             if key:
                 keys.append(key)
-                continue
-
-            # 如果注册表中没有，尝试重新创建
-            key_created = None
-
-            # 对于单字符按键，直接从字符创建
-            if len(key_name) == 1 and 32 <= ord(key_name) <= 126:
-                char = key_name.upper()
-                keyval = ord(char)
-                key_created = Key(char, keyval, KeyType.CHARACTER)
-
-            # 对于鼠标按键
-            elif key_name.startswith("Mouse"):
-                try:
-                    button_num = int(key_name.replace("Mouse", ""))
-                    key_created = Key(key_name, button_num, KeyType.MOUSE)
-                except ValueError:
-                    pass
-
-            # 对于其他按键，尝试通过 Gdk.keyval_from_name 获取 keyval
-            else:
-                try:
-                    keyval = Gdk.keyval_from_name(key_name)
-                    if keyval != Gdk.KEY_VoidSymbol:  # 如果找到有效的 keyval
-                        # 判断按键类型
-                        if 32 <= keyval <= 126:
-                            key_created = Key(key_name, keyval, KeyType.CHARACTER)
-                        else:
-                            key_created = Key(key_name, keyval, KeyType.SPECIAL)
-                except:
-                    pass
-
-            # 如果还是无法创建，创建一个临时按键（用于向后兼容）
-            if not key_created:
-                logger.warning(f"无法重新创建按键: {key_name}，创建临时按键")
-                key_created = Key(key_name, 0, KeyType.SPECIAL)
-
-            if key_created:
-                keys.append(key_created)
-                # 将动态创建的按键添加到注册表中，避免重复创建
-                key_registry.register_key(
-                    key_created.name, key_created.keyval, key_created.key_type
-                )
-                logger.debug(f"重新创建并注册按键: {key_name}")
-
         return KeyCombination(keys) if keys else None
 
     def _save_layout(self):

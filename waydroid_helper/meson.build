@@ -164,6 +164,7 @@ controller_widgets_components_sources = [
     'controller/widgets/components/directional_pad.py',
     'controller/widgets/components/fire.py',
     'controller/widgets/components/single_click.py',
+    'controller/widgets/components/macro.py',
 ]
 
 controller_widgets_decorators_sources = [

@@ -12,7 +12,7 @@ import json
 
 import gi
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk, GObject
+from gi.repository import Gtk, GObject, Gdk
 
 from waydroid_helper.util.log import logger
 
@@ -25,6 +25,7 @@ class ConfigType(Enum):
     NUMBER = auto()
     SWITCH = auto()
     COLOR = auto()
+    TEXTAREA = auto()  # 新增多行文本类型
 
 
 @dataclass
@@ -357,6 +358,112 @@ class SwitchConfig(ConfigItem):
         return data
 
 
+@dataclass
+class TextAreaConfig(ConfigItem):
+    """多行文本输入配置项"""
+    max_length: int = 0
+    
+    def create_ui_widget(self, on_change_callback: Callable[[str, Any], None]) -> Gtk.Widget:
+        """创建多行文本输入UI控件"""
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        
+        # 标签
+        label = Gtk.Label(label=self.label, xalign=0)
+        label.set_tooltip_text(self.description)
+        box.append(label)
+        
+        # 创建文本视图
+        text_view = Gtk.TextView()
+        text_view.set_accepts_tab(True)  # 允许输入 tab
+        
+        # 添加自定义样式
+        css_provider = Gtk.CssProvider()
+        css_provider.load_from_data(b"""
+        textview {
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            padding: 6px;
+            background-color: #ffffff;
+        }
+        textview text {
+            padding: 4px;
+        }
+        """)
+        Gtk.StyleContext.add_provider_for_display(
+            text_view.get_display(), css_provider, Gtk.STYLE_PROVIDER_PRIORITY_USER
+        )
+        
+        # 设置初始文本
+        buffer = text_view.get_buffer()
+        if self.value:
+            buffer.set_text(str(self.value))
+        
+        # 连接信号并存储信号ID
+        def on_text_changed(buffer):
+            start, end = buffer.get_bounds()
+            text = buffer.get_text(start, end, True)
+            on_change_callback(self.key, text)
+        
+        signal_id = buffer.connect("changed", on_text_changed)
+        setattr(text_view, '_config_signal_id', signal_id)
+        
+        # 创建滚动窗口
+        scrolled = Gtk.ScrolledWindow()
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_min_content_height(150)  # 设置最小高度
+        scrolled.set_vexpand(True)  # 允许垂直扩展
+        scrolled.set_child(text_view)
+        
+        # 添加到容器
+        box.append(scrolled)
+        
+        return box
+    
+    def get_value_from_ui(self, widget: Gtk.Widget) -> str:
+        """从文本视图获取值"""
+        if isinstance(widget, Gtk.Box):
+            scrolled = widget.get_last_child()
+            if isinstance(scrolled, Gtk.ScrolledWindow):
+                text_view = scrolled.get_child()
+                if isinstance(text_view, Gtk.TextView):
+                    buffer = text_view.get_buffer()
+                    start, end = buffer.get_bounds()
+                    return buffer.get_text(start, end, True)
+        return self.value or ""
+    
+    def set_value_to_ui(self, widget: Gtk.Widget, value: Any) -> None:
+        """设置值到文本视图（不触发信号）"""
+        if isinstance(widget, Gtk.Box):
+            scrolled = widget.get_last_child()
+            if isinstance(scrolled, Gtk.ScrolledWindow):
+                text_view = scrolled.get_child()
+                if isinstance(text_view, Gtk.TextView):
+                    buffer = text_view.get_buffer()
+                    # 使用信号ID来阻塞和解除阻塞信号
+                    signal_id = getattr(text_view, '_config_signal_id', None)
+                    if signal_id is not None:
+                        buffer.handler_block(signal_id)
+                    buffer.set_text(str(value) if value is not None else "")
+                    if signal_id is not None:
+                        buffer.handler_unblock(signal_id)
+    
+    def validate(self, value: Any) -> bool:
+        """验证文本长度"""
+        try:
+            text = str(value)
+            return len(text) <= self.max_length if self.max_length > 0 else True
+        except:
+            return False
+    
+    def serialize(self) -> Dict[str, Any]:
+        """序列化文本配置"""
+        data = super().serialize()
+        data.update({
+            "max_length": self.max_length,
+        })
+        return data
+
+
 class ConfigManager(GObject.Object):
     """配置管理器，使用GObject信号机制"""
     
@@ -526,4 +633,21 @@ def create_switch_config(key: str, label: str, value: bool = False,
     """创建开关配置项"""
     return SwitchConfig(
         key=key, label=label, value=value, description=description
+    ) 
+
+
+def create_textarea_config(
+    key: str,
+    label: str,
+    value: str = "",
+    description: str = "",
+    max_length: int = 0,
+) -> TextAreaConfig:
+    """创建多行文本输入配置项"""
+    return TextAreaConfig(
+        key=key,
+        label=label,
+        value=value,
+        description=description,
+        max_length=max_length,
     ) 
