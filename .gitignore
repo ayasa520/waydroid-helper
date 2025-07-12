@@ -28,3 +28,4 @@ AppDir
 .flatpak-builder
 extract_description.py
 .VSCodeCounter/
+CLAUDE.md

@@ -170,7 +170,7 @@ class BaseWidget(Gtk.DrawingArea):
             return True  # 阻止事件继续传播
         
         if self.is_point_in_settings_button(x, y):
-            event_bus.emit(Event(EventType.SETTINGS_WIDGET, self, None))
+            event_bus.emit(Event(EventType.SETTINGS_WIDGET, self, True))
             return True
 
         return False

@@ -12,7 +12,7 @@ import json
 
 import gi
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk, GObject, Gdk
+from gi.repository import GLib, Gtk, GObject, Gdk
 
 from waydroid_helper.util.log import logger
 
@@ -156,6 +156,10 @@ class DropdownConfig(ConfigItem):
     """下拉选择配置项"""
     options: List[str] = field(default_factory=list)
     option_labels: Optional[Dict[str, str]] = None
+
+    def on_dropdown_changed(self, dropdown, pspec, on_change_callback: Callable[[str, Any], None]):
+        """下拉框选择改变回调"""
+        on_change_callback(self.key, self.options[dropdown.get_selected()] if dropdown.get_selected() < len(self.options) else self.value)
     
     def create_ui_widget(self, on_change_callback: Callable[[str, Any], None]) -> Gtk.Widget:
         """创建下拉选择UI控件"""
@@ -182,9 +186,7 @@ class DropdownConfig(ConfigItem):
             dropdown.set_selected(self.options.index(self.value))
         
         # 连接信号并存储信号ID
-        signal_id = dropdown.connect("notify::selected", lambda d, _: on_change_callback(
-            self.key, self.options[d.get_selected()] if d.get_selected() < len(self.options) else self.value
-        ))
+        signal_id = dropdown.connect("notify::selected", self.on_dropdown_changed, on_change_callback)
         setattr(dropdown, '_config_signal_id', signal_id)
         
         dropdown.set_hexpand(True)

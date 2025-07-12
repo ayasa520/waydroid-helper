@@ -106,7 +106,9 @@ class TransparentWindow(Adw.Window):
         self.workspace_manager = WorkspaceManager(self, self.fixed)
 
         # 订阅事件
-        event_bus.subscribe(EventType.SETTINGS_WIDGET, self._on_widget_settings_requested)
+        event_bus.subscribe(
+            EventType.SETTINGS_WIDGET, self._on_widget_settings_requested
+        )
 
         # 创建全局事件处理器链
         self.event_handler_chain = EventHandlerChain()
@@ -134,13 +136,31 @@ class TransparentWindow(Adw.Window):
 
         # 初始提示
         GLib.idle_add(self.show_notification, _("Edit Mode (F1: Switch Mode)"))
-    
-    def _on_widget_settings_requested(self, event: "Event"):
+
+    def _on_widget_settings_requested(self, event: "Event[bool]"):
         """当一个widget请求设置时的回调, 弹出一个Popover"""
         widget = event.source
-        logger.info(f"Widget {type(widget).__name__} (id={id(widget)}) requested settings.")
+        logger.info(
+            f"Widget {type(widget).__name__} (id={id(widget)}) requested settings."
+        )
+
+        def workaround_popover_auto_hide(controller, n_press, x, y):
+            if popover.get_visible() and popover.get_autohide():
+                if (
+                    x < 0
+                    or y < 0
+                    or x > popover.get_width()
+                    or y > popover.get_height()
+                ):
+                    popover.popdown()
 
         popover = Gtk.Popover()
+        popover.set_autohide(event.data)
+        click_controller = Gtk.GestureClick()
+        click_controller.connect("pressed", workaround_popover_auto_hide)
+        popover.add_controller(click_controller)
+
+        # popover.set_cascade_popdown(event.data)
         # "fix: Tried to map a grabbing popup with a non-top most parent" 错误
         popover.set_parent(self)
 
@@ -153,10 +173,10 @@ class TransparentWindow(Adw.Window):
         title_label.set_markup(f"<b>{widget.WIDGET_NAME}{_("Settings")}</b>")
         title_label.set_halign(Gtk.Align.CENTER)
         main_box.append(title_label)
-  
+
         # 使用新的配置系统
         config_manager = widget.get_config_manager()
-        
+
         if not config_manager.configs:
             label = Gtk.Label(label=_("This widget has no settings."))
             main_box.append(label)
@@ -164,30 +184,30 @@ class TransparentWindow(Adw.Window):
             # 使用配置管理器生成UI面板
             config_panel = config_manager.create_ui_panel()
             main_box.append(config_panel)
-            
-            # Confirm Button
-            confirm_button = Gtk.Button(label=_("OK"), halign=Gtk.Align.END)
-            confirm_button.add_css_class("suggested-action")
-            
-            def on_confirm_clicked(btn):
-                # UI值变化已自动同步到配置管理器，这里只需关闭弹窗
-                logger.info("Configuration popover closed by user.")
-                popover.popdown()
 
-            confirm_button.connect("clicked", on_confirm_clicked)
-            main_box.append(confirm_button)
+            # # Confirm Button
+            # confirm_button = Gtk.Button(label=_("OK"), halign=Gtk.Align.END)
+            # confirm_button.add_css_class("suggested-action")
+
+            # def on_confirm_clicked(btn):
+            #     # UI值变化已自动同步到配置管理器，这里只需关闭弹窗
+            #     logger.info("Configuration popover closed by user.")
+            #     popover.popdown()
+
+            # confirm_button.connect("clicked", on_confirm_clicked)
+            # main_box.append(confirm_button)
 
         # Pointing and Display
         settings_button_rect = Gdk.Rectangle()
         bounds = widget.get_settings_button_bounds()
-        settings_button_rect.x = bounds[0]+widget.x
-        settings_button_rect.y = bounds[1]+widget.y
+        settings_button_rect.x = bounds[0] + widget.x
+        settings_button_rect.y = bounds[1] + widget.y
         settings_button_rect.width = bounds[2]
         settings_button_rect.height = bounds[3]
-        
+
         popover.set_pointing_to(settings_button_rect)
         popover.set_position(Gtk.PositionType.BOTTOM)
-        
+
         def on_popover_closed(p):
             # 清理ConfigManager中对UI控件的引用，防止内存泄漏
             config_manager.clear_ui_references()
@@ -197,9 +217,9 @@ class TransparentWindow(Adw.Window):
         popover.connect("closed", on_popover_closed)
         popover.popup()
 
-
     def _on_close_request(self, window):
         logger.info("Close request received, running cleanup...")
+        self.on_clear_widgets(None)
         self.close()
         return False
 
@@ -234,23 +254,31 @@ class TransparentWindow(Adw.Window):
 
                 # 2. Push server to device
                 if not await self.adb_helper.push_scrcpy_server():
-                    logger.warning(f"Failed to push scrcpy-server. Retrying in {RETRY_DELAY_SECONDS}s...")
+                    logger.warning(
+                        f"Failed to push scrcpy-server. Retrying in {RETRY_DELAY_SECONDS}s..."
+                    )
                     await asyncio.sleep(RETRY_DELAY_SECONDS)
                     continue
 
                 # 3. Generate SCID and setup reverse tunnel
                 scid, socket_name = self.adb_helper.generate_scid()
-                if not await self.adb_helper.reverse_tunnel(socket_name, self.server.port):
-                    logger.warning(f"Failed to set up adb reverse. Retrying in {RETRY_DELAY_SECONDS}s...")
+                if not await self.adb_helper.reverse_tunnel(
+                    socket_name, self.server.port
+                ):
+                    logger.warning(
+                        f"Failed to set up adb reverse. Retrying in {RETRY_DELAY_SECONDS}s..."
+                    )
                     await asyncio.sleep(RETRY_DELAY_SECONDS)
                     continue
 
                 # 4. Start scrcpy-server on device
                 if not await self.adb_helper.start_scrcpy_server(scid):
-                    logger.warning(f"Failed to start scrcpy-server. Retrying in {RETRY_DELAY_SECONDS}s...")
+                    logger.warning(
+                        f"Failed to start scrcpy-server. Retrying in {RETRY_DELAY_SECONDS}s..."
+                    )
                     await asyncio.sleep(RETRY_DELAY_SECONDS)
                     continue
-                
+
                 logger.info("Scrcpy setup process completed successfully.")
                 return  # Exit on success
 
@@ -258,10 +286,14 @@ class TransparentWindow(Adw.Window):
                 logger.info("Scrcpy setup task was cancelled.")
                 return  # Use return to exit immediately on cancellation
             except Exception as e:
-                logger.error(f"An unexpected error occurred during setup attempt {attempt + 1}: {e}")
+                logger.error(
+                    f"An unexpected error occurred during setup attempt {attempt + 1}: {e}"
+                )
                 await asyncio.sleep(RETRY_DELAY_SECONDS)
-        
-        logger.error(f"Scrcpy setup failed after {MAX_RETRY_ATTEMPTS} attempts. Aborting.")
+
+        logger.error(
+            f"Scrcpy setup failed after {MAX_RETRY_ATTEMPTS} attempts. Aborting."
+        )
 
     def setup_mode_system(self):
         """初始化双模式系统"""
@@ -312,7 +344,9 @@ class TransparentWindow(Adw.Window):
         self.add_controller(key_controller)
 
         # 窗口级别的鼠标滚动事件
-        scroll_controller = Gtk.EventControllerScroll.new(flags=Gtk.EventControllerScrollFlags.BOTH_AXES)
+        scroll_controller = Gtk.EventControllerScroll.new(
+            flags=Gtk.EventControllerScrollFlags.BOTH_AXES
+        )
         scroll_controller.connect("scroll-begin", self.on_window_mouse_scroll)
         scroll_controller.connect("scroll", self.on_window_mouse_scroll)
         scroll_controller.connect("scroll-end", self.on_window_mouse_scroll)
@@ -354,7 +388,9 @@ class TransparentWindow(Adw.Window):
 
         # 在映射模式下使用事件处理器链
         if self.current_mode == self.MAPPING_MODE:
-            logger.debug("In mapping mode, use event handler chain to handle mouse event")
+            logger.debug(
+                "In mapping mode, use event handler chain to handle mouse event"
+            )
 
             # 创建鼠标按键的Key对象
             mouse_key = key_registry.create_mouse_key(button)
@@ -386,7 +422,9 @@ class TransparentWindow(Adw.Window):
                 self.menu_manager.show_widget_creation_menu(x, y, self.widget_factory)
             else:
                 # 右键widget，调用widget的右键回调
-                logger.debug(f"Right click on widget: {type(widget_at_position).__name__}")
+                logger.debug(
+                    f"Right click on widget: {type(widget_at_position).__name__}"
+                )
                 local_x, local_y = self.workspace_manager.global_to_local_coords(
                     widget_at_position, x, y
                 )
@@ -399,7 +437,9 @@ class TransparentWindow(Adw.Window):
     def on_window_mouse_motion(self, controller, x, y):
         """窗口级别的鼠标移动事件"""
         if self.current_mode == self.MAPPING_MODE:
-            logger.debug("In mapping mode, use event handler chain to handle mouse motion")
+            logger.debug(
+                "In mapping mode, use event handler chain to handle mouse motion"
+            )
             event = InputEvent(
                 event_type="mouse_motion",
                 position=(int(x), int(y)),
@@ -410,8 +450,13 @@ class TransparentWindow(Adw.Window):
 
         # 编辑模式下，委托给 workspace_manager
         self.workspace_manager.handle_mouse_motion(controller, x, y)
-    
-    def on_window_mouse_scroll(self, controller: Gtk.EventControllerScroll, dx: float|None = None, dy: float|None = None):
+
+    def on_window_mouse_scroll(
+        self,
+        controller: Gtk.EventControllerScroll,
+        dx: float | None = None,
+        dy: float | None = None,
+    ):
         if self.current_mode == self.MAPPING_MODE:
             event = InputEvent(
                 event_type="mouse_scroll",
@@ -467,7 +512,9 @@ class TransparentWindow(Adw.Window):
 
         if should_keep_editing:
             # 如果应该保持编辑状态，就不改变选择状态，也不要触发置顶
-            logger.debug("Keep editing state, skip selection logic and bring to front operation")
+            logger.debug(
+                "Keep editing state, skip selection logic and bring to front operation"
+            )
             # 设置跳过标志，避免延迟置顶破坏编辑状态
             widget._skip_delayed_bring_to_front = True
             return  # 直接返回，不执行后续的选择和置顶逻辑
@@ -543,7 +590,9 @@ class TransparentWindow(Adw.Window):
 
         # 在映射模式下使用事件处理器链
         if self.current_mode == self.MAPPING_MODE:
-            logger.debug("In mapping mode, use event handler chain to handle mouse release")
+            logger.debug(
+                "In mapping mode, use event handler chain to handle mouse release"
+            )
 
             # 创建鼠标按键的Key对象
             mouse_key = key_registry.create_mouse_key(button)
@@ -660,7 +709,9 @@ class TransparentWindow(Adw.Window):
                 hasattr(widget, "_skip_delayed_bring_to_front")
                 and widget._skip_delayed_bring_to_front
             ):
-                logger.debug("Skip delayed bring to front operation (widget is editing)")
+                logger.debug(
+                    "Skip delayed bring to front operation (widget is editing)"
+                )
                 # 清除标志
                 delattr(widget, "_skip_delayed_bring_to_front")
                 return False
@@ -684,9 +735,7 @@ class TransparentWindow(Adw.Window):
                 current_state = getattr(widget, "is_selected", False)
                 if current_state != selected_state:
                     widget.set_selected(selected_state)
-                    logger.debug(
-                        f"Bring to front: {current_state} -> {selected_state}"
-                    )
+                    logger.debug(f"Bring to front: {current_state} -> {selected_state}")
                 else:
                     logger.debug(f"Bring to front: {selected_state}")
 
@@ -771,9 +820,13 @@ class TransparentWindow(Adw.Window):
                     if hasattr(widget, "text") and not widget.text:
                         widget.text = str(key_combination)
                 else:
-                    logger.debug(f"Register component default key mapping failed: {key_combination}")
+                    logger.debug(
+                        f"Register component default key mapping failed: {key_combination}"
+                    )
         else:
-            logger.debug(f"Component {type(widget).__name__} has no default key, skip auto registration")
+            logger.debug(
+                f"Component {type(widget).__name__} has no default key, skip auto registration"
+            )
 
     def on_clear_widgets(self, button: Gtk.Button | None):
         """清空所有组件"""
@@ -925,14 +978,19 @@ class TransparentWindow(Adw.Window):
         self.notification_label.set_label(text)
 
         # 停止任何正在进行的动画
-        if hasattr(self, "_notification_fade_out_timer") and self._notification_fade_out_timer > 0:
+        if (
+            hasattr(self, "_notification_fade_out_timer")
+            and self._notification_fade_out_timer > 0
+        ):
             GLib.source_remove(self._notification_fade_out_timer)
         if hasattr(self, "_notification_animation"):
             self._notification_animation.reset()
 
         # 淡入动画
         self.notification_box.set_opacity(0)
-        animation_target = Adw.PropertyAnimationTarget.new(self.notification_box, "opacity")
+        animation_target = Adw.PropertyAnimationTarget.new(
+            self.notification_box, "opacity"
+        )
         self._notification_animation = Adw.TimedAnimation.new(
             self.notification_box, 0.0, 1.0, 300, animation_target
         )
@@ -940,11 +998,15 @@ class TransparentWindow(Adw.Window):
         self._notification_animation.play()
 
         # 计划淡出
-        self._notification_fade_out_timer = GLib.timeout_add(1500, self._fade_out_notification)
+        self._notification_fade_out_timer = GLib.timeout_add(
+            1500, self._fade_out_notification
+        )
 
     def _fade_out_notification(self):
         """执行淡出动画"""
-        animation_target = Adw.PropertyAnimationTarget.new(self.notification_box, "opacity")
+        animation_target = Adw.PropertyAnimationTarget.new(
+            self.notification_box, "opacity"
+        )
         self._notification_animation = Adw.TimedAnimation.new(
             self.notification_box, 1.0, 0.0, 500, animation_target
         )
@@ -969,7 +1031,7 @@ class TransparentWindow(Adw.Window):
             # 进入映射模式：取消所有选择，禁用编辑功能
             self.clear_all_selections()
             logger.debug("Enter mapping mode, edit function disabled")
-            
+
             self.show_notification(_("Mapping Mode (F1: Switch Mode)"))
 
             # 可以在这里添加更多映射模式的UI调整
@@ -979,7 +1041,9 @@ class TransparentWindow(Adw.Window):
 
             # 显示映射模式帮助信息
             logger.debug("Enter mapping mode!")
-            logger.debug(f"- Press configured key combination to trigger corresponding widget action")
+            logger.debug(
+                f"- Press configured key combination to trigger corresponding widget action"
+            )
             logger.debug("- F1: Switch to edit mode")
             logger.debug("- ESC: Other operations")
 
@@ -1074,14 +1138,18 @@ class TransparentWindow(Adw.Window):
     def on_global_key_release(self, controller, keyval, keycode, state):
         """全局按键释放事件 - 使用事件处理器链"""
         if self.current_mode == self.MAPPING_MODE:
-            logger.debug("In mapping mode, use event handler chain to handle key release")
+            logger.debug(
+                "In mapping mode, use event handler chain to handle key release"
+            )
 
             # 获取物理按键的标准 keyval
             physical_keyval = self.get_physical_keyval(keycode)
             if physical_keyval == 0:
                 # 如果获取失败，回退到原始 keyval
                 physical_keyval = keyval
-                logger.debug(f"Release fallback to original keyval: {Gdk.keyval_name(keyval)}")
+                logger.debug(
+                    f"Release fallback to original keyval: {Gdk.keyval_name(keyval)}"
+                )
 
             # 处理修饰键本身
             if self._is_modifier_key(keyval):
