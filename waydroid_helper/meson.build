@@ -111,7 +111,6 @@ controller_core_sources = [
     'controller/core/control_msg.py',
     'controller/core/event_bus.py',
     'controller/core/__init__.py',
-    'controller/core/key_mapping_manager.py',
     'controller/core/key_system.py',
     'controller/core/server.py',
     'controller/core/types.py',
@@ -121,7 +120,6 @@ controller_core_sources = [
 controller_core_handler_sources = [
     'controller/core/handler/__init__.py',
     'controller/core/handler/event_handlers.py',
-    'controller/core/handler/key_mapping_event_handler.py',
 ]
 
 controller_core_handler_default_sources = [
@@ -129,6 +127,12 @@ controller_core_handler_default_sources = [
     'controller/core/handler/default/default_event_handler.py',
     'controller/core/handler/default/default_key_handler.py',
     'controller/core/handler/default/default_mouse_handler.py',
+]
+
+controller_core_handler_mapping_sources = [
+    'controller/core/handler/mapping/__init__.py',
+    'controller/core/handler/mapping/key_mapping_event_handler.py',
+    'controller/core/handler/mapping/key_mapping_manager.py',
 ]
 
 controller_platform_sources = [
@@ -194,3 +198,4 @@ install_data(controller_widgets_sources, install_dir: controllerdir / 'widgets')
 install_data(controller_widgets_base_sources, install_dir: controllerdir / 'widgets' / 'base')
 install_data(controller_widgets_components_sources, install_dir: controllerdir / 'widgets' / 'components')
 install_data(controller_widgets_decorators_sources, install_dir: controllerdir / 'widgets' / 'decorators')
+install_data(controller_core_handler_mapping_sources, install_dir: controllerdir / 'core' / 'handler' / 'mapping')

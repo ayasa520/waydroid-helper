@@ -8,7 +8,7 @@ from waydroid_helper.controller.core.handler.event_handlers import (
     EventHandlerPriority,
     InputEvent,
 )
-from waydroid_helper.controller.core.key_mapping_manager import key_mapping_manager
+from .key_mapping_manager import key_mapping_manager
 from waydroid_helper.util.log import logger
 
 

@@ -9,7 +9,7 @@ gi.require_version('Gtk', '4.0')
 from gi.repository import Gtk, GLib, Gdk
 from .base_decorator import WidgetDecorator, parameterized_widget_decorator
 from waydroid_helper.controller.core.key_system import KeyCombination, Key, key_registry
-from waydroid_helper.controller.core.key_mapping_manager import key_mapping_manager
+from waydroid_helper.controller.core.handler import key_mapping_manager
 from waydroid_helper.util.log import logger
 
 class EditableDecorator(WidgetDecorator):

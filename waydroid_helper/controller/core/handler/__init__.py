@@ -8,5 +8,16 @@ from .event_handlers import (
     InputEvent,
     EventHandlerChain,
 )
+from .mapping import KeyMappingEventHandler
+from .default import DefaultEventHandler
+from .mapping import key_mapping_manager
 
-__all__ = ["EventHandler", "EventHandlerPriority", "InputEvent", "EventHandlerChain"]
+__all__ = [
+    "EventHandler",
+    "EventHandlerPriority",
+    "InputEvent",
+    "EventHandlerChain",
+    "KeyMappingEventHandler",
+    "DefaultEventHandler",
+    "key_mapping_manager",
+]

@@ -19,7 +19,6 @@ from waydroid_helper.controller.app.workspace_manager import WorkspaceManager
 from waydroid_helper.controller.core import (
     KeyCombination,
     key_registry,
-    key_mapping_manager,
     Server,
     is_point_in_rect,
     event_bus,
@@ -27,11 +26,13 @@ from waydroid_helper.controller.core import (
     Event,
 )
 from waydroid_helper.controller.core.constants import APP_TITLE
-from waydroid_helper.controller.core.handler import EventHandlerChain, InputEvent
-from waydroid_helper.controller.core.handler.key_mapping_event_handler import (
+from waydroid_helper.controller.core.handler import (
+    EventHandlerChain,
+    InputEvent,
     KeyMappingEventHandler,
+    DefaultEventHandler,
+    key_mapping_manager,
 )
-from waydroid_helper.controller.core.handler.default import DefaultEventHandler
 from waydroid_helper.controller.ui.styles import StyleManager
 from waydroid_helper.controller.ui.menus import ContextMenuManager
 from waydroid_helper.controller.widgets.factory import WidgetFactory
