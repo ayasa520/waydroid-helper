@@ -7,11 +7,13 @@ from .fire import Fire
 from .single_click import SingleClick
 from .directional_pad import DirectionalPad
 from .macro import Macro
+from .right_click_to_walk import RightClickToWalk
 
 __all__ = [
     'Aim',
     'Fire', 
     'SingleClick',
     'DirectionalPad',
-    'Macro'
+    'Macro',
+    'RightClickToWalk'
 ] 

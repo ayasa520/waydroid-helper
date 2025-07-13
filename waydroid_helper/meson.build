@@ -169,6 +169,7 @@ controller_widgets_components_sources = [
     'controller/widgets/components/fire.py',
     'controller/widgets/components/single_click.py',
     'controller/widgets/components/macro.py',
+    'controller/widgets/components/right_click_to_walk.py',
 ]
 
 controller_widgets_decorators_sources = [

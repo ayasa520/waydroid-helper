@@ -15,13 +15,13 @@ from waydroid_helper.controller.core.handler.default.default_mouse_handler impor
     MouseDefault,
 )
 from waydroid_helper.controller.core.handler.event_handlers import (
-    EventHandler,
+    InputEventHandler,
     EventHandlerPriority,
     InputEvent,
 )
 
 
-class DefaultEventHandler(EventHandler):
+class DefaultEventHandler(InputEventHandler):
     """默认事件处理器 - 处理未被widget处理的事件"""
 
     def __init__(self):

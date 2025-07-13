@@ -35,7 +35,7 @@ class InputEvent:
     raw_data: dict[str, Any] | None = None  # 原始事件数据
 
 
-class EventHandler(ABC):
+class InputEventHandler(ABC):
     """事件处理器基类"""
 
     def __init__(self, priority: EventHandlerPriority = EventHandlerPriority.NORMAL):
@@ -61,14 +61,14 @@ class EventHandler(ABC):
         self.enabled = enabled
 
 
-class EventHandlerChain:
-    """事件处理器链 - 管理多个事件处理器"""
+class InputEventHandlerChain:
+    """输入事件处理器链 - 管理多个输入事件处理器"""
 
     def __init__(self):
-        self.handlers: list[EventHandler] = []
+        self.handlers: list[InputEventHandler] = []
         self.enabled = True
 
-    def add_handler(self, handler: EventHandler):
+    def add_handler(self, handler: InputEventHandler):
         """添加事件处理器"""
         self.handlers.append(handler)
         # 按优先级排序（数值越小优先级越高）
@@ -77,7 +77,7 @@ class EventHandlerChain:
             f"Add event handler: {handler.__class__.__name__} (priority: {handler.get_priority()})"
         )
 
-    def remove_handler(self, handler: EventHandler):
+    def remove_handler(self, handler: InputEventHandler):
         """移除事件处理器"""
         if handler in self.handlers:
             self.handlers.remove(handler)

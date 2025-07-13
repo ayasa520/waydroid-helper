@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING, Callable, cast, TypedDict
 
 from gi.repository import GLib
 
+from waydroid_helper.controller.core.handler.event_handlers import InputEvent
+
 if TYPE_CHECKING:
     from cairo import Context, Surface
     from gi.repository import Gtk
@@ -533,7 +535,7 @@ class DirectionalPad(BaseWidget):
         )
         event_bus.emit(Event(EventType.CONTROL_MSG, self, msg))
 
-    def on_key_triggered(self, key_combination: KeyCombination | None = None):
+    def on_key_triggered(self, key_combination: KeyCombination | None = None, event: "InputEvent | None" = None) -> bool:
         """当映射的按键被触发时的行为 - 根据按键确定方向"""
         if not key_combination:
             logger.debug(f"Directional pad key triggered (no key specified)")
@@ -570,7 +572,7 @@ class DirectionalPad(BaseWidget):
             logger.debug(f"Directional pad received unknown key: {key_combination}")
             return False
 
-    def on_key_released(self, key_combination: KeyCombination | None = None):
+    def on_key_released(self, key_combination: KeyCombination | None = None, event: "InputEvent | None" = None) -> bool:
         """当映射的按键被弹起时的行为 - 根据按键确定方向"""
         if not key_combination:
             logger.debug(f"Directional pad key released (no key specified)")

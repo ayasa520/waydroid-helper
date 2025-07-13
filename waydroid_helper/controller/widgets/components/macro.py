@@ -18,36 +18,38 @@ if TYPE_CHECKING:
 
 class MacroCommand(NamedTuple):
     """宏命令数据结构"""
+
     command_type: str  # "key_press", "key_release", "sleep", "release_all"
-    args: list[str]    # 命令参数
+    args: list[str]  # 命令参数
 
 
 # ==================== 命令模式实现 ====================
 
+
 class Command(ABC):
     """抽象命令接口"""
-    
+
     @abstractmethod
-    async def execute(self, context: 'Macro') -> None:
+    async def execute(self, context: "Macro") -> None:
         """执行命令"""
         pass
 
 
 class KeyPressCommand(Command):
     """按键按下命令"""
-    
+
     def __init__(self, key_names: list[str]):
         self.key_names = key_names
-    
-    async def execute(self, context: 'Macro') -> None:
+
+    async def execute(self, context: "Macro") -> None:
         from waydroid_helper.controller.core import (
             Event,
-            EventType, 
+            EventType,
             event_bus,
             key_system,
         )
         from waydroid_helper.util.log import logger
-        
+
         for key_name in self.key_names:
             try:
                 key = key_system.deserialize_key(key_name)
@@ -65,11 +67,11 @@ class KeyPressCommand(Command):
 
 class KeyReleaseCommand(Command):
     """按键释放命令"""
-    
+
     def __init__(self, key_names: list[str]):
         self.key_names = key_names
-    
-    async def execute(self, context: 'Macro') -> None:
+
+    async def execute(self, context: "Macro") -> None:
         from waydroid_helper.controller.core import (
             Event,
             EventType,
@@ -77,7 +79,7 @@ class KeyReleaseCommand(Command):
             key_system,
         )
         from waydroid_helper.util.log import logger
-        
+
         for key_name in self.key_names:
             try:
                 key = key_system.deserialize_key(key_name)
@@ -95,22 +97,25 @@ class KeyReleaseCommand(Command):
 
 class SleepCommand(Command):
     """延迟命令"""
-    
+
     def __init__(self, sleep_time: float):
         self.sleep_time = sleep_time
-    
-    async def execute(self, context: 'Macro') -> None:
+
+    async def execute(self, context: "Macro") -> None:
         if self.sleep_time > 0:
             await asyncio.sleep(self.sleep_time)
         else:
             from waydroid_helper.util.log import logger
-            logger.warning(f"Macro command: sleep time must be greater than 0, current value: {self.sleep_time}")
+
+            logger.warning(
+                f"Macro command: sleep time must be greater than 0, current value: {self.sleep_time}"
+            )
 
 
 class ReleaseAllCommand(Command):
     """释放所有按键命令"""
-    
-    async def execute(self, context: 'Macro') -> None:
+
+    async def execute(self, context: "Macro") -> None:
         from waydroid_helper.controller.core import (
             Event,
             EventType,
@@ -118,7 +123,7 @@ class ReleaseAllCommand(Command):
             key_system,
         )
         from waydroid_helper.util.log import logger
-        
+
         for key_name in list(context.pressed_keys):
             try:
                 key = key_system.deserialize_key(key_name)
@@ -136,60 +141,65 @@ class ReleaseAllCommand(Command):
 
 class OtherCommand(Command):
     """其他命令占位符"""
-    
+
     def __init__(self, args: list[str]):
         self.args = args
-    
-    async def execute(self, context: 'Macro') -> None:
+
+    async def execute(self, context: "Macro") -> None:
         pass  # 可以在这里扩展其他命令
 
 
 # ==================== 命令工厂 ====================
 
+
 class CommandFactory:
     """命令工厂 - 负责创建具体的命令对象"""
-    
+
     @staticmethod
     def create_command(command_type: str, args: list[str]) -> Command | None:
         """根据命令类型和参数创建命令对象"""
         from waydroid_helper.util.log import logger
-        
+
         if command_type == "key_press":
             if args:
                 return KeyPressCommand(args)
             else:
                 logger.warning("Macro command: key_press missing parameters.")
                 return None
-                
+
         elif command_type == "key_release":
             if args:
                 return KeyReleaseCommand(args)
             else:
                 logger.warning("Macro command: key_release missing parameters.")
                 return None
-                
+
         elif command_type == "sleep":
             if args:
                 try:
                     sleep_time = float(args[0])
                     return SleepCommand(sleep_time)
                 except ValueError:
-                    logger.warning(f"Macro command: sleep parameter is invalid '{args[0]}'")
+                    logger.warning(
+                        f"Macro command: sleep parameter is invalid '{args[0]}'"
+                    )
                     return None
             else:
                 logger.warning("Macro command: sleep missing parameters.")
                 return None
-                
+
         elif command_type == "release_all":
             return ReleaseAllCommand()
-            
+
         elif command_type == "other_command":
             return OtherCommand(args)
-            
+
         else:
             logger.warning(f"Macro command: unknown command '{command_type}'")
             return None
 
+
+from waydroid_helper.controller.core.handler.event_handlers import InputEvent
 from waydroid_helper.util.log import logger
 
 from waydroid_helper.controller.android.input import (
@@ -231,8 +241,15 @@ class Macro(BaseWidget):
     MAPPING_MODE_HEIGHT = 30
     MAPPING_MODE_WIDTH = 30
 
-
-    def __init__(self, x:int=0, y:int=0, width:int=50, height:int=50, text:str="", default_keys:set[KeyCombination]|None=None):
+    def __init__(
+        self,
+        x: int = 0,
+        y: int = 0,
+        width: int = 50,
+        height: int = 50,
+        text: str = "",
+        default_keys: set[KeyCombination] | None = None,
+    ):
         # 初始化基类，传入默认按键
         super().__init__(
             x,
@@ -245,19 +262,19 @@ class Macro(BaseWidget):
             min_width=50,  # 固定大小
             min_height=50,  # 固定大小
         )
-        
+
         # 存储预解析的宏命令对象
         self.press_commands: list[Command] = []
         self.release_commands: list[Command] = []
-        
+
         # 设置宏命令配置
         self.setup_config()
-        self.triggered:bool = False
-        
+        self.triggered: bool = False
+
         # 任务管理
         self.current_press_task: asyncio.Task[None] | None = None
         self.current_release_task: asyncio.Task[None] | None = None
-        
+
         # 按键状态跟踪 - 记录已按下但未释放的按键
         self.pressed_keys: set[str] = set()
 
@@ -268,43 +285,48 @@ class Macro(BaseWidget):
             key="macro_command",
             label=pgettext("Controller Widgets", "Macro Command"),
             value="",  # 初始为空，后续通过配置加载
-            description=pgettext("Controller Widgets", "The macro commands to execute when triggered. Supported commands:\n"
-                                                      "- key_press <key1,key2,...>: Press keys\n"
-                                                      "- key_release <key1,key2,...>: Release keys\n"
-                                                      "- sleep <seconds>: Delay execution (supports decimals)\n"
-                                                      "- release_all: Release all currently pressed keys\n"
-                                                      "- Use 'release_actions' to separate press and release commands\n"
-                                                      "- Lines starting with # are comments")
+            description=pgettext(
+                "Controller Widgets",
+                "The macro commands to execute when triggered. Supported commands:\n"
+                "- key_press <key1,key2,...>: Press keys\n"
+                "- key_release <key1,key2,...>: Release keys\n"
+                "- sleep <seconds>: Delay execution (supports decimals)\n"
+                "- release_all: Release all currently pressed keys\n"
+                "- Use 'release_actions' to separate press and release commands\n"
+                "- Lines starting with # are comments",
+            ),
         )
         self.add_config_item(macro_config)
         self.add_config_change_callback("macro_command", self.on_macro_command_changed)
-    
+
     def on_macro_command_changed(self, key: str, value: str):
         """当宏命令文本框内容改变时，解析并存储预解析的命令对象"""
         parts = value.split("release_actions", 1)
-        
+
         # 解析按下命令
         self.press_commands = self._parse_command_lines(parts[0].strip().splitlines())
-        
+
         # 解析释放命令
         if len(parts) > 1:
-            self.release_commands = self._parse_command_lines(parts[1].strip().splitlines())
+            self.release_commands = self._parse_command_lines(
+                parts[1].strip().splitlines()
+            )
         else:
             self.release_commands = []
-    
+
     def _parse_command_lines(self, lines: list[str]) -> list[Command]:
         """解析命令行列表为Command对象列表"""
         commands = []
-        
+
         for line in lines:
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
-                
+
             parts = line.split(" ", 1)
             command_type = parts[0].lower()
             args_str = parts[1] if len(parts) > 1 else ""
-            
+
             # 处理参数
             if command_type in ["key_press", "key_release"] and args_str:
                 args = [k.strip() for k in args_str.split(",")]
@@ -312,16 +334,15 @@ class Macro(BaseWidget):
                 args = [args_str]
             else:
                 args = [args_str] if args_str else []
-            
+
             # 使用工厂创建命令
             command = CommandFactory.create_command(command_type, args)
             if command:
                 commands.append(command)
-                
-        return commands
-        
 
-    def draw_widget_content(self, cr: 'Context[Surface]', width: int, height: int):
+        return commands
+
+    def draw_widget_content(self, cr: "Context[Surface]", width: int, height: int):
         """绘制圆形按钮的具体内容"""
         # 计算圆心和半径
         center_x = width / 2
@@ -340,7 +361,7 @@ class Macro(BaseWidget):
         cr.arc(center_x, center_y, radius, 0, 2 * math.pi)
         cr.stroke()
 
-    def draw_text_content(self, cr: 'Context[Surface]', width: int, height: int):
+    def draw_text_content(self, cr: "Context[Surface]", width: int, height: int):
         if self.text:
             center_x = width / 2
             center_y = height / 2
@@ -357,7 +378,7 @@ class Macro(BaseWidget):
             # 清除路径，避免影响后续绘制
             cr.new_path()
 
-    def draw_selection_border(self, cr: 'Context[Surface]', width: int, height: int):
+    def draw_selection_border(self, cr: "Context[Surface]", width: int, height: int):
         center_x = width / 2
         center_y = height / 2
         radius = min(width, height) / 2 - 5
@@ -368,51 +389,65 @@ class Macro(BaseWidget):
         cr.arc(center_x, center_y, radius + 3, 0, 2 * math.pi)
         cr.stroke()
 
-    def draw_mapping_mode_background(self, cr: 'Context[Surface]', width: int, height: int):
+    def draw_mapping_mode_background(
+        self, cr: "Context[Surface]", width: int, height: int
+    ):
         pass
 
-    def draw_mapping_mode_content(self, cr: 'Context[Surface]', width: int, height: int):
+    def draw_mapping_mode_content(
+        self, cr: "Context[Surface]", width: int, height: int
+    ):
         pass
 
-    def on_key_triggered(self, key_combination: KeyCombination | None = None) -> bool:
+    def on_key_triggered(
+        self,
+        key_combination: KeyCombination | None = None,
+        event: "InputEvent|None" = None,
+    ) -> bool:
         """当映射的按键被触发时的行为 - 执行预先解析好的按下宏命令"""
         if self.current_release_task and not self.current_release_task.done():
             return True
-        
+
         if self.current_press_task and not self.current_press_task.done():
             return True
-            
+
         if self.press_commands:
             self.current_press_task = asyncio.create_task(
                 self._execute_commands_async(self.press_commands, "press")
             )
         return True
 
-    def on_key_released(self, key_combination: KeyCombination | None = None) -> bool:
+    def on_key_released(
+        self,
+        key_combination: KeyCombination | None = None,
+        event: "InputEvent|None" = None,
+    ) -> bool:
         """当映射的按键被弹起时的行为 - 执行预先解析好的弹起宏命令"""
         # 如果当前有 release task 在执行，直接返回 True
         # if self.current_release_task and not self.current_release_task.done():
         #     logger.debug("宏按键有 release task 在执行，跳过新的 release 触发")
         #     return True
-        
+
         # 如果没有 release_command 配置，直接返回 True
         if not self.release_commands:
             return True
-            
+
         # 如果有 release_command 配置，终止当前的 press task（如果有）
         if self.current_press_task and not self.current_press_task.done():
             self.current_press_task.cancel()
 
         if self.current_release_task and not self.current_release_task.done():
             self.current_release_task.cancel()
-        
+
         # 创建新的 release task
         self.current_release_task = asyncio.create_task(
             self._execute_commands_async(self.release_commands, "release")
         )
         return True
 
-    async def _execute_commands_async(self, commands: list[Command], task_type: str = "unknown"):
+    async def _execute_commands_async(
+        self, commands: list[Command], task_type: str = "unknown"
+    ):
         """异步执行预解析的宏命令列表"""
         try:
             for command in commands:
@@ -441,8 +476,7 @@ class Macro(BaseWidget):
                 logger.warning(f"Macro command: cannot recognize key '{key_name}'")
         self.pressed_keys.clear()
 
-
-    def get_editable_regions(self)->list['EditableRegion']:
+    def get_editable_regions(self) -> list["EditableRegion"]:
         return [
             {
                 "id": "default",

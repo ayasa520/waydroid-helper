@@ -6,6 +6,7 @@
 import itertools
 from typing import Any, Callable, TYPE_CHECKING
 
+from waydroid_helper.controller.core.handler.event_handlers import InputEvent
 from waydroid_helper.controller.core.key_system import Key, KeyCombination
 from waydroid_helper.util.log import logger
 from waydroid_helper.controller.core.event_bus import Event, EventBus, EventType, event_bus
@@ -60,10 +61,10 @@ class KeyMappingManager:
         event_bus.subscribe(EventType.MACRO_KEY_RELEASED, self._on_macro_key_released)
 
     def _on_macro_key_pressed(self, event: Event[Key]):
-        self.handle_key_press(event.data)
+        self.handle_key_press(InputEvent(event_type="key_press", key=event.data))
 
     def _on_macro_key_released(self, event: Event[Key]):
-        self.handle_key_release(event.data)
+        self.handle_key_release(InputEvent(event_type="key_release", key=event.data))
 
     def subscribe(
         self,
@@ -144,44 +145,39 @@ class KeyMappingManager:
 
         return result
 
-    def handle_key_press(self, key: Key) -> bool:
+    def handle_key_press(self, event: InputEvent) -> bool:
         """处理按键按下事件，返回事件是否被消费"""
-        if not key:
+        if not event.key:
             return False
 
-        self._pressed_keys.add(key)
+        self._pressed_keys.add(event.key)
 
         # 检查是否触发了新的映射
-        triggered_new = self._check_and_trigger_mappings()
+        triggered_new = self._check_and_trigger_mappings(event)
 
         # 如果触发了新映射，事件肯定被消费
         if triggered_new:
             return True
 
-        # 如果没有触发新映射，但当前按下的键是某个已激活映射的一部分，
-        # 那么也认为事件被消费，防止泄露给下一个处理器。
-        # 例如，当 Ctrl+Shift 已激活时，再按 A，A 的事件也应被消费。
-        current_pressed_set = set(self._pressed_keys)
         for triggered_keys in self._triggered_mappings.values():
-            # 如果已激活的组合是当前按下键的子集 (e.g. 按下A, B, C, 激活了A+B)
-            if triggered_keys.issubset(current_pressed_set):
+            if event.key in triggered_keys:
                 return True
 
         return False
 
-    def handle_key_release(self, key: Key) -> bool:
+    def handle_key_release(self, event: InputEvent) -> bool:
         """处理按键释放事件，返回事件是否被消费"""
-        if key not in self._pressed_keys:
+        if event.key not in self._pressed_keys:
             return False
 
         # 检查释放这个键是否会导致某个映射被释放
-        released_a_mapping = self._check_mapping_release(key)
+        released_a_mapping = self._check_mapping_release(event.key)
 
         # 从按下的键中移除
-        self._pressed_keys.remove(key)
+        self._pressed_keys.remove(event.key)
 
         # 在释放一个键后，可能会触发一个新的、更短的组合
-        triggered_new_on_release = self._check_and_trigger_mappings()
+        triggered_new_on_release = self._check_and_trigger_mappings(event)
 
         # 只要释放了旧的映射，或者触发了新的映射，都算事件被消费
         return released_a_mapping or triggered_new_on_release
@@ -200,7 +196,7 @@ class KeyMappingManager:
 
         return True
 
-    def _check_and_trigger_mappings(self) -> bool:
+    def _check_and_trigger_mappings(self, event:InputEvent) -> bool:
         """检查并触发匹配的映射"""
         triggered_any = False
         pressed_keys_list = list(self._pressed_keys)
@@ -241,7 +237,7 @@ class KeyMappingManager:
                                     subscription.widget, subscription.callback
                                 )
                                 # 假设回调返回True表示事件被处理
-                                if callback(key_combination):
+                                if callback(key_combination, event):
                                     combo_triggered_this_time = True
 
                         if combo_triggered_this_time:

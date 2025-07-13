@@ -3,20 +3,20 @@
 """
 
 from .event_handlers import (
-    EventHandler,
+    InputEventHandler,
     EventHandlerPriority,
     InputEvent,
-    EventHandlerChain,
+    InputEventHandlerChain,
 )
 from .mapping import KeyMappingEventHandler
 from .default import DefaultEventHandler
 from .mapping import key_mapping_manager
 
 __all__ = [
-    "EventHandler",
+    "InputEventHandler",
     "EventHandlerPriority",
     "InputEvent",
-    "EventHandlerChain",
+    "InputEventHandlerChain",
     "KeyMappingEventHandler",
     "DefaultEventHandler",
     "key_mapping_manager",

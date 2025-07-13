@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from gi.repository import Gtk
     from waydroid_helper.controller.widgets.base.base_widget import EditableRegion
 
+from waydroid_helper.controller.core.handler.event_handlers import InputEvent
 from waydroid_helper.util.log import logger
 
 from waydroid_helper.controller.android.input import (
@@ -185,7 +186,11 @@ class Fire(BaseWidget):
         # 使用和编辑模式相同的文本绘制方式
         self.draw_text_content(cr, width, height)
 
-    def on_key_triggered(self, key_combination: KeyCombination | None = None):
+    def on_key_triggered(
+        self,
+        key_combination: KeyCombination | None = None,
+        event: "InputEvent | None" = None,
+    ) -> bool:
         """当映射的按键被触发时的行为 - 模拟点击效果（按键按下）"""
         logger.debug("测试测试")
         if not self.aim_triggered:
@@ -218,7 +223,11 @@ class Fire(BaseWidget):
         event_bus.emit(Event(EventType.CONTROL_MSG, self, msg))
         return True
 
-    def on_key_released(self, key_combination: KeyCombination | None = None):
+    def on_key_released(
+        self,
+        key_combination: KeyCombination | None = None,
+        event: "InputEvent | None" = None,
+    ):
         """当映射的按键被弹起时的行为 - 模拟释放效果（按键弹起）"""
         if not self.aim_triggered:
             return False

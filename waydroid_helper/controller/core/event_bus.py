@@ -49,8 +49,8 @@ class Event(Generic[T]):
 
 
 @dataclass
-class EventHandler:
-    """事件处理器"""
+class BusEventHandler:
+    """事件总线处理器"""
 
     callback: Callable[[Event[Any]], None]  # 回调函数
     filter: Callable[[Event[Any]], bool] | None = None  # 事件过滤器
@@ -62,7 +62,7 @@ class EventBus:
 
     def __init__(self):
         # 事件处理器: {事件类型: [处理器列表]}
-        self._handlers: dict[EventType, list[EventHandler]] = {}
+        self._handlers: dict[EventType, list[BusEventHandler]] = {}
 
         # 初始化事件类型
         for event_type in EventType:
@@ -82,7 +82,7 @@ class EventBus:
         :param filter: 可选的事件过滤器
         :param priority: 处理优先级
         """
-        event_handler = EventHandler(handler, filter, priority)
+        event_handler = BusEventHandler(handler, filter, priority)
         self._handlers[event_type].append(event_handler)
         # 按优先级排序
         self._handlers[event_type].sort(key=lambda h: h.priority, reverse=True)

@@ -4,15 +4,16 @@
 """
 
 from waydroid_helper.controller.core.handler.event_handlers import (
-    EventHandler,
+    InputEventHandler,
     EventHandlerPriority,
     InputEvent,
 )
 from .key_mapping_manager import key_mapping_manager
 from waydroid_helper.util.log import logger
+from gi.repository import Gdk
 
 
-class KeyMappingEventHandler(EventHandler):
+class KeyMappingEventHandler(InputEventHandler):
     """
     一个专门处理按键/鼠标映射的事件处理器。
     它使用全局的 key_mapping_manager 来触发已注册的映射。
@@ -30,6 +31,7 @@ class KeyMappingEventHandler(EventHandler):
             "key_release",
             "mouse_press",
             "mouse_release",
+            'mouse_motion'
         ]
 
     def handle_event(self, event: InputEvent) -> bool:
@@ -44,9 +46,11 @@ class KeyMappingEventHandler(EventHandler):
         # 对于按键事件，我们只关心主键（Key对象），组合逻辑由manager处理
         if event.key:
             if event.event_type in ["key_press", "mouse_press"]:
-                return key_mapping_manager.handle_key_press(event.key)
+                return key_mapping_manager.handle_key_press(event)
             elif event.event_type in ["key_release", "mouse_release"]:
-                return key_mapping_manager.handle_key_release(event.key)
-
+                return key_mapping_manager.handle_key_release(event)
+            if event.event_type == 'mouse_motion' and event.button==Gdk.BUTTON_SECONDARY:
+                return key_mapping_manager.handle_key_press(event)
+            
         # 如果事件没有被按键处理器消费，则返回False
         return False

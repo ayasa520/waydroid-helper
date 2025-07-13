@@ -18,7 +18,10 @@ from waydroid_helper.controller.core import (
 from waydroid_helper.controller.core.control_msg import InjectTouchEventMsg
 from waydroid_helper.controller.platform import get_platform
 from waydroid_helper.controller.widgets import BaseWidget
-from waydroid_helper.controller.widgets.config import create_slider_config, create_text_config
+from waydroid_helper.controller.widgets.config import (
+    create_slider_config,
+    create_text_config,
+)
 from waydroid_helper.controller.widgets.decorators import (
     Editable,
     Resizable,
@@ -31,6 +34,7 @@ if TYPE_CHECKING:
     from waydroid_helper.controller.platform import PlatformBase
     from gi.repository import Gtk
     from waydroid_helper.controller.widgets.base.base_widget import EditableRegion
+    from waydroid_helper.controller.core.handler import InputEvent
 
 
 @Editable
@@ -77,7 +81,7 @@ class Aim(BaseWidget):
 
     def setup_config(self) -> None:
         """设置配置项"""
-        
+
         # 添加灵敏度配置
         sensitivity_config = create_slider_config(
             key="sensitivity",
@@ -86,9 +90,11 @@ class Aim(BaseWidget):
             min_value=1,
             max_value=100,
             step=1,
-            description=pgettext("Controller Widgets", "Adjusts the sensitivity of aim movement")
+            description=pgettext(
+                "Controller Widgets", "Adjusts the sensitivity of aim movement"
+            ),
         )
-        
+
         self.add_config_item(sensitivity_config)
         # 添加配置变更回调
         self.add_config_change_callback("sensitivity", self._on_sensitivity_changed)
@@ -268,7 +274,11 @@ class Aim(BaseWidget):
         """映射模式下的内容绘制 - 完全透明，什么都不绘制"""
         pass
 
-    def on_key_triggered(self, key_combination: KeyCombination | None = None) -> bool:
+    def on_key_triggered(
+        self,
+        key_combination: KeyCombination | None = None,
+        event: "InputEvent | None" = None,
+    ) -> bool:
         """当映射的按键被触发时的行为 - 瞄准触发"""
 
         if not self.platform:
@@ -328,7 +338,11 @@ class Aim(BaseWidget):
             )
         return True
 
-    def on_key_released(self, key_combination: KeyCombination | None = None) -> bool:
+    def on_key_released(
+        self,
+        key_combination: KeyCombination | None = None,
+        event: "InputEvent|None" = None,
+    ) -> bool:
         return True
         # """当映射的按键被弹起时的行为 - 瞄准释放"""
         # if key_combination:
@@ -358,7 +372,7 @@ class Aim(BaseWidget):
         y = button_center_y - size / 2
 
         return (int(x), int(y), size, size)
-    
+
     def get_settings_button_bounds(self) -> tuple[int, int, int, int]:
         size = 16
         center_x = self.width / 2
@@ -386,7 +400,12 @@ class Aim(BaseWidget):
             {
                 "id": "aim_center",
                 "name": "瞄准区域",
-                "bounds": (int(circle_left), int(circle_top), self.CIRCLE_SIZE, self.CIRCLE_SIZE),
+                "bounds": (
+                    int(circle_left),
+                    int(circle_top),
+                    self.CIRCLE_SIZE,
+                    self.CIRCLE_SIZE,
+                ),
                 "get_keys": lambda: self.final_keys.copy(),
                 "set_keys": lambda keys: setattr(
                     self, "final_keys", set(keys) if keys else set()

@@ -27,7 +27,7 @@ from waydroid_helper.controller.core import (
 )
 from waydroid_helper.controller.core.constants import APP_TITLE
 from waydroid_helper.controller.core.handler import (
-    EventHandlerChain,
+    InputEventHandlerChain,
     InputEvent,
     KeyMappingEventHandler,
     DefaultEventHandler,
@@ -112,7 +112,7 @@ class TransparentWindow(Adw.Window):
         )
 
         # 创建全局事件处理器链
-        self.event_handler_chain = EventHandlerChain()
+        self.event_handler_chain = InputEventHandlerChain()
         # 导入并添加默认处理器
         self.server = Server("0.0.0.0", 10721)
         self.adb_helper = AdbHelper()
@@ -441,9 +441,26 @@ class TransparentWindow(Adw.Window):
             logger.debug(
                 "In mapping mode, use event handler chain to handle mouse motion"
             )
+            event = controller.get_current_event()
+            state = event.get_modifier_state()
+            # TODO 这个 mouse_key 实际上应该为 none, 此处只是为了兼容. 因为右键行走可以在右键按下状态移动时触发
+            mouse_key = None
+            button = None
+            if state & Gdk.ModifierType.BUTTON1_MASK:
+                mouse_key = key_registry.create_mouse_key(Gdk.BUTTON_PRIMARY)
+                button = Gdk.BUTTON_PRIMARY
+            elif state & Gdk.ModifierType.BUTTON2_MASK:
+                mouse_key = key_registry.create_mouse_key(Gdk.BUTTON_MIDDLE)
+                button = Gdk.BUTTON_MIDDLE
+            elif state & Gdk.ModifierType.BUTTON3_MASK:
+                mouse_key = key_registry.create_mouse_key(Gdk.BUTTON_SECONDARY)
+                button = Gdk.BUTTON_SECONDARY
+
             event = InputEvent(
                 event_type="mouse_motion",
                 position=(int(x), int(y)),
+                key=mouse_key,
+                button=button,
                 raw_data={"controller": controller, "x": x, "y": y},
             )
             self.event_handler_chain.process_event(event)
