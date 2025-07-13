@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from gi.repository import Gtk
     from waydroid_helper.controller.widgets.base.base_widget import EditableRegion
 
+from waydroid_helper.controller.core.handler.event_handlers import InputEvent
 from waydroid_helper.util.log import logger
 
 from waydroid_helper.controller.android.input import (
@@ -274,7 +275,7 @@ class SingleClick(BaseWidget):
             # 清除路径，避免影响后续绘制
             cr.new_path()
 
-    def on_key_triggered(self, key_combination: KeyCombination | None = None):
+    def on_key_triggered(self, key_combination: KeyCombination | None = None, event: 'InputEvent | None' = None):
         if key_combination:
             used_key = str(key_combination)
         elif self.final_keys:
@@ -306,7 +307,7 @@ class SingleClick(BaseWidget):
         event_bus.emit(Event(EventType.CONTROL_MSG, self, msg))
         return True
 
-    def on_key_released(self, key_combination: KeyCombination | None = None):
+    def on_key_released(self, key_combination: KeyCombination | None = None, event: 'InputEvent | None' = None):
         if key_combination:
             used_key = str(key_combination)
         elif self.final_keys:
