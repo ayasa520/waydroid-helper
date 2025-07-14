@@ -583,11 +583,18 @@ class EditableDecorator(WidgetDecorator):
             # 先清除旧的映射（如果有的话）
             key_mapping_manager.unsubscribe(self._wrapped_widget)
             
+            # 自动读取widget的可重入属性
+            reentrant = getattr(self._wrapped_widget, 'IS_REENTRANT', False)
+            
             # 注册新的映射
             for key_combination in self._wrapped_widget.final_keys:
-                success = key_mapping_manager.subscribe(self._wrapped_widget, key_combination)
+                success = key_mapping_manager.subscribe(
+                    self._wrapped_widget, 
+                    key_combination, 
+                    reentrant=reentrant
+                )
                 if success:
-                    logger.debug(f"Successfully register key mapping: {key_combination} -> {type(self._wrapped_widget).__name__}")
+                    logger.debug(f"Successfully register key mapping: {key_combination} -> {type(self._wrapped_widget).__name__} (reentrant={reentrant})")
                 else:
                     logger.debug(f"Failed to register key mapping: {key_combination}")
                     
@@ -612,11 +619,18 @@ class EditableDecorator(WidgetDecorator):
                 logger.debug(f"Region {region['id']} has no keys, skip mapping registration")
                 return
             
+            # 自动读取widget的可重入属性
+            reentrant = getattr(self._wrapped_widget, 'IS_REENTRANT', False)
+            
             # 注册当前区域的新按键映射
             for key_combination in current_keys:
-                success = key_mapping_manager.subscribe(self._wrapped_widget, key_combination)
+                success = key_mapping_manager.subscribe(
+                    self._wrapped_widget, 
+                    key_combination, 
+                    reentrant=reentrant
+                )
                 if success:
-                    logger.debug(f"Successfully register region key mapping: {key_combination} -> {type(self._wrapped_widget).__name__}[{region['id']}]")
+                    logger.debug(f"Successfully register region key mapping: {key_combination} -> {type(self._wrapped_widget).__name__}[{region['id']}] (reentrant={reentrant})")
                 else:
                     logger.debug(f"Failed to register region key mapping: {key_combination}")
                     

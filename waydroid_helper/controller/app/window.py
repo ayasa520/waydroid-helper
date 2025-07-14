@@ -1129,7 +1129,9 @@ class TransparentWindow(Adw.Window):
         self, widget, key_combination: KeyCombination
     ) -> bool:
         """注册widget的按键映射"""
-        return key_mapping_manager.subscribe(widget, key_combination)
+        # 自动读取widget的可重入属性
+        reentrant = getattr(widget, 'IS_REENTRANT', False)
+        return key_mapping_manager.subscribe(widget, key_combination, reentrant=reentrant)
 
     def unregister_widget_key_mapping(self, widget) -> bool:
         """取消widget的所有按键映射"""

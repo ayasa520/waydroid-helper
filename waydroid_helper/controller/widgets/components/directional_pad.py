@@ -53,19 +53,17 @@ class DirectionalPadEditableRegion(TypedDict):
 @Resizable(resize_strategy=ResizableDecorator.RESIZE_CENTER)
 @Editable(max_keys=1)
 class DirectionalPad(BaseWidget):
-    """方向盘组件 - 支持四个方向的按键操作"""
+    """方向键组件"""
 
-    # 组件元数据
+    MAPPING_MODE_WIDTH = 80
+    MAPPING_MODE_HEIGHT = 80
     WIDGET_NAME = pgettext("Controller Widgets", "Directional Pad")
     WIDGET_DESCRIPTION = pgettext(
         "Controller Widgets",
-        "Drag and drop to the game operation wheel to operate the walking direction. After adding the key, drag the dashed box to adjust the key size, and ensure that the size of the blue frame of the direction key is consistent with the size of the game wheel.",
+        "Used for movement control. Support 4-way movement (up, down, left, right) and diagonal movement (support for up to 8 directions).",
     )
     WIDGET_VERSION = "1.0"
-
-    # 映射模式固定尺寸
-    MAPPING_MODE_WIDTH = 100
-    MAPPING_MODE_HEIGHT = 100
+    IS_REENTRANT = True  # 支持可重入，实现连续移动功能
 
     # 方向常量
     DIRECTIONS = ["up", "down", "left", "right"]

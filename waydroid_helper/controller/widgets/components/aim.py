@@ -40,14 +40,15 @@ if TYPE_CHECKING:
 @Editable
 @Resizable(resize_strategy=ResizableDecorator.RESIZE_SYMMETRIC)
 class Aim(BaseWidget):
-    MAPPING_MODE_WIDTH = 0
-    MAPPING_MODE_HEIGHT = 0
+    MAPPING_MODE_WIDTH = 100
+    MAPPING_MODE_HEIGHT = 100
     WIDGET_NAME = pgettext("Controller Widgets", "Aim")
     WIDGET_DESCRIPTION = pgettext(
         "Controller Widgets",
-        "Commonly used in shooting games. Add to the draggable view position in the game. Combined with the fire button to achieve mouse movement view and aiming. After adding, please first drag the rectangle to adjust the effective range of view rotation, which needs to correspond to the effective range that can trigger view rotation operation in the game.",
+        "Hold the key and move the mouse to turn the camera freely. The effective range is within the blue area.",
     )
     WIDGET_VERSION = "1.0"
+    IS_REENTRANT = True  # 支持可重入，实现长按瞄准功能
 
     # 固定圆形区域大小
     CIRCLE_SIZE = 50
@@ -74,7 +75,7 @@ class Aim(BaseWidget):
             min_height=150,
         )
         self.is_triggered: bool = False
-        self.platform: "PlatformBase" | None = None
+        self.platform: "PlatformBase | None" = None
         self._current_pos: tuple[int | float | None, int | float | None] = (None, None)
         self.sensitivity: int = 20
         self.setup_config()

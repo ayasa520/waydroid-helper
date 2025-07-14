@@ -51,6 +51,9 @@ class BaseWidget(Gtk.DrawingArea):
     MAPPING_MODE_WIDTH = 50  # 默认映射模式宽度
     MAPPING_MODE_HEIGHT = 50  # 默认映射模式高度
 
+    # 按键映射特性 - 子类可以覆盖这个值
+    IS_REENTRANT = False  # 是否支持可重入（长按重复触发），默认不支持
+
     # 定义GObject属性
     __gtype_name__ = "BaseWidget"
 

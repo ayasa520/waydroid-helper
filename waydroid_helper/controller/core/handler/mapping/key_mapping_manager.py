@@ -24,6 +24,7 @@ class KeySubscription:
         key_combination: KeyCombination,
         condition: Callable[[], bool] | None = None,
         required_states: list[str] | None = None,
+        reentrant: bool = False,
     ):
         self.widget: "Gtk.Widget" = widget
         self.key_combination: KeyCombination = key_combination
@@ -31,6 +32,7 @@ class KeySubscription:
         self.release_callback: str = "on_key_released"
         self.condition: Callable[[], bool] | None = condition
         self.required_states: list[str] = required_states or []
+        self.reentrant: bool = reentrant  # 是否支持重入（长按重复触发）
 
 
 class KeyMappingManager:
@@ -72,6 +74,7 @@ class KeyMappingManager:
         key_combination: KeyCombination,
         condition: Callable[[], bool] | None = None,
         required_states: list[str] | None = None,
+        reentrant: bool = False,
     ) -> bool:
         """订阅按键事件"""
         if not key_combination:
@@ -82,6 +85,7 @@ class KeyMappingManager:
             key_combination=key_combination,
             condition=condition,
             required_states=required_states or [],
+            reentrant=reentrant,
         )
 
         if key_combination not in self._key_subscriptions:
@@ -89,7 +93,7 @@ class KeyMappingManager:
         self._key_subscriptions[key_combination].append(subscription)
 
         logger.debug(
-            f"注册按键映射: {key_combination} -> {type(widget).__name__}(id={id(widget)})"
+            f"注册按键映射: {key_combination} -> {type(widget).__name__}(id={id(widget)}) reentrant={reentrant}"
         )
         return True
 
@@ -152,16 +156,23 @@ class KeyMappingManager:
 
         self._pressed_keys.add(event.key)
 
-        # 检查是否触发了新的映射
         triggered_new = self._check_and_trigger_mappings(event)
 
         # 如果触发了新映射，事件肯定被消费
         if triggered_new:
             return True
 
-        for triggered_keys in self._triggered_mappings.values():
+        # 检查是否有非重入的订阅正在处理这个按键
+        # 只有当所有相关的订阅都是可重入的时，才允许事件传递给下一个handler
+        for key_combination, triggered_keys in self._triggered_mappings.items():
             if event.key in triggered_keys:
-                return True
+                # 检查这个key_combination是否有非重入的订阅
+                if key_combination in self._key_subscriptions:
+                    has_non_reentrant = any(
+                        not sub.reentrant for sub in self._key_subscriptions[key_combination]
+                    )
+                    if has_non_reentrant:
+                        return True  # 有非重入的订阅在处理，消费事件
 
         return False
 
@@ -206,10 +217,6 @@ class KeyMappingManager:
             for combo_tuple in itertools.combinations(pressed_keys_list, size):
                 key_combination = KeyCombination(list(combo_tuple))
 
-                # 如果这个组合已经触发，就跳过
-                if key_combination in self._triggered_mappings:
-                    continue
-
                 if key_combination in self._key_subscriptions:
                     # 检查此组合是否是其他已触发组合的子集，如果是，则不触发
                     is_subset_of_triggered = False
@@ -220,16 +227,28 @@ class KeyMappingManager:
                     if is_subset_of_triggered:
                         continue
 
-                    # 【重要】为了避免循环调用，先预记录到 _triggered_mappings 中
-                    # 这样在回调函数执行过程中，如果再次触发相同的按键事件，就不会重复触发
-                    self._triggered_mappings[key_combination] = set(combo_tuple)
-                    logger.debug(f"预记录映射: {key_combination}")
+                    # 检查是否已经触发过，以及是否有可重入的订阅
+                    already_triggered = key_combination in self._triggered_mappings
+                    has_reentrant_subscription = any(
+                        sub.reentrant for sub in self._key_subscriptions[key_combination]
+                    )
+                    
+                    # 如果已经触发过且没有可重入订阅，则跳过
+                    if already_triggered and not has_reentrant_subscription:
+                        continue
+
+                    # 如果是第一次触发，预记录到 _triggered_mappings 中
+                    if not already_triggered:
+                        self._triggered_mappings[key_combination] = set(combo_tuple)
                     
                     combo_triggered_this_time = False
                     try:
                         for subscription in self._key_subscriptions[key_combination]:
                             if not self._check_subscription_conditions(subscription):
-                                logger.debug("跳过触发: 条件不满足")
+                                continue
+
+                            # 如果已经触发过，只处理可重入的订阅
+                            if already_triggered and not subscription.reentrant:
                                 continue
 
                             if hasattr(subscription.widget, subscription.callback):
@@ -242,21 +261,18 @@ class KeyMappingManager:
 
                         if combo_triggered_this_time:
                             triggered_any = True
-                            logger.debug(f"映射成功触发: {key_combination}")
-                        else:
-                            # 如果没有成功触发，则从 _triggered_mappings 中移除预记录
+                        elif not already_triggered:
+                            # 如果是第一次触发但没有成功，则从 _triggered_mappings 中移除预记录
                             del self._triggered_mappings[key_combination]
-                            logger.debug(f"移除预记录映射: {key_combination}")
                     except Exception as e:
                         # 如果回调函数执行过程中出现异常，确保清理预记录的映射
-                        logger.error(f"回调函数执行异常: {e}")
-                        if key_combination in self._triggered_mappings:
+                        logger.error(f"callback error: {e}")
+                        if not already_triggered and key_combination in self._triggered_mappings:
                             del self._triggered_mappings[key_combination]
-                            logger.debug(f"异常清理预记录映射: {key_combination}")
+                            logger.debug(f"exception clear triggered mapping: {key_combination}")
                         raise
 
         return triggered_any
-
     def _check_mapping_release(self, released_key: Key) -> bool:
         """处理映射释放，返回是否有映射被释放"""
         released_any = False
@@ -295,6 +311,8 @@ class KeyMappingManager:
                         conditions.append("自定义条件")
                     if sub.required_states:
                         conditions.append(f"依赖状态: {sub.required_states}")
+                    if sub.reentrant:
+                        conditions.append("可重入")
                     conditions_str = f" ({', '.join(conditions)})" if conditions else ""
                     logger.debug(f"    - {widget_name}(id={widget_id}){conditions_str}")
         logger.debug(f"当前按下的键: {[str(k) for k in self._pressed_keys]}")

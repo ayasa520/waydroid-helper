@@ -22,9 +22,9 @@ class AdbHelper:
     async def get_screen_resolution(self) -> tuple[int, int] | None:
         logger.info("Getting device screen resolution...")
         try:
-            result = await self.sm.run("adb shell wm size")
+            result = await self.sm.run("adb shell dumpsys window displays")
             output = result["stdout"]
-            match = re.search(r"Physical size: (\d+)x(\d+)", output)
+            match = re.search(r"cur=(\d+)x(\d+)", output)
             if match:
                 width = int(match.group(1))
                 height = int(match.group(2))

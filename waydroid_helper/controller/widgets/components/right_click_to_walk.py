@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""
-Right Click to Work Widget
-A circular widget similar to dpad in edit mode, with a mouse icon in the center.
-Mapping mode similar to fire widget, but triggers right click operation.
-"""
-
 import math
 from typing import TYPE_CHECKING, cast
 from gettext import pgettext
@@ -44,12 +38,13 @@ class RightClickToWalk(BaseWidget):
 
     MAPPING_MODE_WIDTH = 30
     MAPPING_MODE_HEIGHT = 30
-    WIDGET_NAME = pgettext("Controller Widgets", "Right Click to Work")
+    WIDGET_NAME = pgettext("Controller Widgets", "Right Click to Walk")
     WIDGET_DESCRIPTION = pgettext(
         "Controller Widgets",
         "Right click widget for work or context menu actions. Map to any key to trigger right mouse button click at the widget position.",
     )
     WIDGET_VERSION = "1.0"
+    IS_REENTRANT = True
 
     def __init__(
         self,
@@ -78,6 +73,7 @@ class RightClickToWalk(BaseWidget):
         self._joystick_active: bool = False  # 摇杆是否已离开中心
 
         self._current_position: tuple[float, float] = (x + width / 2, y + height / 2)
+        self.is_reentrant:bool = True
 
         # region 平滑移动系统
         self._timer_interval: int = 20  # ms
