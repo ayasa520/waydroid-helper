@@ -6,6 +6,7 @@
 
 from gettext import gettext as _
 from typing import TYPE_CHECKING
+import math
 
 import gi
 
@@ -51,6 +52,54 @@ Adw.init()
 
 MAX_RETRY_ATTEMPTS = 5
 RETRY_DELAY_SECONDS = 3
+
+
+class EllipseOverlay(Gtk.DrawingArea):
+    """椭圆覆盖层，用于绘制技能释放范围指示"""
+    
+    def __init__(self):
+        super().__init__()
+        self.ellipse_data = None
+        self.set_draw_func(self._draw_ellipse, None)
+    
+    def set_ellipse_data(self, data):
+        """设置椭圆数据并触发重绘"""
+        self.ellipse_data = data
+        self.queue_draw()
+    
+    def _draw_ellipse(self, widget, cr, width, height, user_data):
+        """绘制椭圆"""
+        if not self.ellipse_data:
+            return
+            
+        # 获取椭圆参数
+        ellipse_width_percent = self.ellipse_data.get('ellipse_width_percent', 80)
+        ellipse_height_percent = self.ellipse_data.get('ellipse_height_percent', 60)
+        
+        # 计算椭圆参数
+        window_center_x = width / 2
+        window_center_y = height / 2
+        ellipse_width = width * ellipse_width_percent / 100
+        ellipse_height = height * ellipse_height_percent / 100
+        ellipse_a = ellipse_width / 2  # 长半轴
+        ellipse_b = ellipse_height / 2  # 短半轴
+        
+        # 绘制椭圆边界
+        cr.set_source_rgba(0.6, 0.6, 0.6, 0.8)  # 半透明灰色
+        cr.set_line_width(3)
+        
+        # 使用椭圆方程绘制椭圆
+        cr.save()
+        cr.translate(window_center_x, window_center_y)
+        cr.scale(ellipse_a, ellipse_b)
+        cr.arc(0, 0, 1, 0, 2 * math.pi)
+        cr.restore()
+        cr.stroke()
+        
+        # 绘制椭圆中心点
+        cr.set_source_rgba(0.5, 0.5, 0.5, 0.9)
+        cr.arc(window_center_x, window_center_y, 4, 0, 2 * math.pi)
+        cr.fill()
 
 
 class TransparentWindow(Adw.Window):
@@ -110,6 +159,14 @@ class TransparentWindow(Adw.Window):
         event_bus.subscribe(
             EventType.SETTINGS_WIDGET, self._on_widget_settings_requested
         )
+        event_bus.subscribe(
+            EventType.WIDGET_SELECTION_OVERLAY, self._on_widget_selection_overlay
+        )
+        
+        # 创建椭圆绘制覆盖层
+        self.ellipse_overlay = EllipseOverlay()
+        self.ellipse_overlay.set_can_target(False)  # 忽略鼠标事件
+        overlay.add_overlay(self.ellipse_overlay)
 
         # 创建全局事件处理器链
         self.event_handler_chain = InputEventHandlerChain()
@@ -137,6 +194,16 @@ class TransparentWindow(Adw.Window):
 
         # 初始提示
         GLib.idle_add(self.show_notification, _("Edit Mode (F1: Switch Mode)"))
+
+    def _on_widget_selection_overlay(self, event):
+        """处理组件选中覆盖层事件"""
+        overlay_data = event.data
+        if overlay_data['action'] == 'show':
+            self.ellipse_overlay.set_ellipse_data(overlay_data)
+            logger.debug(f"显示椭圆覆盖层: {overlay_data}")
+        elif overlay_data['action'] == 'hide':
+            self.ellipse_overlay.set_ellipse_data(None)
+            logger.debug(f"隐藏椭圆覆盖层: {overlay_data}")
 
     def _on_widget_settings_requested(self, event: "Event[bool]"):
         """当一个widget请求设置时的回调, 弹出一个Popover"""
@@ -443,7 +510,7 @@ class TransparentWindow(Adw.Window):
             )
             event = controller.get_current_event()
             state = event.get_modifier_state()
-            # TODO 这个 mouse_key 实际上应该为 none, 此处只是为了兼容. 因为右键行走可以在右键按下状态移动时触发
+            # FIXME 这个 mouse_key 实际上应该为 none, 此处只是为了兼容. 因为右键行走可以在右键按下状态移动时触发
             mouse_key = None
             button = None
             if state & Gdk.ModifierType.BUTTON1_MASK:
@@ -463,6 +530,8 @@ class TransparentWindow(Adw.Window):
                 button=button,
                 raw_data={"controller": controller, "x": x, "y": y},
             )
+            # 技能施法和右键行走
+            event_bus.emit(Event(EventType.MOUSE_MOTION, self, event))
             self.event_handler_chain.process_event(event)
             return
 

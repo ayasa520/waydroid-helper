@@ -31,7 +31,6 @@ class KeyMappingEventHandler(InputEventHandler):
             "key_release",
             "mouse_press",
             "mouse_release",
-            'mouse_motion'
         ]
 
     def handle_event(self, event: InputEvent) -> bool:
@@ -44,13 +43,9 @@ class KeyMappingEventHandler(InputEventHandler):
         logger.debug(f"KeyMappingEventHandler is processing: {event.event_type}")
 
         # 对于按键事件，我们只关心主键（Key对象），组合逻辑由manager处理
-        if event.key:
-            if event.event_type in ["key_press", "mouse_press"]:
-                return key_mapping_manager.handle_key_press(event)
-            elif event.event_type in ["key_release", "mouse_release"]:
-                return key_mapping_manager.handle_key_release(event)
-            if event.event_type == 'mouse_motion' and event.button==Gdk.BUTTON_SECONDARY:
-                return key_mapping_manager.handle_key_press(event)
-            
+        if event.event_type in ["key_press", "mouse_press"]:
+            return key_mapping_manager.handle_key_press(event)
+        elif event.event_type in ["key_release", "mouse_release"]:
+            return key_mapping_manager.handle_key_release(event)
         # 如果事件没有被按键处理器消费，则返回False
         return False

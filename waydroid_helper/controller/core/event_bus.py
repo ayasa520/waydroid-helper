@@ -35,6 +35,9 @@ class EventType(Enum):
     CUSTOM = auto()  # 自定义事件基类
     DELETE_WIDGET = auto()  # 删除组件
     SETTINGS_WIDGET = auto() # 设置组件
+    WIDGET_SELECTION_OVERLAY = auto()  # 组件选中覆盖层显示
+
+    MOUSE_MOTION = auto()  # 鼠标移动事件
 
 
 

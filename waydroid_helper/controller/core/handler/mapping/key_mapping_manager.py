@@ -151,10 +151,8 @@ class KeyMappingManager:
 
     def handle_key_press(self, event: InputEvent) -> bool:
         """处理按键按下事件，返回事件是否被消费"""
-        if not event.key:
-            return False
-
-        self._pressed_keys.add(event.key)
+        if event.key:
+            self._pressed_keys.add(event.key)
 
         triggered_new = self._check_and_trigger_mappings(event)
 
@@ -219,13 +217,13 @@ class KeyMappingManager:
 
                 if key_combination in self._key_subscriptions:
                     # 检查此组合是否是其他已触发组合的子集，如果是，则不触发
-                    is_subset_of_triggered = False
-                    for triggered_combo in self._triggered_mappings.keys():
-                        if key_combination.is_subset_of(triggered_combo):
-                            is_subset_of_triggered = True
-                            break
-                    if is_subset_of_triggered:
-                        continue
+                    # is_subset_of_triggered = False
+                    # for triggered_combo in self._triggered_mappings.keys():
+                    #     if key_combination.is_subset_of(triggered_combo):
+                    #         is_subset_of_triggered = True
+                    #         break
+                    # if is_subset_of_triggered:
+                    #     continue
 
                     # 检查是否已经触发过，以及是否有可重入的订阅
                     already_triggered = key_combination in self._triggered_mappings
