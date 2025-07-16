@@ -272,30 +272,41 @@ class SkillCasting(BaseWidget):
         cr.arc(center_x, center_y, radius, 0, 2 * math.pi)
         cr.fill()
 
-        # 创建径向渐变，从中心向上方向扩散
-        gradient = cairo.RadialGradient(center_x, center_y, 0, center_x, center_y, radius)
-        gradient.add_color_stop_rgba(0, 0.0, 1.0, 1.0, 0.8)  # 中心：亮青色，高透明度
-        gradient.add_color_stop_rgba(0.3, 0.0, 0.8, 0.8, 0.6)  # 中间：青绿色
-        gradient.add_color_stop_rgba(0.7, 0.0, 0.6, 0.6, 0.3)  # 外层：深一些的青绿色
-        gradient.add_color_stop_rgba(1.0, 0.0, 0.4, 0.4, 0.1)  # 边缘：很淡的青绿色
+        # 绘制雷达扫描效果
+        # 绘制同心圆（类似雷达的圆圈）- 从内向外颜色加深
+        # 内圆 - 最浅灰色 (133/400 = 0.33)
+        inner_radius = radius * 0.33
+        cr.set_source_rgba(0.8, 0.8, 0.8, 0.8)  # 最浅灰色
+        cr.arc(center_x, center_y, inner_radius, 0, 2 * math.pi)
+        cr.fill()
         
-        # 绘制朝上的扇形区域，但使用渐变填充
-        cr.set_source(gradient)
-        cr.move_to(center_x, center_y)  # 移动到圆心
-        # 扇形角度稍微大一些，从 -150度 到 -30度 (120度扇形)
-        start_angle = -5 * math.pi / 6  # -150度
-        end_angle = -math.pi / 6        # -30度
-        cr.arc(center_x, center_y, radius, start_angle, end_angle)
+        # 中圆 - 中等灰色 (266/400 = 0.66)
+        middle_radius = radius * 0.66
+        cr.set_source_rgba(0.6, 0.6, 0.6, 0.8)  # 中等灰色
+        cr.arc(center_x, center_y, middle_radius, 0, 2 * math.pi)
+        cr.fill()
+        
+        # 外圆已经是原本的圆形背景(0.5, 0.5, 0.5, 0.6)，是最深的，保持不变
+        
+        # 绘制135度扇形朝上 - 透明度高
+        cr.set_source_rgba(64/255, 224/255, 208/255, 0.25)  # 青绿色，透明度0.25
+        cr.move_to(center_x, center_y)
+        # 135度扇形，以向上(-π/2)为中心，向两边扩展67.5度
+        start_angle_135 = -math.pi / 2 - 135 * math.pi / 360  # 向上中心-67.5度
+        end_angle_135 = -math.pi / 2 + 135 * math.pi / 360   # 向上中心+67.5度
+        cr.arc(center_x, center_y, radius, start_angle_135, end_angle_135)
         cr.close_path()
         cr.fill()
         
-        # # 在扇形上方添加一个更亮的指向箭头效果
-        # cr.set_source_rgba(0.0, 1.0, 1.0, 0.9)  # 亮青色
-        # cr.set_line_width(2)
-        # # 绘制向上的指示线
-        # cr.move_to(center_x, center_y)
-        # cr.line_to(center_x, center_y - radius * 0.8)
-        # cr.stroke()
+        # 绘制45度扇形朝上 - 透明度低
+        cr.set_source_rgba(64/255, 224/255, 208/255, 0.15)  # 青绿色，透明度0.15
+        cr.move_to(center_x, center_y)
+        # 45度扇形，以向上(-π/2)为中心，向两边扩展22.5度
+        start_angle_45 = -math.pi / 2 - 45 * math.pi / 360   # 向上中心-22.5度
+        end_angle_45 = -math.pi / 2 + 45 * math.pi / 360     # 向上中心+22.5度
+        cr.arc(center_x, center_y, radius, start_angle_45, end_angle_45)
+        cr.close_path()
+        cr.fill()
 
         # 绘制圆形边框
         cr.set_source_rgba(0.3, 0.3, 0.3, 0.9)
@@ -685,6 +696,7 @@ class SkillCasting(BaseWidget):
                 
         elif self._skill_state == SkillState.MOVING:
             # 移动中，更新目标位置但不重新开始移动
+            pass
             
         elif self._skill_state == SkillState.ACTIVE:
             # 激活状态，瞬移到新目标位置
