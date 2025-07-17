@@ -131,9 +131,8 @@ class SkillCasting(BaseWidget):
         self._move_steps_count: int = 0
         self._move_timer: int | None = None
         
-        # 椭圆映射参数（百分比）
-        self.ellipse_width_percent: int = 80  # 椭圆宽度占窗口宽度的百分比
-        self.ellipse_height_percent: int = 60  # 椭圆高度占窗口高度的百分比
+        # 圆形映射参数（像素值）
+        self.circle_radius: int = 200  # 圆半径，单位像素
         self._mouse_x: float = 0
         self._mouse_y: float = 0
         
@@ -143,7 +142,7 @@ class SkillCasting(BaseWidget):
         # 设置配置项
         self.setup_config()
         
-        # 监听选中状态变化，用于椭圆绘制通知
+        # 监听选中状态变化，用于圆形绘制通知
         self.connect('notify::is-selected', self._on_selection_changed)
 
         event_bus.subscribe(EventType.MOUSE_MOTION, lambda event: (self.on_key_triggered(None, event.data), None)[1])
@@ -151,29 +150,16 @@ class SkillCasting(BaseWidget):
     def setup_config(self) -> None:
         """设置配置项"""
         
-        # 添加椭圆宽度百分比配置
-        ellipse_width_config = create_slider_config(
-            key="ellipse_width_percent",
-            label=pgettext("Controller Widgets", "Ellipse Width (%)"),
-            value=self.ellipse_width_percent,
-            min_value=10,
-            max_value=150,
-            step=5,
+        # 添加圆半径配置
+        circle_radius_config = create_slider_config(
+            key="circle_radius",
+            label=pgettext("Controller Widgets", "Circle Radius (px)"),
+            value=self.circle_radius,
+            min_value=50,
+            max_value=500,
+            step=10,
             description=pgettext(
-                "Controller Widgets", "Adjusts the width of the skill casting ellipse range as percentage of window width"
-            ),
-        )
-        
-        # 添加椭圆高度百分比配置
-        ellipse_height_config = create_slider_config(
-            key="ellipse_height_percent",
-            label=pgettext("Controller Widgets", "Ellipse Height (%)"),
-            value=self.ellipse_height_percent,
-            min_value=10,
-            max_value=150,
-            step=5,
-            description=pgettext(
-                "Controller Widgets", "Adjusts the height of the skill casting ellipse range as percentage of window height"
+                "Controller Widgets", "Adjusts the radius of the skill casting circle range in pixels"
             ),
         )
         
@@ -193,32 +179,21 @@ class SkillCasting(BaseWidget):
             ),
         )
         
-        self.add_config_item(ellipse_width_config)
-        self.add_config_item(ellipse_height_config)
+        self.add_config_item(circle_radius_config)
         self.add_config_item(cast_timing_config)
         
         # 添加配置变更回调
-        self.add_config_change_callback("ellipse_width_percent", self._on_ellipse_width_changed)
-        self.add_config_change_callback("ellipse_height_percent", self._on_ellipse_height_changed)
+        self.add_config_change_callback("circle_radius", self._on_circle_radius_changed)
         self.add_config_change_callback("cast_timing", self._on_cast_timing_changed)
 
-    def _on_ellipse_width_changed(self, key: str, value: int) -> None:
-        """处理椭圆宽度配置变更"""
+    def _on_circle_radius_changed(self, key: str, value: int) -> None:
+        """处理圆半径配置变更"""
         try:
-            self.ellipse_width_percent = int(value)
-            # 如果当前选中状态，重新发送椭圆绘制事件
-            self._update_ellipse_if_selected()
+            self.circle_radius = int(value)
+            # 如果当前选中状态，重新发送圆形绘制事件
+            self._update_circle_if_selected()
         except (ValueError, TypeError):
-            logger.error(f"Invalid ellipse width value: {value}")
-
-    def _on_ellipse_height_changed(self, key: str, value: int) -> None:
-        """处理椭圆高度配置变更"""
-        try:
-            self.ellipse_height_percent = int(value)
-            # 如果当前选中状态，重新发送椭圆绘制事件
-            self._update_ellipse_if_selected()
-        except (ValueError, TypeError):
-            logger.error(f"Invalid ellipse height value: {value}")
+            logger.error(f"Invalid circle radius value: {value}")
 
     def _on_cast_timing_changed(self, key: str, value: str) -> None:
         """处理施法时机配置变更"""
@@ -227,38 +202,36 @@ class SkillCasting(BaseWidget):
         except (ValueError, TypeError):
             logger.error(f"Invalid cast timing value: {value}")
 
-    def _update_ellipse_if_selected(self):
-        """如果当前组件被选中，更新椭圆绘制"""
+    def _update_circle_if_selected(self):
+        """如果当前组件被选中，更新圆形绘制"""
         if self.is_selected:
-            ellipse_data = {
+            circle_data = {
                 'widget_id': id(self),
                 'widget_type': 'skill_casting',
-                'ellipse_width_percent': self.ellipse_width_percent,
-                'ellipse_height_percent': self.ellipse_height_percent,
+                'circle_radius': self.circle_radius,
                 'action': 'show'
             }
-            event_bus.emit(Event(EventType.WIDGET_SELECTION_OVERLAY, self, ellipse_data))
+            event_bus.emit(Event(EventType.WIDGET_SELECTION_OVERLAY, self, circle_data))
 
     def _on_selection_changed(self, widget, pspec):
         """当选中状态变化时的回调"""
         if self.is_selected:
-            # 发送显示椭圆的事件
-            ellipse_data = {
+            # 发送显示圆形的事件
+            circle_data = {
                 'widget_id': id(self),
                 'widget_type': 'skill_casting',
-                'ellipse_width_percent': self.ellipse_width_percent,
-                'ellipse_height_percent': self.ellipse_height_percent,
+                'circle_radius': self.circle_radius,
                 'action': 'show'
             }
-            event_bus.emit(Event(EventType.WIDGET_SELECTION_OVERLAY, self, ellipse_data))
+            event_bus.emit(Event(EventType.WIDGET_SELECTION_OVERLAY, self, circle_data))
         else:
-            # 发送隐藏椭圆的事件
-            ellipse_data = {
+            # 发送隐藏圆形的事件
+            circle_data = {
                 'widget_id': id(self),
                 'widget_type': 'skill_casting',
                 'action': 'hide'
             }
-            event_bus.emit(Event(EventType.WIDGET_SELECTION_OVERLAY, self, ellipse_data))
+            event_bus.emit(Event(EventType.WIDGET_SELECTION_OVERLAY, self, circle_data))
 
     def draw_widget_content(self, cr: "Context[Surface]", width: int, height: int):
         """绘制圆形按钮的具体内容"""
@@ -505,51 +478,52 @@ class SkillCasting(BaseWidget):
         root = cast("Gtk.Window", root)
         return root.get_width(), root.get_height()
 
-    def _map_ellipse_to_circle(self, mouse_x: float, mouse_y: float) -> tuple[float, float]:
+    def _map_circle_to_circle(self, mouse_x: float, mouse_y: float) -> tuple[float, float]:
         """
-        将鼠标在椭圆范围内的坐标映射到虚拟摇杆圆形范围内的坐标
+        将鼠标在圆形范围内的坐标映射到虚拟摇杆圆形范围内的坐标
         
-        椭圆：窗口中心为中心，宽度和高度按百分比缩放
-        圆形：widget中心为圆心，宽度/2为半径
+        外圆：窗口中心为圆心，半径按百分比缩放
+        内圆：widget中心为圆心，宽度/2为半径
         """
         # 获取窗口信息
         window_center_x, window_center_y = self._get_window_center()
         window_width, window_height = self._get_window_size()
         
-        # 椭圆参数（使用百分比）
-        ellipse_width = window_width * self.ellipse_width_percent / 100
-        ellipse_height = window_height * self.ellipse_height_percent / 100
-        ellipse_a = ellipse_width / 2  # 长半轴
-        ellipse_b = ellipse_height / 2  # 短半轴
+        # 外圆参数（使用像素值）
+        outer_radius = self.circle_radius
         
         # 虚拟摇杆圆形参数
         widget_center_x = self.center_x
         widget_center_y = self.center_y
         widget_radius = self.width / 2
         
-        # 计算鼠标相对于椭圆中心的位置
+        # 计算鼠标相对于外圆中心的位置
         rel_x = mouse_x - window_center_x
         rel_y = mouse_y - window_center_y
         
-        # 检查鼠标是否在椭圆内
-        ellipse_value = (rel_x * rel_x) / (ellipse_a * ellipse_a) + (rel_y * rel_y) / (ellipse_b * ellipse_b)
+        # 计算距离
+        distance = math.sqrt(rel_x * rel_x + rel_y * rel_y)
         
-        if ellipse_value <= 1.0:
-            # 鼠标在椭圆内，直接按比例映射
-            target_x = widget_center_x + (rel_x / ellipse_a) * widget_radius
-            target_y = widget_center_y + (rel_y / ellipse_b) * widget_radius
+        if distance <= outer_radius:
+            # 鼠标在外圆内，直接按比例映射
+            if distance == 0:
+                # 避免除零，直接返回widget中心
+                target_x = widget_center_x
+                target_y = widget_center_y
+            else:
+                # 按距离比例映射
+                ratio = distance / outer_radius
+                target_x = widget_center_x + (rel_x / distance) * ratio * widget_radius
+                target_y = widget_center_y + (rel_y / distance) * ratio * widget_radius
         else:
-            # 鼠标在椭圆外，需要先投影到椭圆边界，再映射到圆形边界
-            # 计算从椭圆中心到鼠标位置的方向角度
-            angle = math.atan2(rel_y, rel_x)
-            
-            # 计算椭圆边界上对应角度的点
-            ellipse_edge_x = ellipse_a * math.cos(angle)
-            ellipse_edge_y = ellipse_b * math.sin(angle)
-            
-            # 映射到圆形边界
-            target_x = widget_center_x + (ellipse_edge_x / ellipse_a) * widget_radius
-            target_y = widget_center_y + (ellipse_edge_y / ellipse_b) * widget_radius
+            # 鼠标在外圆外，投影到圆形边界，再映射到widget圆形边界
+            if distance == 0:
+                target_x = widget_center_x
+                target_y = widget_center_y
+            else:
+                # 投影到外圆边界，然后映射到widget圆形边界
+                target_x = widget_center_x + (rel_x / distance) * widget_radius
+                target_y = widget_center_y + (rel_y / distance) * widget_radius
         
         return (target_x, target_y)
 
@@ -666,12 +640,10 @@ class SkillCasting(BaseWidget):
         if is_mouse_motion:
             if not event.position:
                 return False
-            print(f"鼠标移动事件: {event.position}")
             self._mouse_x, self._mouse_y = event.position
          
         # 将鼠标位置映射到虚拟摇杆位置
-        self._target_position = self._map_ellipse_to_circle(self._mouse_x, self._mouse_y)
-        print(f"target_position: {self._target_position}")
+        self._target_position = self._map_circle_to_circle(self._mouse_x, self._mouse_y)
         
         if self._skill_state == SkillState.INACTIVE:
             # 首次激活 - 只有按键事件才能激活
