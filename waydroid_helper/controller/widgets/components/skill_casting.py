@@ -125,6 +125,10 @@ class SkillCasting(BaseWidget):
         self._target_position: tuple[float, float] = (x + width / 2, y + height / 2)
         self.is_reentrant: bool = True
         
+        # 技能释放控制标志
+        self._pending_release: bool = False  # 是否有待处理的释放事件（ON_RELEASE模式专用）
+        self._target_locked: bool = False    # 是否锁定目标位置（所有模式共用）
+        
         # 平滑移动系统
         self._timer_interval: int = 20  # ms
         self._move_steps_total: int = 6
@@ -569,9 +573,17 @@ class SkillCasting(BaseWidget):
             elif self.cast_timing == CastTiming.MANUAL.value:
                 # 手动释放模式：进入锁定状态，等待第二次按键
                 self._skill_state = SkillState.LOCKED
+                self._target_locked = False  # 解锁目标位置，允许瞬移
             else:
-                # 默认松开释放模式：进入激活状态，等待按键松开
-                self._skill_state = SkillState.ACTIVE
+                # ON_RELEASE模式：检查是否有待处理的释放事件
+                if self._pending_release:
+                    # 有待处理的释放事件，立即发送UP事件并重置
+                    self._emit_touch_event(AMotionEventAction.UP)
+                    self._reset_skill()
+                else:
+                    # 没有待处理的释放事件，进入激活状态，等待按键松开
+                    self._skill_state = SkillState.ACTIVE
+                    self._target_locked = False  # 解锁目标位置，允许瞬移
         
         return False  # Stop timer
 
@@ -612,6 +624,8 @@ class SkillCasting(BaseWidget):
         """重置技能状态"""
         self._skill_state = SkillState.INACTIVE
         self._current_position = (self.center_x, self.center_y)
+        self._pending_release = False
+        self._target_locked = False
         
         # 清理定时器
         if self._move_timer:
@@ -643,12 +657,16 @@ class SkillCasting(BaseWidget):
             self._mouse_x, self._mouse_y = event.position
          
         # 将鼠标位置映射到虚拟摇杆位置
-        self._target_position = self._map_circle_to_circle(self._mouse_x, self._mouse_y)
+        mapped_target = self._map_circle_to_circle(self._mouse_x, self._mouse_y)
         
         if self._skill_state == SkillState.INACTIVE:
             # 首次激活 - 只有按键事件才能激活
             if is_key_press:
                 self._skill_state = SkillState.MOVING
+                
+                # 设置目标位置并锁定（所有模式都锁定目标）
+                self._target_position = mapped_target
+                self._target_locked = True
                 
                 # 分配指针ID并发送DOWN事件
                 pointer_id = pointer_id_manager.allocate(self)
@@ -667,12 +685,19 @@ class SkillCasting(BaseWidget):
                 return False
                 
         elif self._skill_state == SkillState.MOVING:
-            # 移动中，更新目标位置但不重新开始移动
-            pass
+            # 移动中的处理：所有模式都忽略鼠标移动（目标已锁定）
+            if is_mouse_motion:
+                # 目标已锁定，忽略鼠标移动
+                return False
+            # 按键事件在移动中不处理
             
         elif self._skill_state == SkillState.ACTIVE:
-            # 激活状态，瞬移到新目标位置
-            self._instant_move_to_target()
+            # 激活状态：只有在到达目标后才允许更新目标位置
+            if is_mouse_motion:
+                # 更新目标位置并瞬移
+                self._target_position = mapped_target
+                self._instant_move_to_target()
+            # 按键事件在激活状态不处理
             
         elif self._skill_state == SkillState.LOCKED:
             # 锁定状态（手动释放模式）
@@ -680,8 +705,9 @@ class SkillCasting(BaseWidget):
                 # 第二次按键，释放技能
                 self._emit_touch_event(AMotionEventAction.UP)
                 self._reset_skill()
-            else:
+            elif is_mouse_motion:
                 # 鼠标移动，瞬移到新目标位置
+                self._target_position = mapped_target
                 self._instant_move_to_target()
 
         return True
@@ -697,8 +723,12 @@ class SkillCasting(BaseWidget):
 
         # 根据施法时机决定处理方式
         if self.cast_timing == CastTiming.ON_RELEASE.value:
-            # 松开释放模式：按键松开时发送UP事件
-            if self._skill_state in [SkillState.MOVING, SkillState.ACTIVE]:
+            # 松开释放模式：检查当前状态
+            if self._skill_state == SkillState.MOVING:
+                # 正在移动中，设置待处理释放标志，等移动完成后自动发送UP事件
+                self._pending_release = True
+            elif self._skill_state == SkillState.ACTIVE:
+                # 已到达目标，立即发送UP事件并重置
                 self._emit_touch_event(AMotionEventAction.UP)
                 self._reset_skill()
         elif self.cast_timing == CastTiming.IMMEDIATE.value:
