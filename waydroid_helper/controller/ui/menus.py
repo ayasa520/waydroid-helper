@@ -408,28 +408,6 @@ class ContextMenuManager:
                     logger.error(f"Failed to create widget: {e}")
                     continue
 
-                    # 创建widget
-                    widget = widget_factory.create_widget(widget_type, **create_kwargs)
-
-                    if widget:
-                        # 在缩放后的位置创建widget
-                        if hasattr(self.parent_window, "create_widget_at_position"):
-                            self.parent_window.create_widget_at_position(widget, x, y)
-                            widgets_created += 1
-                            logger.debug(
-                                f"Restored {widget_type} widget: original position ({original_x}, {original_y}) -> new position ({x}, {y}), original size ({original_width}x{original_height}) -> new size ({width}x{height})"
-                            )
-                        else:
-                            logger.error(
-                                "Failed to create widget, missing create_widget_at_position method"
-                            )
-                    else:
-                        logger.error(f"Failed to create {widget_type} widget")
-
-                except Exception as e:
-                    logger.error(f"Failed to create widget: {e}")
-                    continue
-
             logger.info(f"Layout loaded, restored {widgets_created} widgets")
 
         except Exception as e:

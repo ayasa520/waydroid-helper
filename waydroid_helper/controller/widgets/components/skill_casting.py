@@ -53,6 +53,7 @@ class SkillState(Enum):
     MOVING = "moving"          # 移动中（向目标位置移动）
     ACTIVE = "active"          # 激活状态（可以瞬移）
     LOCKED = "locked"          # 锁定状态（手动释放模式）
+    CANCELING = "canceling"    # 取消施法移动状态
 
 
 class CastTiming(Enum):
@@ -131,6 +132,10 @@ class SkillCasting(BaseWidget):
         # 技能释放控制标志
         self._pending_release: bool = False  # 是否有待处理的释放事件（ON_RELEASE模式专用）
         self._target_locked: bool = False    # 是否锁定目标位置（所有模式共用）
+        
+        # 取消施法相关变量
+        self._cancel_target_position: tuple[float, float] | None = None  # 取消施法的目标位置
+        self._pending_cancel: bool = False  # 是否有待处理的取消施法事件
         
         # 平滑移动系统
         self._timer_interval: int = 20  # ms
@@ -279,14 +284,44 @@ class SkillCasting(BaseWidget):
 
     def _handle_cancel_casting(self, event):
         """处理取消施法事件"""
-        print("1111111111111111111")
-        if self._skill_state != SkillState.INACTIVE:
-            # 重置技能状态
-            self._reset_skill()
+        if self._skill_state == SkillState.INACTIVE:
+            return
             
-            # TODO: 这里可以添加具体的取消施法逻辑
-            # 比如发送特殊的触摸事件、清理状态等
-            logger.info(f"Skill casting canceled for widget {id(self)}")
+        # 从事件中获取取消施法的目标位置
+        event_data = event.data if hasattr(event, 'data') else event
+        if not isinstance(event_data, dict) or 'x' not in event_data or 'y' not in event_data:
+            logger.error("Cancel casting event missing x,y coordinates")
+            return
+            
+        cancel_x = event_data['x']
+        cancel_y = event_data['y']
+        self._cancel_target_position = (cancel_x, cancel_y)
+        
+        logger.info(f"Cancel casting requested for widget {id(self)}, target: ({cancel_x}, {cancel_y})")
+        
+        if self._skill_state == SkillState.MOVING:
+            # 当前正在移动中，设置待处理的取消标志，等移动完成后执行取消流程
+            self._pending_cancel = True
+            logger.debug("Currently moving, cancel will be processed after movement completion")
+        else:
+            # 当前不在移动状态，立即开始取消施法移动
+            self._start_cancel_move()
+
+    def _start_cancel_move(self):
+        """开始取消施法的平滑移动"""
+        if self._cancel_target_position is None:
+            logger.error("Cannot start cancel move: no target position set")
+            return
+            
+        logger.debug(f"Starting cancel move to {self._cancel_target_position}")
+        
+        # 设置目标位置并开始移动
+        self._target_position = self._cancel_target_position
+        self._skill_state = SkillState.CANCELING
+        self._target_locked = True  # 锁定目标，不允许中断
+        
+        # 开始平滑移动
+        self._start_smooth_move_to_target()
 
     def __del__(self):
         """析构时清理取消按钮"""
@@ -623,7 +658,6 @@ class SkillCasting(BaseWidget):
         if self._move_timer:
             GLib.source_remove(self._move_timer)
         
-        self._skill_state = SkillState.MOVING
         self._move_steps_count = 0
         self._move_timer = GLib.timeout_add(
             self._timer_interval, self._update_smooth_move
@@ -642,7 +676,7 @@ class SkillCasting(BaseWidget):
             )
             self._move_steps_count += 1
             
-            if self._skill_state == SkillState.MOVING:
+            if self._skill_state == SkillState.MOVING or self._skill_state == SkillState.CANCELING:
                 self._emit_touch_event(AMotionEventAction.MOVE)
             
             return True  # Continue timer
@@ -652,6 +686,13 @@ class SkillCasting(BaseWidget):
         self._move_timer = None
         
         if self._skill_state == SkillState.MOVING:
+            # 检查是否有待处理的取消事件
+            if self._pending_cancel:
+                # 有待处理的取消事件，开始取消施法移动
+                self._pending_cancel = False
+                self._start_cancel_move()
+                return False  # Stop current timer, new timer will be started in _start_cancel_move
+            
             # 根据施法时机决定下一步动作
             if self.cast_timing == CastTiming.IMMEDIATE.value:
                 # 立即释放模式：移动完成后立即发送UP事件并重置
@@ -671,6 +712,11 @@ class SkillCasting(BaseWidget):
                     # 没有待处理的释放事件，进入激活状态，等待按键松开
                     self._skill_state = SkillState.ACTIVE
                     self._target_locked = False  # 解锁目标位置，允许瞬移
+        elif self._skill_state == SkillState.CANCELING:
+            # 取消施法移动完成，发送UP事件并重置
+            logger.debug("Cancel move completed, sending UP event")
+            self._emit_touch_event(AMotionEventAction.UP)
+            self._reset_skill()
         
         return False  # Stop timer
 
@@ -714,6 +760,10 @@ class SkillCasting(BaseWidget):
         self._pending_release = False
         self._target_locked = False
         
+        # 清理取消施法相关状态
+        self._pending_cancel = False
+        self._cancel_target_position = None
+        
         # 清理定时器
         if self._move_timer:
             GLib.source_remove(self._move_timer)
@@ -730,6 +780,10 @@ class SkillCasting(BaseWidget):
     ):
         if not event or not event.event_type:
             return False
+            
+        # 取消施法状态下不响应任何用户输入
+        if self._skill_state == SkillState.CANCELING:
+            return True
             
         # 判断事件类型
         is_key_press = event.event_type == "key_press"
@@ -806,6 +860,10 @@ class SkillCasting(BaseWidget):
     ):
         """当映射的键释放时，根据施法时机决定是否发送UP事件"""
         if self._skill_state == SkillState.INACTIVE:
+            return True
+
+        # 取消施法状态下不响应按键弹起
+        if self._skill_state == SkillState.CANCELING:
             return True
 
         # 根据施法时机决定处理方式
