@@ -33,12 +33,13 @@ class EventType(Enum):
 
     # 自定义事件（组件可以定义自己的事件）
     CUSTOM = auto()  # 自定义事件基类
+    CREATE_WIDGET = auto()  # 创建组件
     DELETE_WIDGET = auto()  # 删除组件
     SETTINGS_WIDGET = auto() # 设置组件
     WIDGET_SELECTION_OVERLAY = auto()  # 组件选中覆盖层显示
 
     MOUSE_MOTION = auto()  # 鼠标移动事件
-
+    CANCEL_CASTING = auto()  # 取消施法事件
 
 
 @dataclass

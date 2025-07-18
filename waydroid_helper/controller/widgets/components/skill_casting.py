@@ -4,11 +4,14 @@
 一个圆形的半透明灰色按钮，支持技能释放操作
 """
 
+from cProfile import label
 import math
 import time
 from gettext import pgettext
 from typing import TYPE_CHECKING, cast
 from enum import Enum
+
+from waydroid_helper.controller.widgets.components.cancel_casting import CancelCasting
 
 if TYPE_CHECKING:
     from cairo import Context, Surface, FontSlant, FontWeight
@@ -150,6 +153,7 @@ class SkillCasting(BaseWidget):
         self.connect('notify::is-selected', self._on_selection_changed)
 
         event_bus.subscribe(EventType.MOUSE_MOTION, lambda event: (self.on_key_triggered(None, event.data), None)[1])
+        event_bus.subscribe(EventType.CANCEL_CASTING, self._handle_cancel_casting, lambda event: event.data.get('target_skill_id') == id(self))
 
     def setup_config(self) -> None:
         """设置配置项"""
@@ -183,12 +187,32 @@ class SkillCasting(BaseWidget):
             ),
         )
         
+        # 添加取消施法按钮配置
+        cancel_button_config = create_dropdown_config(
+            key="enable_cancel_button",
+            label=pgettext("Controller Widgets", "Enable Cancel Button"),
+            options=["disabled", "enabled"],
+            option_labels={
+                "disabled": pgettext("Controller Widgets", "Disabled"),
+                "enabled": pgettext("Controller Widgets", "Enabled"),
+            },
+            value="disabled",
+            description=pgettext(
+                "Controller Widgets", "Enable a cancel casting button that can interrupt ongoing skill casting"
+            ),
+        )
+        
         self.add_config_item(circle_radius_config)
         self.add_config_item(cast_timing_config)
+        self.add_config_item(cancel_button_config)
         
         # 添加配置变更回调
         self.add_config_change_callback("circle_radius", self._on_circle_radius_changed)
         self.add_config_change_callback("cast_timing", self._on_cast_timing_changed)
+        self.add_config_change_callback("enable_cancel_button", self._on_cancel_button_config_changed)
+        
+        # 初始化取消按钮状态
+        self._cancel_button_widget = None
 
     def _on_circle_radius_changed(self, key: str, value: int) -> None:
         """处理圆半径配置变更"""
@@ -205,6 +229,69 @@ class SkillCasting(BaseWidget):
             self.cast_timing = str(value)
         except (ValueError, TypeError):
             logger.error(f"Invalid cast timing value: {value}")
+
+    def _on_cancel_button_config_changed(self, key: str, value: str) -> None:
+        """处理取消施法按钮配置变更"""
+        try:
+            if value == "enabled":
+                self._enable_cancel_button()
+            elif value == "disabled":
+                self._disable_cancel_button()
+        except (ValueError, TypeError):
+            logger.error(f"Invalid cancel button value: {value}")
+
+    def _enable_cancel_button(self):
+        """启用取消施法按钮"""
+        if self._cancel_button_widget is not None:
+            logger.debug("Cancel button already enabled")
+            return
+            
+        # 发送事件通知window创建取消按钮
+        create_data = {
+            'widget': CancelCasting(x=self.x, y=self.y, width=self.width, height=self.height,target_skill_id=id(self)),
+            'x': self.x,
+            'y': self.y,
+        }
+        
+        logger.debug(f"Requesting creation of cancel button for skill widget {id(self)}")
+        event_bus.emit(Event(EventType.CREATE_WIDGET, self, create_data))
+        self.set_cancel_button_widget(create_data['widget'])
+
+    def _disable_cancel_button(self):
+        """禁用取消施法按钮"""
+        if self._cancel_button_widget is None:
+            logger.debug("Cancel button already disabled")
+            return
+            
+        # 发送事件通知window删除取消按钮
+        delete_data = {
+            'action': 'delete_cancel_button',
+            'cancel_widget_id': id(self._cancel_button_widget),
+        }
+        
+        logger.debug(f"Requesting deletion of cancel button {id(self._cancel_button_widget)}")
+        event_bus.emit(Event(EventType.DELETE_WIDGET, self, delete_data))
+        self._cancel_button_widget = None
+
+    def set_cancel_button_widget(self, widget):
+        """设置关联的取消按钮widget"""
+        self._cancel_button_widget = widget
+
+    def _handle_cancel_casting(self, event):
+        """处理取消施法事件"""
+        print("1111111111111111111")
+        if self._skill_state != SkillState.INACTIVE:
+            # 重置技能状态
+            self._reset_skill()
+            
+            # TODO: 这里可以添加具体的取消施法逻辑
+            # 比如发送特殊的触摸事件、清理状态等
+            logger.info(f"Skill casting canceled for widget {id(self)}")
+
+    def __del__(self):
+        """析构时清理取消按钮"""
+        if self._cancel_button_widget is not None:
+            self._disable_cancel_button()
 
     def _update_circle_if_selected(self):
         """如果当前组件被选中，更新圆形绘制"""

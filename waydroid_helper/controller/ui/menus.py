@@ -54,13 +54,20 @@ class ContextMenuManager:
         # 动态生成组件菜单项
         available_types = widget_factory.get_available_types()
 
-        if not available_types:
-            # 如果没有发现任何组件，显示提示
+        # 过滤掉不允许通过右键菜单创建的组件
+        filtered_types = []
+        for widget_type in available_types:
+            widget_class = widget_factory.widget_classes.get(widget_type)
+            if widget_class and getattr(widget_class, 'ALLOW_CONTEXT_MENU_CREATION', True):
+                filtered_types.append(widget_type)
+
+        if not filtered_types:
+            # 如果没有发现任何可创建的组件，显示提示
             label = Gtk.Label(label=_("No widgets found"))
             menu_box.append(label)
         else:
             # 为每个发现的组件类型创建菜单项
-            for widget_type in sorted(available_types):
+            for widget_type in sorted(filtered_types):
                 metadata = widget_factory.get_widget_metadata(widget_type)
 
                 # 使用metadata中的名称，如果没有则使用类型名

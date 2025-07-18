@@ -31,6 +31,7 @@ class WorkspaceManager:
         self.interaction_start_x = 0
         self.interaction_start_y = 0
         self.pending_resize_direction = None
+        event_bus.subscribe(EventType.CREATE_WIDGET, lambda event: self.window.create_widget_at_position(event.data['widget'], event.data['x'], event.data['y']))
         event_bus.subscribe(EventType.DELETE_WIDGET, lambda event: self.delete_selected_widgets())
 
     def handle_mouse_press(self, controller, n_press, x, y):

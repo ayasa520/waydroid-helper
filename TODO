@@ -1,0 +1,4 @@
+1. window.py 与 workspace_manager 划分
+2. 检查 widget 删除时的内存释放
+3. 实现取消技能释放逻辑
+4. overlay 圆没有在 skill_casting 删除后消失
