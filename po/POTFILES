@@ -73,6 +73,7 @@ waydroid_helper/controller/widgets/components/cancel_casting.py
 waydroid_helper/controller/widgets/components/directional_pad.py
 waydroid_helper/controller/widgets/components/fire.py
 waydroid_helper/controller/widgets/components/macro.py
+waydroid_helper/controller/widgets/components/repeated_click.py
 waydroid_helper/controller/widgets/components/right_click_to_walk.py
 waydroid_helper/controller/widgets/components/single_click.py
 waydroid_helper/controller/widgets/components/skill_casting.py

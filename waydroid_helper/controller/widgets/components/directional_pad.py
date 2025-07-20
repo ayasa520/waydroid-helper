@@ -166,7 +166,7 @@ class DirectionalPad(BaseWidget):
                 MovementMode.INSTANT.value: pgettext("Controller Widgets", "Click control"),
             },
             value=MovementMode.SMOOTH.value,
-            description=pgettext("Controller Widgets", "Adjusts the control method of the directional pad")
+            description=pgettext("Controller Widgets", "Adjusts the operating method of the directional pad")
         )
         self.add_config_item(movement_mode_config)
         self.add_config_change_callback("movement_mode", lambda key, value, restoring: self.set_movement_mode(value))

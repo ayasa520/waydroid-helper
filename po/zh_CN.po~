@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-21 01:09+0800\n"
+"POT-Creation-Date: 2025-07-21 00:51+0800\n"
 "PO-Revision-Date: 2024-02-25 15:37+0800\n"
 "Last-Translator: Takanashi Rikka<ayasa0520@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -449,17 +449,27 @@ msgctxt "Controller Widgets"
 msgid "Number of clicks per second"
 msgstr "每秒连击次数"
 
-#: waydroid_helper/controller/widgets/components/repeated_click.py:513
+#: waydroid_helper/controller/widgets/components/repeated_click.py:511
+msgctxt "Controller Widgets"
+msgid "Enter clicks per second"
+msgstr "输入每秒连击次数"
+
+#: waydroid_helper/controller/widgets/components/repeated_click.py:514
 msgctxt "Controller Widgets"
 msgid "Number of clicks to perform per second in long-press combo mode"
 msgstr "长按连击时每秒连击次数"
 
-#: waydroid_helper/controller/widgets/components/repeated_click.py:520
+#: waydroid_helper/controller/widgets/components/repeated_click.py:521
 msgctxt "Controller Widgets"
-msgid "Number of clicks"
+msgid "Number of repeated click"
 msgstr "连击次数"
 
-#: waydroid_helper/controller/widgets/components/repeated_click.py:524
+#: waydroid_helper/controller/widgets/components/repeated_click.py:523
+msgctxt "Controller Widgets"
+msgid "Enter click count"
+msgstr "点击控制"
+
+#: waydroid_helper/controller/widgets/components/repeated_click.py:526
 msgctxt "Controller Widgets"
 msgid "Number of repeated clicks to perform in click after button mode"
 msgstr "按键后连击时执行的连击次数"
@@ -649,14 +659,6 @@ msgstr "显示快捷键"
 msgctxt "shortcut window"
 msgid "Quit"
 msgstr "退出"
-
-#~ msgctxt "Controller Widgets"
-#~ msgid "Enter clicks per second"
-#~ msgstr "输入每秒连击次数"
-
-#~ msgctxt "Controller Widgets"
-#~ msgid "Enter click count"
-#~ msgstr "点击控制"
 
 #~ msgctxt "Controller Widgets"
 #~ msgid "Movement Mode"

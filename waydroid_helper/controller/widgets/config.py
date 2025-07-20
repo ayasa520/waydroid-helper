@@ -35,6 +35,7 @@ class ConfigItem(ABC):
     label: str
     description: str = ""
     value: Any = None
+    visible: bool = True
     
     @abstractmethod
     def create_ui_widget(self, on_change_callback: Callable[[str, Any], None]) -> Gtk.Widget:
@@ -64,6 +65,7 @@ class ConfigItem(ABC):
             "description": self.description,
             "value": self.value,
             "type": self.__class__.__name__,
+            "visible": self.visible,
         }
     
     @classmethod
@@ -108,6 +110,7 @@ class SliderConfig(ConfigItem):
         setattr(scale, '_config_signal_id', signal_id)
         
         box.append(scale)
+        box.set_visible(self.visible)
         return box
     
     def get_value_from_ui(self, widget: Gtk.Widget) -> float:
@@ -191,6 +194,7 @@ class DropdownConfig(ConfigItem):
         
         dropdown.set_hexpand(True)
         box.append(dropdown)
+        box.set_visible(self.visible)
         return box
     
     def get_value_from_ui(self, widget: Gtk.Widget) -> str:
@@ -259,6 +263,7 @@ class TextConfig(ConfigItem):
         
         entry.set_hexpand(True)
         box.append(entry)
+        box.set_visible(self.visible)
         return box
     
     def get_value_from_ui(self, widget: Gtk.Widget) -> str:
@@ -324,6 +329,7 @@ class SwitchConfig(ConfigItem):
         setattr(switch, '_config_signal_id', signal_id)
         
         box.append(switch)
+        box.set_visible(self.visible)
         return box
     
     def get_value_from_ui(self, widget: Gtk.Widget) -> bool:
@@ -401,7 +407,7 @@ class TextAreaConfig(ConfigItem):
         
         # 添加到容器
         box.append(scrolled)
-        
+        box.set_visible(self.visible)
         return box
     
     def get_value_from_ui(self, widget: Gtk.Widget) -> str:
@@ -574,6 +580,7 @@ class ConfigManager(GObject.Object):
                     value = config_data.get("value")
                     if value is not None:
                         self.set_value(key, value)
+                    self.set_visible(key, config_data.get("visible", True))
         finally:
             self.restoring = False
     
@@ -585,44 +592,52 @@ class ConfigManager(GObject.Object):
         """清空所有配置"""
         self.configs.clear()
         self.ui_widgets.clear()
+    
+    def set_visible(self, key: str, visible: bool) -> None:
+        """设置配置项的可见性"""
+        if key in self.configs:
+            self.configs[key].visible = visible
+            if key in self.ui_widgets:
+                self.ui_widgets[key].set_visible(visible)
 
 
 # 配置项工厂函数，方便创建常用配置项
 def create_slider_config(key: str, label: str, value: float = 0.0, 
                         min_value: float = 0.0, max_value: float = 100.0, 
-                        step: float = 1.0, description: str = "") -> SliderConfig:
+                        step: float = 1.0, description: str = "",
+                        visible: bool = True) -> SliderConfig:
     """创建滑动条配置项"""
     return SliderConfig(
         key=key, label=label, value=value, description=description,
-        min_value=min_value, max_value=max_value, step=step
+        min_value=min_value, max_value=max_value, step=step, visible=visible
     )
 
 
 def create_dropdown_config(key: str, label: str, options: List[str], 
                           value: Optional[str] = None, option_labels: Optional[Dict[str, str]] = None,
-                          description: str = "") -> DropdownConfig:
+                          description: str = "", visible: bool = True) -> DropdownConfig:
     """创建下拉选择配置项"""
     return DropdownConfig(
         key=key, label=label, value=value or (options[0] if options else ""),
-        description=description, options=options, option_labels=option_labels
+        description=description, options=options, option_labels=option_labels, visible=visible
     )
 
 
 def create_text_config(key: str, label: str, value: str = "", 
                       placeholder: str = "", max_length: int = 0,
-                      description: str = "") -> TextConfig:
+                      description: str = "", visible: bool = True) -> TextConfig:
     """创建文本输入配置项"""
     return TextConfig(
         key=key, label=label, value=value, description=description,
-        placeholder=placeholder, max_length=max_length
+        placeholder=placeholder, max_length=max_length, visible=visible
     )
 
 
 def create_switch_config(key: str, label: str, value: bool = False,
-                        description: str = "") -> SwitchConfig:
+                        description: str = "", visible: bool = True) -> SwitchConfig:
     """创建开关配置项"""
     return SwitchConfig(
-        key=key, label=label, value=value, description=description
+        key=key, label=label, value=value, description=description, visible=visible
     ) 
 
 
@@ -632,6 +647,7 @@ def create_textarea_config(
     value: str = "",
     description: str = "",
     max_length: int = 0,
+    visible: bool = True,
 ) -> TextAreaConfig:
     """创建多行文本输入配置项"""
     return TextAreaConfig(

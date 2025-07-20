@@ -172,6 +172,7 @@ controller_widgets_components_sources = [
     'controller/widgets/components/right_click_to_walk.py',
     'controller/widgets/components/skill_casting.py',
     'controller/widgets/components/cancel_casting.py',
+    'controller/widgets/components/repeated_click.py',
 ]
 
 controller_widgets_decorators_sources = [

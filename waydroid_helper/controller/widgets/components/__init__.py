@@ -9,6 +9,8 @@ from .directional_pad import DirectionalPad
 from .macro import Macro
 from .right_click_to_walk import RightClickToWalk
 from .skill_casting import SkillCasting
+from .cancel_casting import CancelCasting
+from .repeated_click import RepeatedClick
 
 __all__ = [
     'Aim',
@@ -17,5 +19,7 @@ __all__ = [
     'DirectionalPad',
     'Macro',
     'RightClickToWalk',
-    'SkillCasting'
+    'SkillCasting',
+    'CancelCasting',
+    'RepeatedClick',
 ] 
