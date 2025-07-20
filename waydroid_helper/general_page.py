@@ -5,6 +5,7 @@
 # pyright: reportUnknownArgumentType=false
 
 from gettext import gettext as _
+from typing import cast
 
 import gi
 
@@ -208,6 +209,13 @@ class GeneralPage(Gtk.Box):
                 # Update button status
                 self._update_key_mapping_buttons()
                 logger.info("Key mapping window opened")
+                
+                # Minimize the main window
+                root = self.get_root()
+                root = cast(Gtk.ApplicationWindow, root)
+                if root and hasattr(root, 'minimize'):
+                    root.minimize()
+                    logger.info("Main window minimized")
             else:
                 logger.error("Cannot get application instance")
         except Exception as e:
