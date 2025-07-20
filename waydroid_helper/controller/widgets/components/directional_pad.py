@@ -73,8 +73,8 @@ class DirectionalPad(BaseWidget):
         self,
         x: int = 0,
         y: int = 0,
-        width: int = 120,
-        height: int = 120,
+        width: int = 150,
+        height: int = 150,
         text: str = "",
         direction_keys: dict[str, KeyCombination | None] | None = None,
     ):
@@ -156,7 +156,7 @@ class DirectionalPad(BaseWidget):
         self._update_edit_regions()
 
         # 移动模式设置
-        self._movement_mode: MovementMode = MovementMode.SMOOTH
+        # self._movement_mode: MovementMode = MovementMode.SMOOTH
         movement_mode_config = create_dropdown_config(
             key="movement_mode",
             label=pgettext("Controller Widgets", "Movement Mode"),
@@ -165,7 +165,7 @@ class DirectionalPad(BaseWidget):
             description=pgettext("Controller Widgets", "Adjusts the movement mode of the directional pad")
         )
         self.add_config_item(movement_mode_config)
-        self.add_config_change_callback("movement_mode", lambda key, value: self.set_movement_mode(value))
+        self.add_config_change_callback("movement_mode", lambda key, value, restoring: self.set_movement_mode(value))
 
     def set_movement_params(self, interval: int, max_steps: int):
         """设置平滑移动的参数"""
@@ -178,9 +178,9 @@ class DirectionalPad(BaseWidget):
     def set_movement_mode(self, mode: str):
         if mode not in [MovementMode.SMOOTH.value, MovementMode.INSTANT.value]:
             logger.warning(f"Invalid movement mode: {mode}, using 'smooth'")
-            self._movement_mode = MovementMode.SMOOTH
+            # self._movement_mode = MovementMode.SMOOTH
             return
-        self._movement_mode = MovementMode(mode)
+        # self._movement_mode = MovementMode(mode)
         logger.info(f"Directional pad movement mode set to: {mode}")
 
     def __del__(self):
@@ -204,7 +204,7 @@ class DirectionalPad(BaseWidget):
             return
 
         # 根据移动模式决定是否使用平滑移动
-        use_smooth = smooth and self._movement_mode == MovementMode.SMOOTH
+        use_smooth = smooth and self.get_config_value("movement_mode") == MovementMode.SMOOTH.value
         
         if use_smooth:
             self._move_steps_count = 0

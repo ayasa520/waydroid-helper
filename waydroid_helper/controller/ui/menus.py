@@ -333,6 +333,7 @@ class ContextMenuManager:
 
             # 重新创建组件
             widgets_created = 0
+            cancel_widget = None
             for widget_data in layout_data["widgets"]:
                 try:
                     # 获取基本信息
@@ -397,6 +398,9 @@ class ContextMenuManager:
                             logger.debug(
                                 f"Restored {widget_type} widget: original position ({original_x}, {original_y}) -> new position ({x}, {y}), original size ({original_width}x{original_height}) -> new size ({width}x{height})"
                             )
+
+                            if widget_type == "cancelcasting":
+                                cancel_widget = widget
                         else:
                             logger.error(
                                 "Failed to create widget, missing create_widget_at_position method"
@@ -409,6 +413,9 @@ class ContextMenuManager:
                     continue
 
             logger.info(f"Layout loaded, restored {widgets_created} widgets")
+            if cancel_widget:
+                from waydroid_helper.controller.widgets.components.skill_casting import SkillCasting
+                SkillCasting._cancel_button_widget["widget"] = cancel_widget
 
         except Exception as e:
             logger.error(f"Failed to load layout: {e}")

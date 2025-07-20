@@ -4,10 +4,10 @@
 一个用于取消当前技能施法的按钮，不允许通过右键菜单创建
 """
 
-from gi.repository.Gtk import Root
 import math
 from gettext import pgettext
 from typing import TYPE_CHECKING, cast
+
 
 if TYPE_CHECKING:
     from cairo import Context, Surface
@@ -16,10 +16,6 @@ if TYPE_CHECKING:
 from waydroid_helper.controller.core.handler.event_handlers import InputEvent
 from waydroid_helper.util.log import logger
 
-from waydroid_helper.controller.android.input import (
-    AMotionEventAction,
-    AMotionEventButtons,
-)
 from waydroid_helper.controller.core import (
     Event,
     EventType,
@@ -27,13 +23,8 @@ from waydroid_helper.controller.core import (
     KeyCombination,
     pointer_id_manager,
 )
-from waydroid_helper.controller.core.control_msg import InjectTouchEventMsg
 from waydroid_helper.controller.widgets.base.base_widget import BaseWidget
-from waydroid_helper.controller.widgets.decorators import (
-    Resizable,
-    ResizableDecorator,
-    Editable,
-)
+from waydroid_helper.controller.widgets.decorators import Editable
 import cairo
 
 
@@ -85,7 +76,6 @@ class CancelCasting(BaseWidget):
         height: int = 50,
         text: str = "",
         default_keys: "set[KeyCombination] | None" = None,
-        target_skill_id: int | None = None,
     ):
         # 初始化基类
         super().__init__(
@@ -99,9 +89,6 @@ class CancelCasting(BaseWidget):
             min_width=25,
             min_height=25,
         )
-        
-        # 保存关联的技能施法widget的ID
-        self.target_skill_id = target_skill_id
 
     def draw_widget_content(self, cr: "Context[Surface]", width: int, height: int):
         """绘制圆形按钮的具体内容"""
@@ -118,7 +105,7 @@ class CancelCasting(BaseWidget):
         # 绘制白色X符号
         cr.set_source_rgba(1, 1, 1, 1)
         cr.set_line_width(3)
-        
+
         # 绘制X的两条线
         offset = radius * 0.4
         cr.move_to(center_x - offset, center_y - offset)
@@ -140,7 +127,9 @@ class CancelCasting(BaseWidget):
             center_y = height / 2
 
             cr.set_source_rgba(1, 1, 1, 1)  # 白色文字
-            cr.select_font_face("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+            cr.select_font_face(
+                "Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD
+            )
             cr.set_font_size(12)
             text_extents = cr.text_extents(self.text)
             x = center_x - text_extents.width / 2
@@ -294,7 +283,9 @@ class CancelCasting(BaseWidget):
 
             # 使用白色文字以在红色背景上清晰显示
             cr.set_source_rgba(1, 1, 1, 1)  # 白色文字
-            cr.select_font_face("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+            cr.select_font_face(
+                "Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD
+            )
             cr.set_font_size(12)
             text_extents = cr.text_extents(self.text)
             x = center_x - text_extents.width / 2
@@ -308,7 +299,7 @@ class CancelCasting(BaseWidget):
     def on_key_triggered(
         self,
         key_combination: "KeyCombination | None" = None,
-        event: 'InputEvent | None' = None,
+        event: "InputEvent | None" = None,
     ):
         """触发取消施法"""
 
@@ -319,25 +310,22 @@ class CancelCasting(BaseWidget):
             return False
 
         x, y = self.center_x, self.center_y
-        
+
         # 发送取消施法事件而不是实际的触摸事件
         cancel_data = {
-            'target_skill_id': self.target_skill_id,
-            'source_widget_id': id(self),
-            'x': x,
-            'y': y,
+            "source_widget_id": id(self),
+            "x": x,
+            "y": y,
         }
-        
-        logger.debug(f"Cancel casting triggered for skill widget {self.target_skill_id}")
+
         event_bus.emit(Event(EventType.CANCEL_CASTING, self, cancel_data))
-        
         return True
 
     def on_key_released(self, key_combination=None, event=None):
         """按键释放时不做任何操作"""
         return True
 
-    def get_editable_regions(self) -> list['EditableRegion']:
+    def get_editable_regions(self) -> list["EditableRegion"]:
         return [
             {
                 "id": "default",
@@ -364,4 +352,17 @@ class CancelCasting(BaseWidget):
 
     @property
     def center_y(self):
-        return self.y + self.height / 2 
+        return self.y + self.height / 2
+
+    def on_delete(self):
+        """组件被删除时的清理"""
+        super().on_delete()
+        logger.info(f"CancelCasting widget {id(self)} on_delete called")
+        
+        # 发送销毁通知
+        event_data = {
+            'type': 'cancel_button_destroyed',
+            'widget_class': 'CancelCasting',
+            'widget_id': id(self)
+        }
+        event_bus.emit(Event(EventType.CUSTOM, self, event_data))

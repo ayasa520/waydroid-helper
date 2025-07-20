@@ -2,3 +2,4 @@
 2. 检查 widget 删除时的内存释放
 3. 实现取消技能释放逻辑
 4. overlay 圆没有在 skill_casting 删除后消失
+5. 配置可以直接读 config 代替 self._

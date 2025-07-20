@@ -462,6 +462,7 @@ class ConfigManager(GObject.Object):
         self.configs: Dict[str, ConfigItem] = {}
         self.ui_widgets: Dict[str, Gtk.Widget] = {}
         self._updating_ui = False  # 标记是否正在更新UI，防止循环
+        self.restoring = False
     
     def add_config(self, config: ConfigItem) -> None:
         """添加配置项"""
@@ -507,12 +508,12 @@ class ConfigManager(GObject.Object):
             return self.configs[key].value
         return None
     
-    def add_change_callback(self, key: str, callback: Callable[[str, Any], None]) -> None:
+    def add_change_callback(self, key: str, callback: Callable[[str, Any, bool], None]) -> None:
         """添加配置变更回调（向后兼容方法）"""
         # 连接到config-changed信号
-        def signal_handler(config_manager, changed_key, value):
+        def signal_handler(config_manager, changed_key, value ):
             if changed_key == key:
-                callback(changed_key, value)
+                callback(changed_key, value, self.restoring)
         
         self.connect("config-changed", signal_handler)
         logger.debug(f"Added change callback for config key: {key}")
@@ -566,11 +567,15 @@ class ConfigManager(GObject.Object):
     
     def deserialize(self, data: Dict[str, Any]) -> None:
         """反序列化配置"""
-        for key, config_data in data.items():
-            if key in self.configs:
-                value = config_data.get("value")
-                if value is not None:
-                    self.set_value(key, value)
+        self.restoring = True
+        try:
+            for key, config_data in data.items():
+                if key in self.configs:
+                    value = config_data.get("value")
+                    if value is not None:
+                        self.set_value(key, value)
+        finally:
+            self.restoring = False
     
     def clear_ui_references(self) -> None:
         """清空UI控件引用，防止内存泄漏"""

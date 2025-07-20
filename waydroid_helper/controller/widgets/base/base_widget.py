@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING, Any, Callable, TypedDict, cast
 
 import gi
 
+from waydroid_helper.controller.core.utils import pointer_id_manager
+
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 gi.require_version("Gdk", "4.0")
@@ -134,7 +136,7 @@ class BaseWidget(Gtk.DrawingArea):
         """获取配置值"""
         return self.config_manager.get_value(key)
 
-    def add_config_change_callback(self, key: str, callback: Callable[[str, Any], None]) -> None:
+    def add_config_change_callback(self, key: str, callback: Callable[[str, Any, bool], None]) -> None:
         """添加配置变更回调"""
         self.config_manager.add_change_callback(key, callback)
 
@@ -169,7 +171,7 @@ class BaseWidget(Gtk.DrawingArea):
             
         # 直接判断点击位置是否在删除按钮区域内
         if self.is_point_in_delete_button(x, y):
-            event_bus.emit(Event(EventType.DELETE_WIDGET, self, None))
+            event_bus.emit(Event(EventType.DELETE_WIDGET, self, self))
             return True  # 阻止事件继续传播
         
         if self.is_point_in_settings_button(x, y):
@@ -581,3 +583,7 @@ class BaseWidget(Gtk.DrawingArea):
         
         distance = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
         return distance <= radius
+
+    def on_delete(self):
+        self.set_selected(False)
+        pointer_id_manager.release(self)

@@ -58,8 +58,8 @@ class RightClickToWalk(BaseWidget):
         self,
         x: int = 0,
         y: int = 0,
-        width: int = 100,
-        height: int = 100,
+        width: int = 150,
+        height: int = 150,
         text: str = "",
         default_keys: set[KeyCombination] | None = None,
     ):

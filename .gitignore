@@ -29,3 +29,5 @@ AppDir
 extract_description.py
 .VSCodeCounter/
 CLAUDE.md
+.serena/
+.cursor/

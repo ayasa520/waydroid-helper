@@ -918,6 +918,7 @@ class TransparentWindow(Adw.Window):
             self.unregister_widget_key_mapping(widget)
             # 从UI中移除widget
             self.fixed.remove(widget)
+            widget.on_delete()
             logger.debug(
                 f"Clear widget {type(widget).__name__}(id={id(widget)}) and its key mapping"
             )

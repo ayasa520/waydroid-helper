@@ -77,7 +77,7 @@ class Aim(BaseWidget):
         self.is_triggered: bool = False
         self.platform: "PlatformBase | None" = None
         self._current_pos: tuple[int | float | None, int | float | None] = (None, None)
-        self.sensitivity: int = 20
+        # self.sensitivity: int = 20
         self.setup_config()
 
     def setup_config(self) -> None:
@@ -87,7 +87,8 @@ class Aim(BaseWidget):
         sensitivity_config = create_slider_config(
             key="sensitivity",
             label=pgettext("Controller Widgets", "Sensitivity"),
-            value=self.sensitivity,
+            # value=self.sensitivity,
+            value=20,
             min_value=1,
             max_value=100,
             step=1,
@@ -100,11 +101,11 @@ class Aim(BaseWidget):
         # 添加配置变更回调
         self.add_config_change_callback("sensitivity", self._on_sensitivity_changed)
 
-    def _on_sensitivity_changed(self, key: str, value: int) -> None:
+    def _on_sensitivity_changed(self, key: str, value: int, restoring:bool) -> None:
         """处理灵敏度配置变更"""
         try:
-            self.sensitivity = int(value)
-            logger.debug(f"Aim sensitivity changed to: {self.sensitivity}")
+            # self.sensitivity = int(value)
+            logger.debug(f"Aim sensitivity changed to: {value}")
         except (ValueError, TypeError):
             logger.error(f"Invalid sensitivity value: {value}")
 
@@ -118,8 +119,8 @@ class Aim(BaseWidget):
                 f"[RELATIVE_MOTION] Aim button triggered by relative mouse motion {dx}, {dy} at {self.center_x}, {self.center_y}"
             )
 
-            _dx = dx_unaccel * self.sensitivity / 50
-            _dy = dy_unaccel * self.sensitivity / 50
+            _dx = dx_unaccel * self.get_config_value("sensitivity") / 50
+            _dy = dy_unaccel * self.get_config_value("sensitivity") / 50
 
             root = self.get_root()
             root = cast("Gtk.Window", root)

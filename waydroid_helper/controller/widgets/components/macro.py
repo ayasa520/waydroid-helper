@@ -299,7 +299,7 @@ class Macro(BaseWidget):
         self.add_config_item(macro_config)
         self.add_config_change_callback("macro_command", self.on_macro_command_changed)
 
-    def on_macro_command_changed(self, key: str, value: str):
+    def on_macro_command_changed(self, key: str, value: str, restoring:bool):
         """当宏命令文本框内容改变时，解析并存储预解析的命令对象"""
         parts = value.split("release_actions", 1)
 

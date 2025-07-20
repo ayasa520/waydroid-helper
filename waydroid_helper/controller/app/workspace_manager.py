@@ -32,7 +32,7 @@ class WorkspaceManager:
         self.interaction_start_y = 0
         self.pending_resize_direction = None
         event_bus.subscribe(EventType.CREATE_WIDGET, lambda event: self.window.create_widget_at_position(event.data['widget'], event.data['x'], event.data['y']))
-        event_bus.subscribe(EventType.DELETE_WIDGET, lambda event: self.delete_selected_widgets())
+        event_bus.subscribe(EventType.DELETE_WIDGET, lambda event: self.delete_specific_widget(event.data))
 
     def handle_mouse_press(self, controller, n_press, x, y):
         """处理鼠标按下事件"""
@@ -131,7 +131,7 @@ class WorkspaceManager:
                  widget._skip_delayed_bring_to_front = True
             return
         
-        self.clear_all_selections()
+        self.clear_all_selections(exclude_widget=widget)
         if hasattr(widget, 'set_selected'):
             widget.set_selected(True)
             logger.debug("设置widget为选中状态")
@@ -249,11 +249,11 @@ class WorkspaceManager:
             
         self.resizing_widget.handle_resize_motion(x, y)
 
-    def clear_all_selections(self):
+    def clear_all_selections(self, exclude_widget=None):
         """取消所有组件的选择状态"""
         child = self.fixed.get_first_child()
         while child:
-            if hasattr(child, 'set_selected'):
+            if hasattr(child, 'set_selected') and child != exclude_widget:
                 child.set_selected(False)
             child = child.get_next_sibling()
         
@@ -274,21 +274,22 @@ class WorkspaceManager:
                 self.resizing_widget = None
             if self.selected_widget == widget:
                 self.selected_widget = None
+            widget.on_delete()
 
-    def delete_selected_widgets(self):
-        """删除所有选中的widget"""
-        widgets_to_delete = []
-        child = self.fixed.get_first_child()
-        while child:
-            if hasattr(child, 'is_selected') and child.is_selected:
-                widgets_to_delete.append(child)
-            child = child.get_next_sibling()
+    # def delete_selected_widgets(self):
+    #     """删除所有选中的widget"""
+    #     widgets_to_delete = []
+    #     child = self.fixed.get_first_child()
+    #     while child:
+    #         if hasattr(child, 'is_selected') and child.is_selected:
+    #             widgets_to_delete.append(child)
+    #         child = child.get_next_sibling()
         
-        for widget in widgets_to_delete:
-            self.delete_specific_widget(widget)
+    #     for widget in widgets_to_delete:
+    #         self.delete_specific_widget(widget)
         
-        self.dragging_widget = None
-        self.resizing_widget = None
+    #     self.dragging_widget = None
+    #     self.resizing_widget = None
 
     def bring_widget_to_front_safe(self, widget):
         """安全地将widget置于最前 - 只在拖拽时使用"""
