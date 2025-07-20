@@ -45,7 +45,7 @@ class Aim(BaseWidget):
     WIDGET_NAME = pgettext("Controller Widgets", "Aim")
     WIDGET_DESCRIPTION = pgettext(
         "Controller Widgets",
-        "Hold the key and move the mouse to turn the camera freely. The effective range is within the blue area.",
+        "FPS staple: drag to game's view area, pair with Fire for mouse-aim shooting. Resize box to match in-game rotation zone.",
     )
     WIDGET_VERSION = "1.0"
     IS_REENTRANT = True  # 支持可重入，实现长按瞄准功能

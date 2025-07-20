@@ -36,7 +36,7 @@ class CancelCasting(BaseWidget):
     WIDGET_NAME = pgettext("Controller Widgets", "Cancel Casting")
     WIDGET_DESCRIPTION = pgettext(
         "Controller Widgets",
-        "Button to cancel ongoing skill casting. Cannot be created via context menu.",
+        "Drag the key to the cancel casting position. While casting a spell, hold down the cancel cast button to cancel the cast.",
     )
     WIDGET_VERSION = "1.0"
 

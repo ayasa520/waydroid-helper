@@ -55,6 +55,7 @@ class BaseWidget(Gtk.DrawingArea):
 
     # 按键映射特性 - 子类可以覆盖这个值
     IS_REENTRANT = False  # 是否支持可重入（长按重复触发），默认不支持
+    ALLOW_CONTEXT_MENU_CREATION = True  # 是否允许通过右键菜单创建
 
     # 定义GObject属性
     __gtype_name__ = "BaseWidget"
@@ -351,7 +352,7 @@ class BaseWidget(Gtk.DrawingArea):
         
         # 如果鼠标悬停，绘制蓝色背景
         if self.delete_button_hovered:
-            cr.set_source_rgba(0.2, 0.6, 1.0, 0.9)  # 蓝色
+            cr.set_source_rgba(1.0, 0.2, 0.2, 0.9)  # 红色
             cr.arc(x + w / 2, y + h / 2, w / 2, 0, 2 * math.pi)
             cr.fill()
         

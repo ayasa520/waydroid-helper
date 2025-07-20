@@ -32,7 +32,7 @@ class Fire(BaseWidget):
     WIDGET_NAME = pgettext("Controller Widgets", "Fire")
     WIDGET_DESCRIPTION = pgettext(
         "Controller Widgets",
-        "Shooting game commonly used, add the key to the attack/fire key position, and use the mouse left button to click. It needs to be used with the aim key.",
+        "Commonly used in FPS games, add a button to the attack/fire button position, use the left mouse button to click, and must be used with the aim button. Note: Only supports left mouse button, cannot be modified, and won't work alone.",
     )
     WIDGET_VERSION = "1.0"
 

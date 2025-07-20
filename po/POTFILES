@@ -11,9 +11,18 @@ waydroid_helper/shared_folder.py
 waydroid_helper/available_version_page.py
 waydroid_helper/waydroid.py
 waydroid_helper/util/subprocess_manager.py
+waydroid_helper/util/log.py
+waydroid_helper/util/adb_helper.py
+waydroid_helper/util/weak_ref.py
+waydroid_helper/util/template.py
+waydroid_helper/util/abx_reader.py
+waydroid_helper/util/task.py
+waydroid_helper/util/arch.py
+waydroid_helper/util/__init__.py
 waydroid_helper/tools/extensions_manager.py
 waydroid_helper/tools/monitor_service.py
 waydroid_helper/tools/mount_service.py
+waydroid_helper/tools/__init__.py
 waydroid_helper/compat_widget/file_dialog.py
 waydroid_helper/compat_widget/header_bar.py
 waydroid_helper/compat_widget/__init__.py
@@ -41,8 +50,9 @@ waydroid_helper/controller/core/handler/default/default_event_handler.py
 waydroid_helper/controller/core/handler/default/default_key_handler.py
 waydroid_helper/controller/core/handler/default/default_mouse_handler.py
 waydroid_helper/controller/core/handler/event_handlers.py
-waydroid_helper/controller/core/handler/key_mapping_event_handler.py
-waydroid_helper/controller/core/key_mapping_manager.py
+waydroid_helper/controller/core/handler/mapping/__init__.py
+waydroid_helper/controller/core/handler/mapping/key_mapping_event_handler.py
+waydroid_helper/controller/core/handler/mapping/key_mapping_manager.py
 waydroid_helper/controller/core/key_system.py
 waydroid_helper/controller/core/server.py
 waydroid_helper/controller/core/types.py
@@ -59,14 +69,19 @@ waydroid_helper/controller/widgets/base/__init__.py
 waydroid_helper/controller/widgets/base/base_widget.py
 waydroid_helper/controller/widgets/components/__init__.py
 waydroid_helper/controller/widgets/components/aim.py
+waydroid_helper/controller/widgets/components/cancel_casting.py
 waydroid_helper/controller/widgets/components/directional_pad.py
 waydroid_helper/controller/widgets/components/fire.py
+waydroid_helper/controller/widgets/components/macro.py
+waydroid_helper/controller/widgets/components/right_click_to_walk.py
 waydroid_helper/controller/widgets/components/single_click.py
+waydroid_helper/controller/widgets/components/skill_casting.py
 waydroid_helper/controller/widgets/decorators/__init__.py
 waydroid_helper/controller/widgets/decorators/base_decorator.py
 waydroid_helper/controller/widgets/decorators/editable.py
 waydroid_helper/controller/widgets/decorators/resizable.py
 waydroid_helper/controller/widgets/factory.py
+waydroid_helper/controller/widgets/config.py
 
 # UI files
 data/ui/window.ui

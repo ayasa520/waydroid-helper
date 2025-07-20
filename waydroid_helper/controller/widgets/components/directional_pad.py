@@ -60,7 +60,7 @@ class DirectionalPad(BaseWidget):
     WIDGET_NAME = pgettext("Controller Widgets", "Directional Pad")
     WIDGET_DESCRIPTION = pgettext(
         "Controller Widgets",
-        "Used for movement control. Support 4-way movement (up, down, left, right) and diagonal movement (support for up to 8 directions).",
+        "Drag and place it onto the game's movement wheel to control walking direction. After assigning keys, drag the dotted frame to resize the button; make sure the blue frame of the directional pad matches the size of the game wheel.",
     )
     WIDGET_VERSION = "1.0"
     IS_REENTRANT = True  # 支持可重入，实现连续移动功能
@@ -159,10 +159,14 @@ class DirectionalPad(BaseWidget):
         # self._movement_mode: MovementMode = MovementMode.SMOOTH
         movement_mode_config = create_dropdown_config(
             key="movement_mode",
-            label=pgettext("Controller Widgets", "Movement Mode"),
+            label=pgettext("Controller Widgets", "Operating Method"),
             options=[MovementMode.SMOOTH.value, MovementMode.INSTANT.value],
+            option_labels={
+                MovementMode.SMOOTH.value: pgettext("Controller Widgets", "Slide control"),
+                MovementMode.INSTANT.value: pgettext("Controller Widgets", "Click control"),
+            },
             value=MovementMode.SMOOTH.value,
-            description=pgettext("Controller Widgets", "Adjusts the movement mode of the directional pad")
+            description=pgettext("Controller Widgets", "Adjusts the control method of the directional pad")
         )
         self.add_config_item(movement_mode_config)
         self.add_config_change_callback("movement_mode", lambda key, value, restoring: self.set_movement_mode(value))

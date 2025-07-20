@@ -50,7 +50,7 @@ class RightClickToWalk(BaseWidget):
     WIDGET_NAME = pgettext("Controller Widgets", "Right Click to Walk")
     WIDGET_DESCRIPTION = pgettext(
         "Controller Widgets",
-        "Right click widget for work or context menu actions. Map to any key to trigger right mouse button click at the widget position.",
+        "Add to the game's movement wheel: hold and drag to steer, single-click to auto-walk to cursor. Ideal for MOBAs.",
     )
     WIDGET_VERSION = "1.0"
 
@@ -77,7 +77,7 @@ class RightClickToWalk(BaseWidget):
             y,
             width,
             height,
-            pgettext("Controller Widgets", "Right Click"),
+            pgettext("Controller Widgets", "Right Click to Walk"),
             text,
             default_keys or set(),
             min_width=25,

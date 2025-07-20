@@ -88,7 +88,7 @@ class SkillCasting(BaseWidget):
     WIDGET_NAME = pgettext("Controller Widgets", "Skill Casting")
     WIDGET_DESCRIPTION = pgettext(
         "Controller Widgets",
-        "Skill casting widget that detects real-time mouse position for directional casting.",
+        "Commonly used when using the characters' skills, click and cooperate with the mouse to release skills.",
     )
     WIDGET_VERSION = "1.0"
 
@@ -516,14 +516,14 @@ class SkillCasting(BaseWidget):
         # 添加圆半径配置
         circle_radius_config = create_slider_config(
             key="circle_radius",
-            label=pgettext("Controller Widgets", "Circle Radius (px)"),
+            label=pgettext("Controller Widgets", "Casting Radius"),
             value=200,
             min_value=50,
             max_value=500,
             step=10,
             description=pgettext(
                 "Controller Widgets",
-                "Adjusts the radius of the skill casting circle range in pixels",
+                "Fine-tune according to the casting range of different skills",
             ),
         )
 
