@@ -44,11 +44,11 @@ class WorkspaceManager:
             
             if not widget_at_position:
                 # 点击空白区域，取消所有选择
-                logger.debug("左键点击空白区域，取消所有选择")
+                logger.debug("Left click on blank area, clearing all selections")
                 self.clear_all_selections()
             else:
                 # 点击widget，处理选择、拖拽或调整大小
-                logger.debug(f"左键点击widget: {type(widget_at_position).__name__}")
+                logger.debug(f"Left click on widget: {type(widget_at_position).__name__}")
                 self.handle_widget_interaction(widget_at_position, x, y, n_press)
 
     def handle_mouse_motion(self, controller, x, y):
@@ -70,10 +70,10 @@ class WorkspaceManager:
             # 只有移动超过阈值才开始拖拽/调整大小
             if dx > 5 or dy > 5:  # 5像素的拖拽阈值
                 if self.pending_resize_direction:
-                    logger.debug(f"开始调整大小: widget={type(self.selected_widget).__name__}, 方向={self.pending_resize_direction}")
+                    logger.debug(f"Starting resize: widget={type(self.selected_widget).__name__}, direction={self.pending_resize_direction}")
                     self.start_widget_resize(self.selected_widget, self.interaction_start_x, self.interaction_start_y, self.pending_resize_direction)
                 else:
-                    logger.debug(f"开始拖拽: widget={type(self.selected_widget).__name__}")
+                    logger.debug(f"Starting drag: widget={type(self.selected_widget).__name__}")
                     self.start_widget_drag(self.selected_widget, self.interaction_start_x, self.interaction_start_y)
 
         # 更新鼠标指针样式
@@ -99,11 +99,11 @@ class WorkspaceManager:
         """处理鼠标释放事件"""
         # 停止拖拽和调整大小
         if self.dragging_widget:
-            logger.debug(f"停止拖拽: {type(self.dragging_widget).__name__}")
+            logger.debug(f"Stopping drag: {type(self.dragging_widget).__name__}")
             self.dragging_widget = None
         
         if self.resizing_widget:
-            logger.debug(f"停止调整大小: {type(self.resizing_widget).__name__}")
+            logger.debug(f"Stopping resize: {type(self.resizing_widget).__name__}")
             if hasattr(self.resizing_widget, 'on_resize_release'):
                 self.resizing_widget.on_resize_release()
             self.resizing_widget = None
@@ -111,20 +111,20 @@ class WorkspaceManager:
         
         # 清除待处理状态
         if self.selected_widget:
-            logger.debug("清除待处理状态")
+            logger.debug("Clearing pending state")
         self.selected_widget = None
         self.pending_resize_direction = None
 
     def handle_widget_interaction(self, widget, x, y, n_press=1):
         """处理widget交互 - 支持双击检测"""
-        logger.debug(f"处理widget交互: {type(widget).__name__}, 位置({x:.1f}, {y:.1f}), 点击次数={n_press}")
+        logger.debug(f"Handling widget interaction: {type(widget).__name__}, position({x:.1f}, {y:.1f}), clicks={n_press}")
         
         local_x, local_y = self.global_to_local_coords(widget, x, y)
         
         should_keep_editing = False
         if hasattr(widget, 'should_keep_editing_on_click'):
             should_keep_editing = widget.should_keep_editing_on_click(local_x, local_y)
-            logger.debug(f"Widget编辑状态查询结果: {should_keep_editing}")
+            logger.debug(f"Widget edit state query result: {should_keep_editing}")
         
         if should_keep_editing:
             if not hasattr(widget, '_skip_delayed_bring_to_front'):
@@ -134,26 +134,26 @@ class WorkspaceManager:
         self.clear_all_selections(exclude_widget=widget)
         if hasattr(widget, 'set_selected'):
             widget.set_selected(True)
-            logger.debug("设置widget为选中状态")
+            logger.debug("Setting widget to selected state")
         
         if hasattr(widget, '_skip_delayed_bring_to_front'):
             delattr(widget, '_skip_delayed_bring_to_front')
-            logger.debug("清除跳过延迟置顶标志")
+            logger.debug("Clearing skip delayed bring to front flag")
         
         self.schedule_bring_to_front(widget)
         
         local_x, local_y = self.global_to_local_coords(widget, x, y)
-        logger.debug(f"转换为局部坐标: ({local_x:.1f}, {local_y:.1f})")
+        logger.debug(f"Converting to local coordinates: ({local_x:.1f}, {local_y:.1f})")
         
         if n_press == 2:
-            logger.debug("检测到双击")
+            logger.debug("Double click detected")
             if not hasattr(widget, '_skip_delayed_bring_to_front'):
                 widget._skip_delayed_bring_to_front = True
-                logger.debug("标记widget跳过延迟置顶操作")
+                logger.debug("Marking widget to skip delayed bring to front operation")
             
             if hasattr(widget, 'on_widget_double_clicked'):
                 widget.on_widget_double_clicked(local_x, local_y)
-            logger.debug("双击完成，跳过置顶操作")
+            logger.debug("Double click completed, skipping bring to front operation")
             return
         
         self.selected_widget = widget
@@ -162,20 +162,20 @@ class WorkspaceManager:
         
         if hasattr(widget, 'check_resize_direction'):
             resize_direction = widget.check_resize_direction(local_x, local_y)
-            logger.debug(f"检查调整大小方向: {resize_direction}")
+            logger.debug(f"Checking resize direction: {resize_direction}")
             if resize_direction:
                 if hasattr(widget, 'should_keep_editing_on_click'):
                     self.clear_all_selections()
                     if hasattr(widget, 'set_selected'):
                         widget.set_selected(True)
-                    logger.debug("调整大小时强制退出编辑状态")
+                    logger.debug("Forcing exit from edit state during resize")
                 
                 self.pending_resize_direction = resize_direction
-                logger.debug("准备调整大小操作")
+                logger.debug("Preparing resize operation")
                 return
         
         self.pending_resize_direction = None
-        logger.debug("准备拖拽操作")
+        logger.debug("Preparing drag operation")
         
         if hasattr(widget, 'on_widget_clicked'):
             widget.on_widget_clicked(local_x, local_y)
@@ -265,7 +265,7 @@ class WorkspaceManager:
         if widget and widget.get_parent() == self.fixed:
             self.window.unregister_widget_key_mapping(widget)
             self.fixed.remove(widget)
-            logger.debug(f"已删除widget {type(widget).__name__}(id={id(widget)}) 及其按键映射")
+            logger.debug(f"Deleted widget {type(widget).__name__}(id={id(widget)}) and its key mapping")
             
             # 如果删除的是当前正在操作的widget，清除状态
             if self.dragging_widget == widget:
@@ -299,7 +299,7 @@ class WorkspaceManager:
             self.window.fixed_put(widget, x, y)
             self.dragging_widget = widget
         except Exception as e:
-            logger.error(f"安全置顶时出错: {e}")
+            logger.error(f"Error bringing widget to front safely: {e}")
     
     def schedule_bring_to_front(self, widget):
         """延迟置顶 - 避免立即操作导致的状态问题"""
@@ -309,7 +309,7 @@ class WorkspaceManager:
         """延迟执行的置顶操作"""
         try:
             if hasattr(widget, '_skip_delayed_bring_to_front') and widget._skip_delayed_bring_to_front:
-                logger.debug("跳过延迟置顶操作（widget正在编辑）")
+                logger.debug("Skipping delayed bring to front operation (widget is being edited)")
                 delattr(widget, '_skip_delayed_bring_to_front')
                 return False
             
@@ -328,7 +328,7 @@ class WorkspaceManager:
                 if current_state != selected_state:
                     widget.set_selected(selected_state)
         except Exception as e:
-            logger.error(f"延迟置顶时出错: {e}")
+            logger.error(f"Error during delayed bring to front: {e}")
         
         return False
 
@@ -364,7 +364,7 @@ class WorkspaceManager:
             cursor = Gdk.Cursor.new_from_name(cursor_name)
             self.window.set_cursor(cursor)
         except Exception as e:
-            logger.error(f"设置鼠标指针失败: {cursor_name}, 错误: {e}")
+            logger.error(f"Failed to set cursor: {cursor_name}, error: {e}")
             try:
                 cursor = Gdk.Cursor.new_from_name("default")
                 self.window.set_cursor(cursor)

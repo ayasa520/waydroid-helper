@@ -192,7 +192,6 @@ class Fire(BaseWidget):
         event: "InputEvent | None" = None,
     ) -> bool:
         """当映射的按键被触发时的行为 - 模拟点击效果（按键按下）"""
-        logger.debug("测试测试")
         if not self.aim_triggered:
             return False
         if key_combination:

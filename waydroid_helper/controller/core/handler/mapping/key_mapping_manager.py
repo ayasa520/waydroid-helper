@@ -292,31 +292,30 @@ class KeyMappingManager:
         return released_any
 
     def print_mappings(self):
-        """打印当前所有的按键映射（调试用）"""
-        logger.debug("\n=== KeyMappingManager: 当前按键映射状态 ===")
-        logger.debug(f"总计映射: {len(self._key_subscriptions)} 个按键组合")
+        """Print current key mappings (for debugging)"""
+        logger.debug("\n=== KeyMappingManager: Current key mapping status ===")
+        logger.debug(f"Total mappings: {len(self._key_subscriptions)} key combinations")
 
         if not self._key_subscriptions:
-            logger.debug("没有注册的按键映射")
+            logger.debug("No registered key mappings")
         else:
             for key_combo, subscriptions in self._key_subscriptions.items():
-                logger.debug(f"  {key_combo} -> {len(subscriptions)} 个订阅:")
+                logger.debug(f"  {key_combo} -> {len(subscriptions)} subscriptions:")
                 for sub in subscriptions:
                     widget_name = type(sub.widget).__name__
                     widget_id = id(sub.widget)
                     conditions = []
                     if sub.condition:
-                        conditions.append("自定义条件")
+                        conditions.append("custom condition")
                     if sub.required_states:
-                        conditions.append(f"依赖状态: {sub.required_states}")
+                        conditions.append(f"required states: {sub.required_states}")
                     if sub.reentrant:
-                        conditions.append("可重入")
+                        conditions.append("reentrant")
                     conditions_str = f" ({', '.join(conditions)})" if conditions else ""
                     logger.debug(f"    - {widget_name}(id={widget_id}){conditions_str}")
-        logger.debug(f"当前按下的键: {[str(k) for k in self._pressed_keys]}")
+        logger.debug(f"Currently pressed keys: {[str(k) for k in self._pressed_keys]}")
         logger.debug(
-            f"当前触发的映射: {[str(k) for k in self._triggered_mappings.keys()]}"
-        )
+            f"Currently triggered mappings: {[str(k) for k in self._triggered_mappings.keys()]}")
         logger.debug("=" * 30)
 
     def clear(self) -> None:

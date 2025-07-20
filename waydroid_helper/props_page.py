@@ -452,10 +452,10 @@ class PropsPage(Gtk.Box):
         # print(a.get_widget().get_name())
         # if self.waydroid.persist_props.get_property("state") != PropsState.READY:
         #     return
-        # print("回调")
+        # print("callback")
         self.set_reveal(self.save_notification, True)
         # self.save_notification.set_reveal_child(True)
-        # print("来咯", name, self.waydroid.persist_props.get_property(name))
+        # print("here", name, self.waydroid.persist_props.get_property(name))
         self._task.create_task(self.waydroid.save_persist_prop(name))
 
     # def on_cancel_button_clicked(self, button):
@@ -488,7 +488,7 @@ class PropsPage(Gtk.Box):
     # @Gtk.Template.Callback()
     # def on_switch_clicked(self, a:Gtk.Switch, b=None, c=None, d=None):
     #     # print(a.get_widget().get_name())
-    #     print("回调")
+    #     print("callback")
     #     if self.waydroid.persist_props.get_state()!=2:
     #         return
 

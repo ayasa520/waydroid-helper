@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-透明窗口模块
-提供透明窗口的实现和窗口管理功能
+Transparent window module
+Provides implementation and window management for transparent windows
 """
 
 from gettext import gettext as _
@@ -55,7 +55,7 @@ RETRY_DELAY_SECONDS = 3
 
 
 class CircleOverlay(Gtk.DrawingArea):
-    """圆形覆盖层，用于绘制技能释放范围指示"""
+    """Circular overlay for drawing skill release range indicators"""
     
     def __init__(self):
         super().__init__()
@@ -63,44 +63,44 @@ class CircleOverlay(Gtk.DrawingArea):
         self.set_draw_func(self._draw_circle, None)
     
     def set_circle_data(self, data):
-        """设置圆形数据并触发重绘"""
+        """Sets circular data and triggers redraw"""
         self.circle_data = data
         self.queue_draw()
     
     def _draw_circle(self, widget, cr, width, height, user_data):
-        """绘制圆形"""
+        """Draws a circle"""
         if not self.circle_data:
             return
             
-        # 获取圆形参数
+        # Get circle parameters
         circle_radius = self.circle_data.get('circle_radius', 200)
         
-        # 计算圆形参数
+        # Calculate circle parameters
         window_center_x = width / 2
         window_center_y = height / 2
         
-        # 绘制圆形边界
-        cr.set_source_rgba(0.6, 0.6, 0.6, 0.8)  # 半透明灰色
+        # Draw circle boundary
+        cr.set_source_rgba(0.6, 0.6, 0.6, 0.8)  # Semi-transparent gray
         cr.set_line_width(3)
         cr.arc(window_center_x, window_center_y, circle_radius, 0, 2 * math.pi)
         cr.stroke()
         
-        # 绘制圆形中心点
+        # Draw circle center point
         cr.set_source_rgba(0.5, 0.5, 0.5, 0.9)
         cr.arc(window_center_x, window_center_y, 4, 0, 2 * math.pi)
         cr.fill()
 
 
 class TransparentWindow(Adw.Window):
-    """透明窗口"""
+    """Transparent window"""
 
     # __gtype_name__ = 'TransparentWindow'
 
-    # 定义模式常量
+    # Define mode constants
     EDIT_MODE = "edit"
     MAPPING_MODE = "mapping"
 
-    # 定义current_mode为GObject属性
+    # Define current_mode as a GObject property
     current_mode = GObject.Property(
         type=str,
         default=EDIT_MODE,
@@ -115,7 +115,7 @@ class TransparentWindow(Adw.Window):
 
         self.set_title(APP_TITLE)
 
-        # 创建主容器 (Overlay)
+        # Create main container (Overlay)
         overlay = Gtk.Overlay.new()
         self.set_content(overlay)
 
@@ -123,7 +123,7 @@ class TransparentWindow(Adw.Window):
         self.fixed.set_name("mapping-widget")
         overlay.set_child(self.fixed)
 
-        # 创建模式切换提示
+        # Create mode switching hint
         self.notification_label = Gtk.Label.new("")
         self.notification_label.set_name("mode-notification-label")
 
@@ -134,17 +134,17 @@ class TransparentWindow(Adw.Window):
         self.notification_box.set_margin_top(60)
         self.notification_box.append(self.notification_label)
         self.notification_box.set_opacity(0.0)
-        self.notification_box.set_can_target(False)  # 忽略鼠标事件
+        self.notification_box.set_can_target(False)  # Ignore mouse events
 
         overlay.add_overlay(self.notification_box)
 
-        # 初始化组件
+        # Initialize components
         self.widget_factory = WidgetFactory()
         self.style_manager = StyleManager()
         self.menu_manager = ContextMenuManager(self)
         self.workspace_manager = WorkspaceManager(self, self.fixed)
 
-        # 订阅事件
+        # Subscribe to events
         event_bus.subscribe(
             EventType.SETTINGS_WIDGET, self._on_widget_settings_requested
         )
@@ -152,14 +152,14 @@ class TransparentWindow(Adw.Window):
             EventType.WIDGET_SELECTION_OVERLAY, self._on_widget_selection_overlay
         )
         
-        # 创建圆形绘制覆盖层
+        # Create circular drawing overlay
         self.circle_overlay = CircleOverlay()
-        self.circle_overlay.set_can_target(False)  # 忽略鼠标事件
+        self.circle_overlay.set_can_target(False)  # Ignore mouse events
         overlay.add_overlay(self.circle_overlay)
 
-        # 创建全局事件处理器链
+        # Create global event handler chain
         self.event_handler_chain = InputEventHandlerChain()
-        # 导入并添加默认处理器
+        # Import and add default handler
         self.server = Server("0.0.0.0", 10721)
         self.adb_helper = AdbHelper()
         self.scrcpy_setup_task = asyncio.create_task(self.setup_scrcpy())
@@ -169,33 +169,33 @@ class TransparentWindow(Adw.Window):
         self.event_handler_chain.add_handler(self.key_mapping_handler)
         self.event_handler_chain.add_handler(self.default_handler)
 
-        # 初始化双模式系统
+        # Initialize dual mode system
         self.setup_mode_system()
 
-        # 初始化事件处理器
+        # Initialize event handlers
         self.setup_event_handlers()
 
-        # 设置全屏
+        # Set fullscreen
         self.setup_window()
 
-        # 设置UI（主要是事件控制器）
+        # Set UI (mainly event controllers)
         self.setup_controllers()
 
-        # 初始提示
+        # Initial hint
         GLib.idle_add(self.show_notification, _("Edit Mode (F1: Switch Mode)"))
 
     def _on_widget_selection_overlay(self, event):
-        """处理组件选中覆盖层事件"""
+        """Handles component selection overlay events"""
         overlay_data = event.data
         if overlay_data['action'] == 'show':
             self.circle_overlay.set_circle_data(overlay_data)
-            logger.debug(f"显示圆形覆盖层: {overlay_data}")
+            logger.debug(f"Displaying circular overlay: {overlay_data}")
         elif overlay_data['action'] == 'hide':
             self.circle_overlay.set_circle_data(None)
-            logger.debug(f"隐藏圆形覆盖层: {overlay_data}")
+            logger.debug(f"Hiding circular overlay: {overlay_data}")
 
     def _on_widget_settings_requested(self, event: "Event[bool]"):
-        """当一个widget请求设置时的回调, 弹出一个Popover"""
+        """Callback when a widget requests settings, pops up a Popover"""
         widget = event.source
         logger.info(
             f"Widget {type(widget).__name__} (id={id(widget)}) requested settings."
@@ -218,7 +218,7 @@ class TransparentWindow(Adw.Window):
         popover.add_controller(click_controller)
 
         # popover.set_cascade_popdown(event.data)
-        # "fix: Tried to map a grabbing popup with a non-top most parent" 错误
+        # "fix: Tried to map a grabbing popup with a non-top most parent" error
         popover.set_parent(self)
 
         main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
@@ -231,14 +231,14 @@ class TransparentWindow(Adw.Window):
         title_label.set_halign(Gtk.Align.CENTER)
         main_box.append(title_label)
 
-        # 使用新的配置系统
+        # Use new configuration system
         config_manager = widget.get_config_manager()
 
         if not config_manager.configs:
             label = Gtk.Label(label=_("This widget has no settings."))
             main_box.append(label)
         else:
-            # 使用配置管理器生成UI面板
+            # Use config manager to generate UI panel
             config_panel = config_manager.create_ui_panel()
             main_box.append(config_panel)
 
@@ -247,7 +247,7 @@ class TransparentWindow(Adw.Window):
             # confirm_button.add_css_class("suggested-action")
 
             # def on_confirm_clicked(btn):
-            #     # UI值变化已自动同步到配置管理器，这里只需关闭弹窗
+            #     # UI value changes are automatically synced to config manager, just close the popover
             #     logger.info("Configuration popover closed by user.")
             #     popover.popdown()
 
@@ -266,9 +266,9 @@ class TransparentWindow(Adw.Window):
         popover.set_position(Gtk.PositionType.BOTTOM)
 
         def on_popover_closed(p):
-            # 清理ConfigManager中对UI控件的引用，防止内存泄漏
+            # Clean up UI references in ConfigManager to prevent memory leaks
             config_manager.clear_ui_references()
-            # 从父容器解除对popover的引用
+            # Unparent the popover from its parent
             p.unparent()
 
         popover.connect("closed", on_popover_closed)
@@ -353,18 +353,18 @@ class TransparentWindow(Adw.Window):
         )
 
     def setup_mode_system(self):
-        """初始化双模式系统"""
-        # 监听current_mode属性变化
+        """Initializes the dual mode system"""
+        # Listen for current_mode property changes
         self.connect("notify::current-mode", self._on_mode_changed)
 
         logger.debug(f"Dual mode system initialized, current mode: {self.current_mode}")
 
     def setup_event_handlers(self):
-        """设置事件处理器"""
-        # 配置默认处理器的一些示例映射
-        # default_handler.add_key_mapping("T", lambda: print("🎮 默认: T键测试"))
-        # default_handler.add_key_mapping("G", lambda: print("🎮 默认: G键测试"))
-        # default_handler.add_mouse_mapping(2, lambda: print("🖱️ 默认: 中键点击"))  # 中键
+        """Sets up event handlers"""
+        # Example mappings for default handler
+        # default_handler.add_key_mapping("T", lambda: print("🎮 Default: T key test"))
+        # default_handler.add_key_mapping("G", lambda: print("🎮 Default: G key test"))
+        # default_handler.add_mouse_mapping(2, lambda: print("🖱️ Default: middle click"))  # middle click
 
         logger.debug("Event handler chain initialized")
         logger.debug(
@@ -372,7 +372,7 @@ class TransparentWindow(Adw.Window):
         )
 
     def setup_window(self):
-        """设置窗口属性"""
+        """Sets window properties"""
         self.realize()
         self.set_decorated(False)
 
@@ -388,19 +388,19 @@ class TransparentWindow(Adw.Window):
         self.set_name("transparent-window")
 
     def setup_ui(self):
-        """设置用户界面"""
-        # 主容器已在 __init__ 中创建和设置
+        """Sets up the user interface"""
+        # Main container is created and set in __init__
         pass
 
     def setup_controllers(self):
-        """设置事件控制器"""
-        # 全局键盘事件
+        """Sets up event controllers"""
+        # Global keyboard events
         key_controller = Gtk.EventControllerKey.new()
         key_controller.connect("key-pressed", self.on_global_key_press)
         key_controller.connect("key-released", self.on_global_key_release)
         self.add_controller(key_controller)
 
-        # 窗口级别的鼠标滚动事件
+        # Window-level mouse scroll events
         scroll_controller = Gtk.EventControllerScroll.new(
             flags=Gtk.EventControllerScrollFlags.BOTH_AXES
         )
@@ -409,19 +409,19 @@ class TransparentWindow(Adw.Window):
         scroll_controller.connect("scroll-end", self.on_window_mouse_scroll)
         self.add_controller(scroll_controller)
 
-        # 窗口级别的鼠标事件控制器
+        # Window-level mouse event controller
         click_controller = Gtk.GestureClick()
-        click_controller.set_button(0)  # 所有按钮
+        click_controller.set_button(0)  # All buttons
         click_controller.connect("pressed", self.on_window_mouse_pressed)
         click_controller.connect("released", self.on_window_mouse_released)
         self.add_controller(click_controller)
 
-        # 窗口级别的鼠标移动事件
+        # Window-level mouse motion events
         motion_controller = Gtk.EventControllerMotion.new()
         motion_controller.connect("motion", self.on_window_mouse_motion)
         self.add_controller(motion_controller)
 
-        # 初始化拖拽和调整大小状态
+        # Initialize drag and resize states
         self.dragging_widget = None
         self.resizing_widget = None
         self.drag_start_x = 0
@@ -430,29 +430,29 @@ class TransparentWindow(Adw.Window):
         self.resize_start_y = 0
         self.resize_direction = None
 
-        # 初始化交互状态
+        # Initialize interaction states
         self.selected_widget = None
         self.interaction_start_x = 0
         self.interaction_start_y = 0
         self.pending_resize_direction = None
 
     def on_window_mouse_pressed(self, controller, n_press, x, y):
-        """窗口级别的鼠标按下事件"""
+        """Window-level mouse press event"""
         button = controller.get_current_button()
         logger.debug(
             f"Mouse pressed: position({x:.1f}, {y:.1f}), button={button}, mode={self.current_mode}"
         )
 
-        # 在映射模式下使用事件处理器链
+        # Use event handler chain in mapping mode
         if self.current_mode == self.MAPPING_MODE:
             logger.debug(
                 "In mapping mode, use event handler chain to handle mouse event"
             )
 
-            # 创建鼠标按键的Key对象
+            # Create Key object for mouse button
             mouse_key = key_registry.create_mouse_key(button)
 
-            # 创建输入事件
+            # Create input event
             event = InputEvent(
                 event_type="mouse_press",
                 key=mouse_key,
@@ -461,7 +461,7 @@ class TransparentWindow(Adw.Window):
                 raw_data={"controller": controller, "n_press": n_press, "x": x, "y": y},
             )
 
-            # 使用事件处理器链处理
+            # Process with event handler chain
             handled = self.event_handler_chain.process_event(event)
             if handled:
                 logger.debug("Mouse event handled by event handler chain")
@@ -470,15 +470,15 @@ class TransparentWindow(Adw.Window):
                 logger.debug("Mouse event not handled by any event handler")
             return
 
-        # 编辑模式下的鼠标事件处理
-        if button == Gdk.BUTTON_SECONDARY:  # 右键
+        # Mouse event handling in edit mode
+        if button == Gdk.BUTTON_SECONDARY:  # Right click
             widget_at_position = self.workspace_manager.get_widget_at_position(x, y)
             if not widget_at_position:
-                # 右键空白区域，显示创建菜单
+                # Right click on blank area, show create menu
                 logger.debug("Right click on blank area, show create menu")
                 self.menu_manager.show_widget_creation_menu(x, y, self.widget_factory)
             else:
-                # 右键widget，调用widget的右键回调
+                # Right click on widget, call widget's right-click callback
                 logger.debug(
                     f"Right click on widget: {type(widget_at_position).__name__}"
                 )
@@ -488,18 +488,19 @@ class TransparentWindow(Adw.Window):
                 if hasattr(widget_at_position, "on_widget_right_clicked"):
                     widget_at_position.on_widget_right_clicked(local_x, local_y)
 
-        elif button == Gdk.BUTTON_PRIMARY:  # 左键
+        elif button == Gdk.BUTTON_PRIMARY:  # Left click
             self.workspace_manager.handle_mouse_press(controller, n_press, x, y)
 
     def on_window_mouse_motion(self, controller, x, y):
-        """窗口级别的鼠标移动事件"""
+        """Window-level mouse motion event"""
         if self.current_mode == self.MAPPING_MODE:
             logger.debug(
                 "In mapping mode, use event handler chain to handle mouse motion"
             )
             event = controller.get_current_event()
             state = event.get_modifier_state()
-            # FIXME 这个 mouse_key 实际上应该为 none, 此处只是为了兼容. 因为右键行走可以在右键按下状态移动时触发
+            # FIXME This mouse_key should actually be None, this is just for compatibility.
+            # Right-click walking can be triggered when moving in the right-click down state.
             mouse_key = None
             button = None
             if state & Gdk.ModifierType.BUTTON1_MASK:
@@ -519,12 +520,12 @@ class TransparentWindow(Adw.Window):
                 button=button,
                 raw_data={"controller": controller, "x": x, "y": y},
             )
-            # 技能施法和右键行走
+            # Skill casting and right-click walking
             event_bus.emit(Event(EventType.MOUSE_MOTION, self, event))
             self.event_handler_chain.process_event(event)
             return
 
-        # 编辑模式下，委托给 workspace_manager
+        # In edit mode, delegate to workspace_manager
         self.workspace_manager.handle_mouse_motion(controller, x, y)
 
     def on_window_mouse_scroll(
@@ -551,15 +552,15 @@ class TransparentWindow(Adw.Window):
         widget.y = y
 
     def get_widget_at_position(self, x, y):
-        """获取指定位置的组件"""
+        """Gets the component at the specified position"""
         child = self.fixed.get_first_child()
         while child:
-            # 获取组件的位置和大小
+            # Get component position and size
             child_x, child_y = self.fixed.get_child_position(child)
             child_width = child.get_allocated_width()
             child_height = child.get_allocated_height()
 
-            # 检查点击是否在组件范围内
+            # Check if click is within component bounds
             if is_point_in_rect(x, y, child_x, child_y, child_width, child_height):
                 return child
 
@@ -567,82 +568,82 @@ class TransparentWindow(Adw.Window):
         return None
 
     def global_to_local_coords(self, widget, global_x, global_y):
-        """将全局坐标转换为widget内部坐标"""
+        """Converts global coordinates to widget internal coordinates"""
         widget_x, widget_y = self.fixed.get_child_position(widget)
         return global_x - widget_x, global_y - widget_y
 
     def handle_widget_interaction(self, widget, x, y, n_press=1):
-        """处理widget交互 - 支持双击检测"""
+        """Handles widget interaction - supports double-click detection"""
         logger.debug(
             f"Handle widget interaction: {type(widget).__name__}, position({x:.1f}, {y:.1f}), click count={n_press}"
         )
 
-        # 转换为widget内部坐标，用于编辑状态判断
+        # Convert to widget internal coordinates for edit state check
         local_x, local_y = self.global_to_local_coords(widget, x, y)
 
-        # 检查widget是否有编辑装饰器，且是否应该保持编辑状态
+        # Check if widget has edit decorator and should keep edit state
         should_keep_editing = False
         if hasattr(widget, "should_keep_editing_on_click"):
             should_keep_editing = widget.should_keep_editing_on_click(local_x, local_y)
             logger.debug(f"Widget edit status query result: {should_keep_editing}")
 
         if should_keep_editing:
-            # 如果应该保持编辑状态，就不改变选择状态，也不要触发置顶
+            # If it should keep editing state, don't change selection state, and don't trigger bring to front
             logger.debug(
                 "Keep editing state, skip selection logic and bring to front operation"
             )
-            # 设置跳过标志，避免延迟置顶破坏编辑状态
+            # Set skip flag to avoid breaking edit state with delayed bring to front
             widget._skip_delayed_bring_to_front = True
-            return  # 直接返回，不执行后续的选择和置顶逻辑
+            return  # Return directly, do not execute subsequent selection and bring to front logic
         else:
-            # 正常的选择逻辑
-            # 取消其他widget的选择
+            # Normal selection logic
+            # Unselect other widgets
             self.clear_all_selections()
 
-            # 选择当前widget
+            # Select current widget
             if hasattr(widget, "set_selected"):
                 widget.set_selected(True)
                 logger.debug("Set widget to selected state")
 
-        # 选择时置顶 - 使用延迟方式
-        # 清除跳过标志（如果存在），确保正常情况下能置顶
+        # Selection brings to front - using delayed method
+        # Clear skip flag (if it exists), ensure normal bring to front works
         if hasattr(widget, "_skip_delayed_bring_to_front"):
             delattr(widget, "_skip_delayed_bring_to_front")
             logger.debug("Clear skip delayed bring to front flag")
 
         self.schedule_bring_to_front(widget)
 
-        # 转换为widget内部坐标
+        # Convert to widget internal coordinates
         local_x, local_y = self.global_to_local_coords(widget, x, y)
         logger.debug(f"Convert to local coordinates: ({local_x:.1f}, {local_y:.1f})")
 
-        # 处理双击事件
+        # Handle double-click event
         if n_press == 2:
             logger.debug("Double click detected")
-            # 双击时，标记widget避免延迟置顶操作执行
+            # When double-clicking, mark widget to avoid delayed bring to front operation
             if not hasattr(widget, "_skip_delayed_bring_to_front"):
                 widget._skip_delayed_bring_to_front = True
                 logger.debug("Mark widget to skip delayed bring to front operation")
 
             if hasattr(widget, "on_widget_double_clicked"):
                 widget.on_widget_double_clicked(local_x, local_y)
-            # 双击进入编辑时不要触发置顶，避免干扰编辑状态
+            # Double click does not trigger bring to front when entering edit, to avoid interference with edit state
             logger.debug("Double click completed, skip bring to front operation")
             return
 
-        # 记录准备进行的操作，但不立即执行
+        # Record the operation to be performed, but do not execute immediately
         self.selected_widget = widget
         self.interaction_start_x = x
         self.interaction_start_y = y
 
-        # 检查是否是调整大小区域
+        # Check if it's a resize area
         if hasattr(widget, "check_resize_direction"):
             resize_direction = widget.check_resize_direction(local_x, local_y)
             logger.debug(f"Check resize direction: {resize_direction}")
             if resize_direction:
-                # 开始调整大小时，如果widget正在编辑状态，强制退出编辑
+                # When starting to resize, if the widget is in edit state, force exit edit
                 if hasattr(widget, "should_keep_editing_on_click"):
-                    # 这表示widget有编辑装饰器，强制触发selection change来退出编辑
+                    # This means the widget has an edit decorator, force trigger selection change to exit edit
                     self.clear_all_selections()
                     widget.set_selected(True)
                     logger.debug("When resizing, force exit edit state")
@@ -651,29 +652,29 @@ class TransparentWindow(Adw.Window):
                 logger.debug("Prepare resize operation")
                 return
 
-        # 否则准备拖拽
+        # Otherwise, prepare for drag
         self.pending_resize_direction = None
         logger.debug("Prepare drag operation")
 
-        # 调用widget的点击回调
+        # Call widget's click callback
         if hasattr(widget, "on_widget_clicked"):
             widget.on_widget_clicked(local_x, local_y)
 
     def on_window_mouse_released(self, controller, n_press, x, y):
-        """窗口级别的鼠标释放事件"""
+        """Window-level mouse release event"""
         button = controller.get_current_button()
         logger.debug(f"Mouse released: position({x:.1f}, {y:.1f}), button={button}")
 
-        # 在映射模式下使用事件处理器链
+        # Use event handler chain in mapping mode
         if self.current_mode == self.MAPPING_MODE:
             logger.debug(
                 "In mapping mode, use event handler chain to handle mouse release"
             )
 
-            # 创建鼠标按键的Key对象
+            # Create Key object for mouse button
             mouse_key = key_registry.create_mouse_key(button)
 
-            # 创建输入事件
+            # Create input event
             event = InputEvent(
                 event_type="mouse_release",
                 key=mouse_key,
@@ -682,7 +683,7 @@ class TransparentWindow(Adw.Window):
                 raw_data={"controller": controller, "n_press": n_press, "x": x, "y": y},
             )
 
-            # 使用事件处理器链处理
+            # Process with event handler chain
             handled = self.event_handler_chain.process_event(event)
             if handled:
                 logger.debug("Mouse release event handled by event handler chain")
@@ -691,20 +692,20 @@ class TransparentWindow(Adw.Window):
                 logger.debug("Mouse release event not handled by any event handler")
             return
 
-        # 编辑模式下的鼠标释放处理, 委托给 workspace_manager
+        # Mouse release handling in edit mode, delegate to workspace_manager
         self.workspace_manager.handle_mouse_release(controller, n_press, x, y)
 
     def start_widget_drag(self, widget, x, y):
-        """开始拖拽widget"""
+        """Starts dragging widget"""
         self.dragging_widget = widget
         self.drag_start_x = x
         self.drag_start_y = y
 
-        # 在拖拽时将widget置于顶层 - 使用安全的方法
+        # Bring widget to front when dragging - using safe method
         self.bring_widget_to_front_safe(widget)
 
     def start_widget_resize(self, widget, x, y, direction):
-        """开始调整widget大小"""
+        """Starts resizing widget"""
         self.resizing_widget = widget
         self.resize_start_x = x
         self.resize_start_y = y
@@ -715,19 +716,19 @@ class TransparentWindow(Adw.Window):
             widget.start_resize(local_x, local_y, direction)
 
     def handle_widget_drag(self, x, y):
-        """处理widget拖拽"""
+        """Handles widget dragging"""
         if not self.dragging_widget:
             return
 
         dx = x - self.drag_start_x
         dy = y - self.drag_start_y
 
-        # 获取当前位置
+        # Get current position
         current_x, current_y = self.fixed.get_child_position(self.dragging_widget)
         new_x = current_x + dx
         new_y = current_y + dy
 
-        # 限制在窗口范围内
+        # Limit within window bounds
         widget_bounds = self.dragging_widget.get_widget_bounds()
         window_width = self.get_allocated_width()
         window_height = self.get_allocated_height()
@@ -735,15 +736,15 @@ class TransparentWindow(Adw.Window):
         new_x = max(0, min(new_x, window_width - widget_bounds[2]))
         new_y = max(0, min(new_y, window_height - widget_bounds[3]))
 
-        # 移动widget
+        # Move widget
         self.fixed_move(self.dragging_widget, new_x, new_y)
 
-        # 更新拖拽起始点
+        # Update drag start point
         self.drag_start_x = x
         self.drag_start_y = y
 
     def handle_widget_resize(self, x, y):
-        """处理widget调整大小"""
+        """Handles widget resizing"""
         if not self.resizing_widget or not hasattr(
             self.resizing_widget, "handle_resize_motion"
         ):
@@ -752,35 +753,35 @@ class TransparentWindow(Adw.Window):
         self.resizing_widget.handle_resize_motion(x, y)
 
     def bring_widget_to_front(self, widget):
-        """将widget置于最前 - 使用简单安全的方法"""
-        # 简单的方法：只在开始拖拽时置顶，避免在选择时就置顶
+        """Brings widget to front - using simple safe method"""
+        # Simple method: only bring to front when dragging starts, to avoid bringing to front when selecting
         pass
 
     def bring_widget_to_front_safe(self, widget):
-        """安全地将widget置于最前 - 只在拖拽时使用"""
+        """Safely brings widget to front - only used when dragging"""
         try:
-            # 获取当前位置
+            # Get current position
             x, y = self.fixed.get_child_position(widget)
 
-            # 移除并重新添加（只在拖拽时这样做是安全的）
+            # Remove and re-add (only do this safely when dragging)
             self.fixed.remove(widget)
             self.fixed_put(widget, x, y)
 
-            # 确保拖拽状态正确
+            # Ensure drag state is correct
             self.dragging_widget = widget
 
         except Exception as e:
             logger.error(f"Error bringing widget to front: {e}")
 
     def schedule_bring_to_front(self, widget):
-        """延迟置顶 - 避免立即操作导致的状态问题"""
-        # 使用GLib.idle_add来延迟执行置顶操作
+        """Delays bringing to front - to avoid state issues with immediate operations"""
+        # Use GLib.idle_add to delay the bring to front operation
         GLib.idle_add(self._delayed_bring_to_front, widget)
 
     def _delayed_bring_to_front(self, widget):
-        """延迟执行的置顶操作"""
+        """Delays the bring to front operation"""
         try:
-            # 检查是否应该跳过延迟置顶（双击进入编辑时）
+            # Check if delayed bring to front should be skipped (double-click to enter edit)
             if (
                 hasattr(widget, "_skip_delayed_bring_to_front")
                 and widget._skip_delayed_bring_to_front
@@ -788,25 +789,25 @@ class TransparentWindow(Adw.Window):
                 logger.debug(
                     "Skip delayed bring to front operation (widget is editing)"
                 )
-                # 清除标志
+                # Clear flag
                 delattr(widget, "_skip_delayed_bring_to_front")
                 return False
 
-            # 检查widget是否仍然存在
+            # Check if widget still exists
             if widget.get_parent() != self.fixed:
                 return False
 
-            # 获取当前位置
+            # Get current position
             x, y = self.fixed.get_child_position(widget)
 
-            # 保存选择状态
+            # Save selection state
             selected_state = getattr(widget, "is_selected", False)
 
-            # 移除并重新添加
+            # Remove and re-add
             self.fixed.remove(widget)
             self.fixed_put(widget, x, y)
 
-            # 恢复选择状态（只在状态真的改变时才调用，避免触发不必要的信号）
+            # Restore selection state (only call if state actually changed, to avoid triggering unnecessary signals)
             if hasattr(widget, "set_selected"):
                 current_state = getattr(widget, "is_selected", False)
                 if current_state != selected_state:
@@ -818,14 +819,14 @@ class TransparentWindow(Adw.Window):
         except Exception as e:
             logger.error(f"Error bringing widget to front: {e}")
 
-        return False  # 不重复执行
+        return False  # Do not repeat execution
 
     # def update_cursor_for_position(self, x, y):
-    #     """根据位置更新鼠标指针 - 已移至 workspace_manager"""
-    #     pass  # 此方法已移至 workspace_manager，保留空方法以保持兼容性
+    #     """Updates mouse cursor based on position - moved to workspace_manager"""
+    #     pass  # This method has been moved to workspace_manager, keep empty method for compatibility
 
     # def get_cursor_name_for_resize_direction(self, direction):
-    #     """根据调整大小方向获取鼠标指针名称"""
+    #     """Gets mouse cursor name based on resize direction"""
     #     cursor_map = {
     #         "se": "se-resize",
     #         "sw": "sw-resize",
@@ -839,11 +840,11 @@ class TransparentWindow(Adw.Window):
     #     return cursor_map.get(direction, "default")
 
     def clear_all_selections(self):
-        """取消所有组件的选择状态"""
+        """Clears the selected state of all components"""
         self.workspace_manager.clear_all_selections()
 
     def set_all_widgets_mapping_mode(self, mapping_mode: bool):
-        """设置所有 widget 的映射模式"""
+        """Sets the mapping mode for all widgets"""
         widget_count = 0
         child = self.fixed.get_first_child()
         while child:
@@ -856,13 +857,13 @@ class TransparentWindow(Adw.Window):
         logger.debug(f"Set {widget_count} widgets to {mode_name} mode")
 
     def create_widget_at_position(self, widget: "BaseWidget", x: int, y: int):
-        """在指定位置创建组件"""
-        # 直接在指定位置放置组件
+        """Creates a component at the specified position"""
+        # Place component directly at the specified position
         self.fixed_put(widget, x, y)
 
-        # 检查是否是支持多按键映射的组件（如DirectionalPad）
+        # Check if it's a multi-key mapping component (e.g., DirectionalPad)
         if hasattr(widget, "get_all_key_mappings"):
-            # 为多按键映射组件注册所有按键
+            # Register all keys for multi-key mapping components
             key_mappings = widget.get_all_key_mappings()
             success_count = 0
             total_count = len(key_mappings)
@@ -884,15 +885,15 @@ class TransparentWindow(Adw.Window):
             )
 
         elif hasattr(widget, "final_keys") and widget.final_keys:
-            # 传统的单按键映射组件
-            # 直接使用KeyCombination对象进行注册
+            # Traditional single-key mapping components
+            # Register directly using KeyCombination objects
             for key_combination in widget.final_keys:
                 success = self.register_widget_key_mapping(widget, key_combination)
                 if success:
                     logger.debug(
                         f"Auto register component default key mapping: {key_combination} -> {type(widget).__name__}"
                     )
-                    # 更新组件显示文本以反映注册的按键
+                    # Update component display text to reflect registered keys
                     if hasattr(widget, "text") and not widget.text:
                         widget.text = str(key_combination)
                 else:
@@ -905,25 +906,25 @@ class TransparentWindow(Adw.Window):
             )
 
     def on_clear_widgets(self, button: Gtk.Button | None):
-        """清空所有组件"""
+        """Clears all components"""
         widgets_to_delete = []
         child = self.fixed.get_first_child()
         while child:
             widgets_to_delete.append(child)
             child = child.get_next_sibling()
 
-        # 清理每个widget的按键映射，然后从UI中移除
+        # Clean up key mappings for each widget, then remove from UI
         for widget in widgets_to_delete:
-            # 清理widget的按键映射
+            # Clean up widget's key mappings
             self.unregister_widget_key_mapping(widget)
-            # 从UI中移除widget
+            # Remove widget from UI
             self.fixed.remove(widget)
             widget.on_delete()
             logger.debug(
                 f"Clear widget {type(widget).__name__}(id={id(widget)}) and its key mapping"
             )
 
-        # 清除交互状态
+        # Clear interaction states
         self.workspace_manager.dragging_widget = None
         self.workspace_manager.resizing_widget = None
 
@@ -932,7 +933,7 @@ class TransparentWindow(Adw.Window):
         )
 
     def get_physical_keyval(self, keycode):
-        """获取物理按键对应的标准 keyval（不受修饰键影响）"""
+        """Gets the standard keyval for the physical key (independent of modifier keys)"""
         try:
             display = self.get_display()
             if display:
@@ -946,10 +947,10 @@ class TransparentWindow(Adw.Window):
         return 0
 
     def on_global_key_press(self, controller, keyval, keycode, state):
-        """全局键盘事件 - 支持双模式，使用事件处理器链"""
-        # 特殊按键：模式切换和调试功能 - 这些直接用原始keyval判断
+        """Global keyboard event - supports dual mode, uses event handler chain"""
+        # Special keys: mode switching and debug functions - these are directly judged by original keyval
         if keyval == Gdk.KEY_F1:
-            # F1在两个模式之间切换
+            # F1 switches between two modes
             if self.current_mode == self.EDIT_MODE:
                 self.switch_mode(self.MAPPING_MODE)
             else:
@@ -959,33 +960,33 @@ class TransparentWindow(Adw.Window):
         #     self.switch_mode(self.MAPPING_MODE)
         #     return True
         # elif keyval == Gdk.KEY_F3:
-        #     # F3显示当前按键映射状态
+        #     # F3 displays current key mapping status
         #     self.print_key_mappings()
         #     return True
         # elif keyval == Gdk.KEY_F4:
-        #     # F4显示事件处理器状态
+        #     # F4 displays event handler status
         #     self.print_event_handlers_status()
         #     return True
 
-        # 在映射模式下使用事件处理器链
+        # Use event handler chain in mapping mode
         if self.current_mode == self.MAPPING_MODE:
             logger.debug("In mapping mode, use event handler chain to handle key event")
 
-            # 获取物理按键的标准 keyval
+            # Get standard keyval for physical key
             physical_keyval = self.get_physical_keyval(keycode)
             if physical_keyval == 0:
-                # 如果获取失败，回退到原始 keyval
+                # If failed to get, fallback to original keyval
                 physical_keyval = keyval
                 logger.debug(f"Fallback to original keyval: {Gdk.keyval_name(keyval)}")
 
-            # 处理修饰键本身
+            # Process modifier keys themselves
             if self._is_modifier_key(keyval):
                 main_key = key_registry.create_from_keyval(keyval)
             else:
                 main_key = key_registry.create_from_keyval(physical_keyval)
 
             if main_key:
-                # 收集修饰键
+                # Collect modifier keys
                 modifiers = []
                 if state & Gdk.ModifierType.CONTROL_MASK:
                     ctrl_key = key_registry.get_by_name("Ctrl_L")
@@ -1004,7 +1005,7 @@ class TransparentWindow(Adw.Window):
                     if super_key:
                         modifiers.append(super_key)
 
-                # 创建输入事件
+                # Create input event
                 event = InputEvent(
                     event_type="key_press",
                     key=main_key,
@@ -1017,7 +1018,7 @@ class TransparentWindow(Adw.Window):
                     },
                 )
 
-                # 使用事件处理器链处理
+                # Process with event handler chain
                 handled = self.event_handler_chain.process_event(event)
                 if handled:
                     logger.debug("Key event handled by event handler chain")
@@ -1025,36 +1026,36 @@ class TransparentWindow(Adw.Window):
                 else:
                     logger.debug("Key event not handled by any event handler")
 
-        # 编辑模式或映射模式下的通用按键
+        # General key handling in edit mode or mapping mode
         if keyval == Gdk.KEY_Escape:
             if self.current_mode == self.EDIT_MODE:
-                # 编辑模式：取消所有选择
+                # Edit mode: cancel all selections
                 self.clear_all_selections()
             else:
-                # 映射模式：暂时什么都不做，或者可以切换回编辑模式
+                # Mapping mode: do nothing for now, or switch back to edit mode
                 logger.debug("In mapping mode, press ESC key")
             return True
 
-        # 只在编辑模式下处理编辑相关按键
+        # Only handle edit-related keys in edit mode
         if self.current_mode == self.EDIT_MODE:
             if keyval == Gdk.KEY_Delete:
-                # Delete键删除选中的widget
+                # Delete key deletes selected widget
                 self.workspace_manager.delete_selected_widgets()
                 return True
 
         return False
 
     def delete_selected_widgets(self):
-        """删除所有选中的widget"""
+        """Deletes all selected widgets"""
         self.workspace_manager.delete_selected_widgets()
 
-    # ===================提示信息方法===================
+    # ===================Hint Information Methods====================
 
     def show_notification(self, text: str):
-        """显示带渐隐效果的提示信息"""
+        """Shows a hint message with fade-out effect"""
         self.notification_label.set_label(text)
 
-        # 停止任何正在进行的动画
+        # Stop any ongoing animations
         if (
             hasattr(self, "_notification_fade_out_timer")
             and self._notification_fade_out_timer > 0
@@ -1063,7 +1064,7 @@ class TransparentWindow(Adw.Window):
         if hasattr(self, "_notification_animation"):
             self._notification_animation.reset()
 
-        # 淡入动画
+        # Fade-in animation
         self.notification_box.set_opacity(0)
         animation_target = Adw.PropertyAnimationTarget.new(
             self.notification_box, "opacity"
@@ -1074,13 +1075,13 @@ class TransparentWindow(Adw.Window):
         self._notification_animation.set_easing(Adw.Easing.LINEAR)
         self._notification_animation.play()
 
-        # 计划淡出
+        # Plan fade-out
         self._notification_fade_out_timer = GLib.timeout_add(
             1500, self._fade_out_notification
         )
 
     def _fade_out_notification(self):
-        """执行淡出动画"""
+        """Executes fade-out animation"""
         animation_target = Adw.PropertyAnimationTarget.new(
             self.notification_box, "opacity"
         )
@@ -1092,31 +1093,31 @@ class TransparentWindow(Adw.Window):
         self._notification_fade_out_timer = 0
         return GLib.SOURCE_REMOVE
 
-    # ===================双模式系统方法===================
+    # ===================Dual Mode System Methods====================
 
     def _on_mode_changed(self, widget, pspec):
-        """模式属性变化时的回调"""
+        """Callback when mode property changes"""
         new_mode = self.current_mode
         logger.debug(f"Mode changed to: {new_mode}")
 
-        # 通知所有widget切换绘制模式
+        # Notify all widgets to switch drawing mode
         mapping_mode = new_mode == self.MAPPING_MODE
         self.set_all_widgets_mapping_mode(mapping_mode)
 
-        # 根据新模式调整UI状态
+        # Adjust UI state based on new mode
         if new_mode == self.MAPPING_MODE:
-            # 进入映射模式：取消所有选择，禁用编辑功能
+            # Enter mapping mode: cancel all selections, disable edit functions
             self.clear_all_selections()
             logger.debug("Enter mapping mode, edit function disabled")
 
             self.show_notification(_("Mapping Mode (F1: Switch Mode)"))
 
-            # 可以在这里添加更多映射模式的UI调整
-            # 比如改变窗口标题、显示状态指示器等
+            # Add more UI adjustments for mapping mode here
+            # e.g., change window title, display status indicator, etc.
             self.set_title(f"{APP_TITLE} - Mapping Mode (F1: Switch Mode)")
             self.set_cursor_from_name("default")
 
-            # 显示映射模式帮助信息
+            # Display mapping mode help information
             logger.debug("Enter mapping mode!")
             logger.debug(
                 f"- Press configured key combination to trigger corresponding widget action"
@@ -1125,12 +1126,12 @@ class TransparentWindow(Adw.Window):
             logger.debug("- ESC: Other operations")
 
         else:
-            # 进入编辑模式：恢复编辑功能
+            # Enter edit mode: restore edit functions
             logger.debug("Enter edit mode, edit function enabled")
             self.show_notification(_("Edit Mode (F1: Switch Mode)"))
             self.set_title(f"{APP_TITLE} - Edit Mode (F1: Switch Mode)")
 
-            # 显示编辑模式帮助信息
+            # Display edit mode help information
             logger.debug("Enter edit mode!")
             logger.debug("- Right click on blank area: create widget")
             logger.debug("- Double click widget: edit key mapping")
@@ -1139,7 +1140,7 @@ class TransparentWindow(Adw.Window):
             logger.debug("- F1: Switch to mapping mode")
 
     def switch_mode(self, new_mode):
-        """切换模式"""
+        """Switches mode"""
         if new_mode not in [self.EDIT_MODE, self.MAPPING_MODE]:
             logger.debug(f"Invalid mode: {new_mode}")
             return False
@@ -1150,16 +1151,16 @@ class TransparentWindow(Adw.Window):
 
         logger.debug(f"Switch mode: {self.current_mode} -> {new_mode}")
 
-        # 使用属性系统设置模式，会自动触发_on_mode_changed回调
+        # Use property system to set mode, which will trigger _on_mode_changed callback
         self.set_property("current-mode", new_mode)
 
         return True
 
     def format_key_combination(self, keyval, state) -> KeyCombination:
-        """将按键事件格式化为 KeyCombination"""
+        """Formats key event into KeyCombination"""
         keys = []
 
-        # 添加修饰键
+        # Add modifier keys
         if state & Gdk.ModifierType.CONTROL_MASK:
             ctrl_key = key_registry.get_by_name("Ctrl")
             if ctrl_key:
@@ -1177,7 +1178,7 @@ class TransparentWindow(Adw.Window):
             if super_key:
                 keys.append(super_key)
 
-        # 获取主要按键
+        # Get main key
         main_key = key_registry.create_from_keyval(keyval, state)
         if main_key:
             keys.append(main_key)
@@ -1187,57 +1188,57 @@ class TransparentWindow(Adw.Window):
     def register_widget_key_mapping(
         self, widget, key_combination: KeyCombination
     ) -> bool:
-        """注册widget的按键映射"""
-        # 自动读取widget的可重入属性
+        """Registers widget's key mapping"""
+        # Automatically read widget's reentrant attribute
         reentrant = getattr(widget, 'IS_REENTRANT', False)
         return key_mapping_manager.subscribe(widget, key_combination, reentrant=reentrant)
 
     def unregister_widget_key_mapping(self, widget) -> bool:
-        """取消widget的所有按键映射"""
+        """Unsubscribes all key mappings for a widget"""
         return key_mapping_manager.unsubscribe(widget)
 
     def unregister_single_widget_key_mapping(
         self, widget, key_combination: KeyCombination
     ) -> bool:
-        """取消widget的单个按键映射"""
+        """Unsubscribes a single key mapping for a widget"""
         return key_mapping_manager.unsubscribe_key(widget, key_combination)
 
     def get_widget_key_mapping(self, widget) -> list[KeyCombination]:
-        """获取指定widget的按键映射列表"""
+        """Gets the list of key mappings for a specified widget"""
         return key_mapping_manager.get_subscriptions(widget)
 
     def print_key_mappings(self):
-        """打印当前所有的按键映射（调试用）"""
+        """Prints all current key mappings (for debugging)"""
         key_mapping_manager.print_mappings()
 
     def clear_all_key_mappings(self):
-        """清空所有按键映射"""
+        """Clears all key mappings"""
         return key_mapping_manager.clear()
 
     def on_global_key_release(self, controller, keyval, keycode, state):
-        """全局按键释放事件 - 使用事件处理器链"""
+        """Global key release event - uses event handler chain"""
         if self.current_mode == self.MAPPING_MODE:
             logger.debug(
                 "In mapping mode, use event handler chain to handle key release"
             )
 
-            # 获取物理按键的标准 keyval
+            # Get standard keyval for physical key
             physical_keyval = self.get_physical_keyval(keycode)
             if physical_keyval == 0:
-                # 如果获取失败，回退到原始 keyval
+                # If failed to get, fallback to original keyval
                 physical_keyval = keyval
                 logger.debug(
                     f"Release fallback to original keyval: {Gdk.keyval_name(keyval)}"
                 )
 
-            # 处理修饰键本身
+            # Process modifier keys themselves
             if self._is_modifier_key(keyval):
                 main_key = key_registry.create_from_keyval(keyval)
             else:
                 main_key = key_registry.create_from_keyval(physical_keyval)
 
             if main_key:
-                # 收集修饰键
+                # Collect modifier keys
                 modifiers = []
                 if state & Gdk.ModifierType.CONTROL_MASK:
                     ctrl_key = key_registry.get_by_name("Ctrl_L")
@@ -1256,7 +1257,7 @@ class TransparentWindow(Adw.Window):
                     if super_key:
                         modifiers.append(super_key)
 
-                # 创建输入事件
+                # Create input event
                 event = InputEvent(
                     event_type="key_release",
                     key=main_key,
@@ -1269,7 +1270,7 @@ class TransparentWindow(Adw.Window):
                     },
                 )
 
-                # 使用事件处理器链处理
+                # Process with event handler chain
                 handled = self.event_handler_chain.process_event(event)
                 if handled:
                     logger.debug("Key release event handled by event handler chain")
@@ -1280,7 +1281,7 @@ class TransparentWindow(Adw.Window):
         return False
 
     def _is_modifier_key(self, keyval):
-        """检查是否是修饰键"""
+        """Checks if it's a modifier key"""
         modifier_keys = {
             Gdk.KEY_Control_L,
             Gdk.KEY_Control_R,
@@ -1297,23 +1298,23 @@ class TransparentWindow(Adw.Window):
         }
         return keyval in modifier_keys
 
-    def print_event_handlers_status(self):
-        """打印事件处理器状态（调试用）"""
-        print(f"\n[DEBUG] ==================Event handler status==================")
-        print(
-            f"[DEBUG] Event handler chain status: {'Enabled' if self.event_handler_chain.enabled else 'Disabled'}"
-        )
+    # def print_event_handlers_status(self):
+    #     """Prints event handler status (for debugging)"""
+    #     print(f"\n[DEBUG] ==================Event handler status==================")
+    #     print(
+    #         f"[DEBUG] Event handler chain status: {'Enabled' if self.event_handler_chain.enabled else 'Disabled'}"
+    #     )
 
-        handlers_info = self.event_handler_chain.get_handlers_info()
-        for info in handlers_info:
-            status = "启用" if info["enabled"] else "禁用"
-            print(f"[DEBUG] - {info['name']}: 优先级={info['priority']}, 状态={status}")
+    #     handlers_info = self.event_handler_chain.get_handlers_info()
+    #     for info in handlers_info:
+    #         status = "Enabled" if info["enabled"] else "Disabled"
+    #         print(f"[DEBUG] - {info['name']}: Priority={info['priority']}, Status={status}")
 
-        # 显示默认处理器的映射
-        print(
-            f"[DEBUG] 默认处理器按键映射: {list(self.default_handler.key_mappings.keys())}"
-        )
-        print(
-            f"[DEBUG] 默认处理器鼠标映射: {list(self.default_handler.mouse_mappings.keys())}"
-        )
-        print(f"[DEBUG] ================================================\n")
+    #     # Display default handler's mappings
+    #     print(
+    #         f"[DEBUG] Default handler key mappings: {list(self.default_handler.key_mappings.keys())}"
+    #     )
+    #     print(
+    #         f"[DEBUG] Default handler mouse mappings: {list(self.default_handler.mouse_mappings.keys())}"
+    #     )
+    #     print(f"[DEBUG] ================================================\n")

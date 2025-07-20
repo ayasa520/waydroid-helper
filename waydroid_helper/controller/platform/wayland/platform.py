@@ -35,7 +35,7 @@ def get_wayland_surface(widget):
 
 def get_wayland_display(widget):
     """获取Wayland显示"""
-    logger.debug(f"获取Wayland显示: {widget}")
+    logger.debug(f"Getting Wayland display: {widget}")
     gdk_display = widget.get_display()
     return libgtk.gdk_wayland_display_get_wl_display(hash(gdk_display))
 
@@ -133,10 +133,10 @@ class PointerConstraint(GObject.Object):
                         self.relative_pointer_handle_relative_motion
                     )
 
-            logger.debug(f"成功锁定鼠标到 widget: {type(self.widget).__name__}")
+            logger.debug(f"Successfully locked mouse to widget: {type(self.widget).__name__}")
             return True
         except Exception as e:
-            logger.error(f"锁定鼠标失败: {e}")
+            logger.error(f"Failed to lock mouse: {e}")
             return False
 
     def unlock_pointer(self):
@@ -147,10 +147,10 @@ class PointerConstraint(GObject.Object):
             if self.relative_pointer:
                 self.relative_pointer.destroy()
                 self.relative_pointer = None
-            logger.debug("鼠标已解锁")
+            logger.debug("Mouse unlocked")
             return True
         except Exception as e:
-            logger.error(f"解锁鼠标失败: {e}")
+            logger.error(f"Failed to unlock mouse: {e}")
             return False
 
 
@@ -159,7 +159,7 @@ class WaylandPlatform(PlatformBase):
 
     def __init__(self, widget):
         super().__init__(widget)
-        logger.debug(f"初始化WaylandPlatform: {widget}")
+        logger.debug(f"Initializing WaylandPlatform: {widget}")
         self.pointer_constraint = None
         self._relative_pointer_callback = None
 
@@ -168,7 +168,7 @@ class WaylandPlatform(PlatformBase):
         if self.pointer_constraint:
             self.pointer_constraint.unlock_pointer()
             self.pointer_constraint = None
-        logger.debug("清理 Wayland 平台资源")
+        logger.debug("Cleaning up Wayland platform resources")
 
     def relative_pointer_callback(self, obj, dx, dy, dx_unaccel, dy_unaccel):
         if self._relative_pointer_callback:
@@ -188,11 +188,11 @@ class WaylandPlatform(PlatformBase):
                 "relative-motion", self.relative_pointer_callback
             )
 
-            logger.debug(f"成功锁定鼠标到 widget: {type(self.widget).__name__}")
+            logger.debug(f"Successfully locked mouse to widget: {type(self.widget).__name__}")
             return True
 
         except Exception as e:
-            logger.error(f"锁定鼠标失败: {e}")
+            logger.error(f"Failed to lock mouse: {e}")
             self.pointer_constraint = None
             return False
 
@@ -205,11 +205,11 @@ class WaylandPlatform(PlatformBase):
             self.pointer_constraint.unlock_pointer()
             self.pointer_constraint.disconnect_by_func(self.relative_pointer_callback)
             self.pointer_constraint = None
-            logger.debug("鼠标已解锁")
+            logger.debug("Mouse unlocked")
             return True
 
         except Exception as e:
-            logger.error(f"解锁鼠标失败: {e}")
+            logger.error(f"Failed to unlock mouse: {e}")
             return False
 
     def is_pointer_locked(self) -> bool:
