@@ -240,6 +240,7 @@ class Macro(BaseWidget):
     # 映射模式固定尺寸
     MAPPING_MODE_HEIGHT = 30
     MAPPING_MODE_WIDTH = 30
+    SETTINGS_PANEL_AUTO_HIDE = False
 
     def __init__(
         self,

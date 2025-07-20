@@ -200,22 +200,21 @@ class TransparentWindow(Adw.Window):
         logger.info(
             f"Widget {type(widget).__name__} (id={id(widget)}) requested settings."
         )
-
-        def workaround_popover_auto_hide(controller, n_press, x, y):
-            if popover.get_visible() and popover.get_autohide():
-                if (
-                    x < 0
-                    or y < 0
-                    or x > popover.get_width()
-                    or y > popover.get_height()
-                ):
-                    popover.popdown()
-
         popover = Gtk.Popover()
         popover.set_autohide(event.data)
-        click_controller = Gtk.GestureClick()
-        click_controller.connect("pressed", workaround_popover_auto_hide)
-        popover.add_controller(click_controller)
+        if event.data:
+            def workaround_popover_auto_hide(controller, n_press, x, y):
+                if popover.get_visible() and popover.get_autohide():
+                    if (
+                        x < 0
+                        or y < 0
+                        or x > popover.get_width()
+                        or y > popover.get_height()
+                    ):
+                        popover.popdown()
+            click_controller = Gtk.GestureClick()
+            click_controller.connect("pressed", workaround_popover_auto_hide)
+            popover.add_controller(click_controller)
 
         # popover.set_cascade_popdown(event.data)
         # "fix: Tried to map a grabbing popup with a non-top most parent" error
@@ -242,17 +241,17 @@ class TransparentWindow(Adw.Window):
             config_panel = config_manager.create_ui_panel()
             main_box.append(config_panel)
 
-            # # Confirm Button
-            # confirm_button = Gtk.Button(label=_("OK"), halign=Gtk.Align.END)
-            # confirm_button.add_css_class("suggested-action")
+            # Confirm Button
+            confirm_button = Gtk.Button(label=_("OK"), halign=Gtk.Align.END)
+            confirm_button.add_css_class("suggested-action")
 
-            # def on_confirm_clicked(btn):
-            #     # UI value changes are automatically synced to config manager, just close the popover
-            #     logger.info("Configuration popover closed by user.")
-            #     popover.popdown()
+            def on_confirm_clicked(btn):
+                # UI value changes are automatically synced to config manager, just close the popover
+                logger.info("Configuration popover closed by user.")
+                popover.popdown()
 
-            # confirm_button.connect("clicked", on_confirm_clicked)
-            # main_box.append(confirm_button)
+            confirm_button.connect("clicked", on_confirm_clicked)
+            main_box.append(confirm_button)
 
         # Pointing and Display
         settings_button_rect = Gdk.Rectangle()

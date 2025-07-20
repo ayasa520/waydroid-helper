@@ -57,6 +57,8 @@ class BaseWidget(Gtk.DrawingArea):
     IS_REENTRANT = False  # 是否支持可重入（长按重复触发），默认不支持
     ALLOW_CONTEXT_MENU_CREATION = True  # 是否允许通过右键菜单创建
 
+    SETTINGS_PANEL_AUTO_HIDE = True
+
     # 定义GObject属性
     __gtype_name__ = "BaseWidget"
 
@@ -176,7 +178,7 @@ class BaseWidget(Gtk.DrawingArea):
             return True  # 阻止事件继续传播
         
         if self.is_point_in_settings_button(x, y):
-            event_bus.emit(Event(EventType.SETTINGS_WIDGET, self, True))
+            event_bus.emit(Event(EventType.SETTINGS_WIDGET, self, self.SETTINGS_PANEL_AUTO_HIDE))
             return True
 
         return False
