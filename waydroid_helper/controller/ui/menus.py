@@ -41,15 +41,38 @@ class ContextMenuManager:
     def show_widget_creation_menu(
         self, x: int, y: int, widget_factory: "WidgetFactory"
     ):
-        """显示动态生成的组件创建菜单"""
+        """显示动态生成的组件创建菜单（网格布局）"""
         popover = Gtk.Popover()
         popover.set_parent(self.parent_window)
         popover.set_has_arrow(False)
         popover.set_autohide(True)
 
-        # 创建菜单内容
-        menu_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-        popover.set_child(menu_box)
+        # 创建主容器
+        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        popover.set_child(main_box)
+
+        # 创建滚动窗口
+        scrolled = Gtk.ScrolledWindow()
+        scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scrolled.set_max_content_height(300)  # 限制最大高度
+        scrolled.set_max_content_width(400)   # 限制最大宽度
+        scrolled.set_propagate_natural_height(True)
+        scrolled.set_propagate_natural_width(True)
+        main_box.append(scrolled)
+
+        # 创建网格容器
+        flow_box = Gtk.FlowBox()
+        flow_box.set_orientation(Gtk.Orientation.HORIZONTAL)
+        flow_box.set_selection_mode(Gtk.SelectionMode.NONE)
+        flow_box.set_column_spacing(4)
+        flow_box.set_row_spacing(4)
+        flow_box.set_margin_top(8)
+        flow_box.set_margin_bottom(8)
+        flow_box.set_margin_start(8)
+        flow_box.set_margin_end(8)
+        flow_box.set_min_children_per_line(2)
+        flow_box.set_max_children_per_line(4)  # 最多4列
+        scrolled.set_child(flow_box)
 
         # 动态生成组件菜单项
         available_types = widget_factory.get_available_types()
@@ -64,16 +87,20 @@ class ContextMenuManager:
         if not filtered_types:
             # 如果没有发现任何可创建的组件，显示提示
             label = Gtk.Label(label=_("No widgets found"))
-            menu_box.append(label)
+            label.set_margin_top(20)
+            label.set_margin_bottom(20)
+            flow_box.append(label)
         else:
-            # 为每个发现的组件类型创建菜单项
+            # 为每个发现的组件类型创建紧凑的按钮
             for widget_type in sorted(filtered_types):
                 metadata = widget_factory.get_widget_metadata(widget_type)
 
                 # 使用metadata中的名称，如果没有则使用类型名
                 display_name = metadata.get("name", widget_type.title())
 
+                # 创建紧凑的按钮
                 button = Gtk.Button(label=str(display_name))
+                button.set_size_request(100, 40)  # 固定大小，更紧凑
                 button.connect(
                     "clicked",
                     lambda btn, wtype=widget_type: [
@@ -81,13 +108,25 @@ class ContextMenuManager:
                         popover.popdown(),
                     ],
                 )
-                menu_box.append(button)
+                
+                # 添加到网格
+                flow_box.append(button)
 
         # 添加分隔线
         separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
-        menu_box.append(separator)
+        separator.set_margin_top(4)
+        separator.set_margin_bottom(4)
+        main_box.append(separator)
 
-        # 添加工具菜单项
+        # 创建工具菜单容器
+        tool_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        tool_box.set_margin_top(4)
+        tool_box.set_margin_bottom(8)
+        tool_box.set_margin_start(8)
+        tool_box.set_margin_end(8)
+        main_box.append(tool_box)
+
+        # 添加工具菜单项（使用更紧凑的布局）
         tool_items = [
             (_("Refresh widgets"), lambda: self._refresh_widgets(widget_factory)),
             (_("Show widget info"), lambda: self._show_widget_info(widget_factory)),
@@ -96,12 +135,23 @@ class ContextMenuManager:
             (_("Load layout"), lambda: self._load_layout(widget_factory)),
         ]
 
+        # 创建工具按钮的网格
+        tool_flow = Gtk.FlowBox()
+        tool_flow.set_orientation(Gtk.Orientation.HORIZONTAL)
+        tool_flow.set_selection_mode(Gtk.SelectionMode.NONE)
+        tool_flow.set_column_spacing(4)
+        tool_flow.set_row_spacing(4)
+        tool_flow.set_min_children_per_line(3)
+        tool_flow.set_max_children_per_line(5)
+        tool_box.append(tool_flow)
+
         for label, callback in tool_items:
             button = Gtk.Button(label=label)
+            button.set_size_request(70, 35)  # 更小的工具按钮
             button.connect(
                 "clicked", lambda btn, cb=callback: [cb(), popover.popdown()]
             )
-            menu_box.append(button)
+            tool_flow.append(button)
 
         # 设置菜单位置
         rect = Gdk.Rectangle()
