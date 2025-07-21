@@ -40,6 +40,7 @@ class EventType(Enum):
 
     MOUSE_MOTION = auto()  # 鼠标移动事件
     CANCEL_CASTING = auto()  # 取消施法事件
+    MASK_CLICKED = auto()  # 遮罩层点击事件，传递点击坐标
 
 
 @dataclass
