@@ -93,6 +93,21 @@ class KeyReleaseCommand(Command):
                 )
             except ValueError:
                 logger.warning(f"Macro command: cannot recognize key '{key_name}'")
+                
+class KeySwitchCommand(Command):
+    """按键切换命令"""
+
+    def __init__(self, key_names: list[str]):
+        self.key_names = key_names
+        self.is_pressed = False
+        self.press_command = KeyPressCommand(key_names)
+        self.release_command = KeyReleaseCommand(key_names)
+    async def execute(self, context: "Macro") -> None:
+        if self.is_pressed:
+            await self.release_command.execute(context)
+        else:
+            await self.press_command.execute(context)
+        self.is_pressed = not self.is_pressed
 
 
 class SleepCommand(Command):
@@ -190,7 +205,12 @@ class CommandFactory:
 
         elif command_type == "release_all":
             return ReleaseAllCommand()
-
+        elif command_type == "key_switch":
+            if args:
+                return KeySwitchCommand(args)
+            else:
+                logger.warning("Macro command: key_switch missing parameters.")
+                return None
         elif command_type == "other_command":
             return OtherCommand(args)
 
@@ -291,6 +311,7 @@ class Macro(BaseWidget):
                 "The macro commands to execute when triggered. Supported commands:\n"
                 "- key_press <key1,key2,...>: Press keys\n"
                 "- key_release <key1,key2,...>: Release keys\n"
+                "- key_switch <key1,key2,...>: Switch keys\n"
                 "- sleep <seconds>: Delay execution (supports decimals)\n"
                 "- release_all: Release all currently pressed keys\n"
                 "- Use 'release_actions' to separate press and release commands\n"
@@ -338,7 +359,7 @@ class Macro(BaseWidget):
             args_str = parts[1] if len(parts) > 1 else ""
 
             # 处理参数
-            if command_type in ["key_press", "key_release"] and args_str:
+            if command_type in ["key_press", "key_release", "key_switch"] and args_str:
                 args = [k.strip() for k in args_str.split(",")]
             elif command_type == "sleep" and args_str:
                 args = [args_str]
