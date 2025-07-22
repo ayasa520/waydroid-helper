@@ -461,6 +461,7 @@ class ConfigManager(GObject.Object):
     __gsignals__ = {
         'config-changed': (GObject.SignalFlags.RUN_FIRST, None, (str, object)),
         'config-validated': (GObject.SignalFlags.RUN_FIRST, None, (str, bool)),
+        'confirmed': (GObject.SignalFlags.RUN_FIRST, None, ()),
     }
     
     def __init__(self):

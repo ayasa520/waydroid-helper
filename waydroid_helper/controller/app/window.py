@@ -217,8 +217,8 @@ class TransparentWindow(Adw.Window):
                 mask_layer.set_cursor_from_name("default")
                 
                 # 设置遮罩层样式，确保它覆盖整个窗口并阻止事件
-                mask_layer.set_css_classes(["modal-mask"])
-                mask_layer.set_opacity(0.01)  # 几乎透明但可见，确保能接收事件
+                # mask_layer.set_css_classes(["modal-mask"])
+                # mask_layer.set_opacity(0.01)  # 几乎透明但可见，确保能接收事件
                 
                 # 关键：设置遮罩层为模态，阻止其他widget接收事件
                 mask_layer.set_can_target(True)
@@ -234,7 +234,7 @@ class TransparentWindow(Adw.Window):
                 def on_mask_clicked(controller, n_press, x, y):
                     """遮罩层点击事件处理"""
                     logger.debug(f"Mask clicked at coordinates: ({x}, {y})")
-                    event_bus.emit(Event(EventType.MASK_CLICKED, self, {"x": x, "y": y}))
+                    event_bus.emit(Event(EventType.MASK_CLICKED, self, {"x": int(x), "y": int(y)}))
                     
                     # 关键：停止事件传播
                     controller.set_state(Gtk.EventSequenceState.CLAIMED)
@@ -244,42 +244,6 @@ class TransparentWindow(Adw.Window):
                 click_controller.connect("released", lambda c, n, x, y: True)
                 mask_layer.add_controller(click_controller)
                 controllers.append(click_controller)
-                
-                # 键盘控制器
-                key_controller = Gtk.EventControllerKey.new()
-                
-                def on_mask_key_event(controller, keyval, keycode, state):
-                    """遮罩层键盘事件处理"""
-                    if keyval == Gdk.KEY_Escape:
-                        if mask_layer.get_parent():
-                            overlay.remove_overlay(mask_layer)
-                        popover.popdown()
-                    return True
-                
-                key_controller.connect("key-pressed", on_mask_key_event)
-                key_controller.connect("key-released", on_mask_key_event)
-                mask_layer.add_controller(key_controller)
-                controllers.append(key_controller)
-                
-                # 鼠标移动控制器
-                motion_controller = Gtk.EventControllerMotion.new()
-                motion_controller.connect("motion", lambda c, x, y: True)
-                mask_layer.add_controller(motion_controller)
-                controllers.append(motion_controller)
-                
-                # 滚动控制器
-                scroll_controller = Gtk.EventControllerScroll.new(
-                    flags=Gtk.EventControllerScrollFlags.BOTH_AXES
-                )
-                scroll_controller.connect("scroll", lambda c, dx, dy: True)
-                scroll_controller.connect("scroll-begin", lambda c: True)
-                scroll_controller.connect("scroll-end", lambda c: True)
-                mask_layer.add_controller(scroll_controller)
-                controllers.append(scroll_controller)
-                
-                # 临时禁用窗口级别的控制器
-                original_controllers = []
-                
                 def disable_window_controllers():
                     """临时禁用窗口级别的控制器"""
                     # 获取窗口的所有控制器
@@ -366,18 +330,7 @@ class TransparentWindow(Adw.Window):
 
             def on_confirm_clicked(btn):
                 logger.info("Configuration popover closed by user.")
-                if not event.data:
-                    overlay = self.get_content()
-                    if isinstance(overlay, Gtk.Overlay):
-                        mask_layer = None
-                        child = overlay.get_first_child()
-                        while child:
-                            if isinstance(child, Gtk.Box) and child.get_name() == "mask-layer":
-                                mask_layer = child
-                                break
-                            child = child.get_next_sibling()
-                        if mask_layer:
-                            overlay.remove_overlay(mask_layer)
+                config_manager.emit('confirmed')
                 popover.popdown()
 
             confirm_button.connect("clicked", on_confirm_clicked)
@@ -519,7 +472,7 @@ class TransparentWindow(Adw.Window):
         key_controller = Gtk.EventControllerKey.new()
         key_controller.connect("key-pressed", self.on_global_key_press)
         key_controller.connect("key-released", self.on_global_key_release)
-        self.get_content().add_controller(key_controller)
+        self.add_controller(key_controller)
 
         # Window-level mouse scroll events
         scroll_controller = Gtk.EventControllerScroll.new(
