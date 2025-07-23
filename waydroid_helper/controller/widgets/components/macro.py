@@ -8,12 +8,23 @@ import asyncio
 import math
 from abc import ABC, abstractmethod
 from gettext import pgettext
-from typing import TYPE_CHECKING, cast, NamedTuple
-
+from typing import TYPE_CHECKING, NamedTuple, cast
+from waydroid_helper.controller.android import AMotionEventAction, AMotionEventButtons
+from waydroid_helper.controller.core.control_msg import InjectTouchEventMsg
+from waydroid_helper.util.log import logger
 if TYPE_CHECKING:
     from cairo import Context, Surface, FontSlant, FontWeight
     from gi.repository import Gtk
     from waydroid_helper.controller.widgets.base.base_widget import EditableRegion
+from waydroid_helper.controller.core import (
+    Event,
+    EventType,
+    event_bus,
+    key_system,
+)
+from waydroid_helper.controller.core.utils import pointer_id_manager
+
+from waydroid_helper.controller.core.handler.event_handlers import InputEvent
 
 
 class MacroCommand(NamedTuple):
@@ -48,7 +59,6 @@ class KeyPressCommand(Command):
             event_bus,
             key_system,
         )
-        from waydroid_helper.util.log import logger
 
         for key_name in self.key_names:
             try:
@@ -78,7 +88,6 @@ class KeyReleaseCommand(Command):
             event_bus,
             key_system,
         )
-        from waydroid_helper.util.log import logger
 
         for key_name in self.key_names:
             try:
@@ -109,6 +118,63 @@ class KeySwitchCommand(Command):
             await self.press_command.execute(context)
         self.is_pressed = not self.is_pressed
 
+class ClickCommand(Command):
+    """点击命令"""
+
+    def __init__(self, point: list[str]):
+        # ["x,y", "x1,y1"...]
+        self.points = point
+        self.current_position  = (0,0)
+        self._obj = [object() for _ in range(len(point))]
+    
+    async def execute(self, context: "Macro") -> None:
+        for idx,point in enumerate(self.points, start=0):
+            x, y = point.split(",")
+            x, y = int(x), int(y)
+            root = context.get_root()
+            root = cast("Gtk.Window", root)
+            w, h = root.get_width(), root.get_height()
+            pointer_id = pointer_id_manager.allocate(self._obj[idx])
+            if pointer_id is None:
+                logger.warning(f"Failed to allocate pointer_id for Click command")
+                return
+
+            msg = InjectTouchEventMsg(
+                action=AMotionEventAction.DOWN,
+                pointer_id=pointer_id,
+                position=(int(x), int(y), w, h),
+                pressure=1.0,
+                action_button=AMotionEventButtons.PRIMARY,
+                buttons=AMotionEventButtons.PRIMARY,
+            )
+            event_bus.emit(Event(EventType.CONTROL_MSG, context, msg))
+
+        await asyncio.sleep(0.001)
+
+        for idx,point in enumerate(self.points, start=0):
+            x, y = point.split(",")
+            x, y = int(x), int(y)
+            root = context.get_root()
+            root = cast("Gtk.Window", root)
+            w, h = root.get_width(), root.get_height()
+            pointer_id = pointer_id_manager.get_allocated_id(self._obj[idx])
+            if pointer_id is None:
+                logger.warning(f"Failed to allocate pointer_id for Click command")
+                return
+
+            msg = InjectTouchEventMsg(
+                action=AMotionEventAction.UP,
+                pointer_id=pointer_id,
+                position=(int(x), int(y), w, h),
+                pressure=0.0,
+                action_button=AMotionEventButtons.PRIMARY,
+                buttons=0,
+            )
+            event_bus.emit(Event(EventType.CONTROL_MSG, context, msg))
+            pointer_id_manager.release(self._obj[idx])
+
+
+        # 模拟点击事件
 
 class SleepCommand(Command):
     """延迟命令"""
@@ -120,7 +186,6 @@ class SleepCommand(Command):
         if self.sleep_time > 0:
             await asyncio.sleep(self.sleep_time)
         else:
-            from waydroid_helper.util.log import logger
 
             logger.warning(
                 f"Macro command: sleep time must be greater than 0, current value: {self.sleep_time}"
@@ -137,7 +202,6 @@ class ReleaseAllCommand(Command):
             event_bus,
             key_system,
         )
-        from waydroid_helper.util.log import logger
 
         for key_name in list(context.pressed_keys):
             try:
@@ -211,6 +275,12 @@ class CommandFactory:
             else:
                 logger.warning("Macro command: key_switch missing parameters.")
                 return None
+        elif command_type == "click":
+            if args:
+                return ClickCommand(args)
+            else:
+                logger.warning("Macro command: click missing parameters.")
+                return None
         elif command_type == "other_command":
             return OtherCommand(args)
 
@@ -222,20 +292,13 @@ class CommandFactory:
 from waydroid_helper.controller.core.handler.event_handlers import InputEvent
 from waydroid_helper.util.log import logger
 
-from waydroid_helper.controller.android.input import (
-    AMotionEventAction,
-    AMotionEventButtons,
-)
 from waydroid_helper.controller.core import (
     Event,
     EventType,
     event_bus,
-    Key,
     KeyCombination,
     key_system,
-    pointer_id_manager,
 )
-from waydroid_helper.controller.core.control_msg import InjectTouchEventMsg
 from waydroid_helper.controller.widgets.base.base_widget import BaseWidget
 from waydroid_helper.controller.widgets.decorators import (
     Editable,
@@ -298,6 +361,10 @@ class Macro(BaseWidget):
 
         # 按键状态跟踪 - 记录已按下但未释放的按键
         self.pressed_keys: set[str] = set()
+        self._cursor_position = (0,0)
+    
+    def get_current_position(self):
+        return self._cursor_position
 
     def setup_config(self) -> None:
         """设置配置项"""
@@ -322,6 +389,10 @@ class Macro(BaseWidget):
         # self.add_config_change_callback("macro_command", self.on_macro_command_changed)
         self.config_manager.connect("confirmed", self.on_macro_command_changed)
         event_bus.subscribe(event_type=EventType.MASK_CLICKED, handler=self.on_mask_clicked)
+        event_bus.subscribe(EventType.MOUSE_MOTION, self.on_mouse_motion)
+
+    def on_mouse_motion(self, event:Event[InputEvent]):
+        self._cursor_position = event.data.position
     
     def on_mask_clicked(self, event):
         data = event.data
@@ -361,6 +432,8 @@ class Macro(BaseWidget):
             # 处理参数
             if command_type in ["key_press", "key_release", "key_switch"] and args_str:
                 args = [k.strip() for k in args_str.split(",")]
+            elif command_type == "click" and args_str:
+                args = args_str.split()
             elif command_type == "sleep" and args_str:
                 args = [args_str]
             else:

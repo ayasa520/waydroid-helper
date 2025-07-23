@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 import random
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict
 
 from waydroid_helper.util.log import logger
 
@@ -55,7 +55,7 @@ class PointerIdManagerStatus(TypedDict):
 class PointerIdManager:
     """Pointer ID 管理器 - 管理 widget 的 pointer_id 分配和释放（单例模式）"""
 
-    _instance: "PointerIdManager" | None = None
+    _instance: "PointerIdManager | None" = None
     _initialized: bool = False
 
     def __new__(cls):
@@ -73,7 +73,7 @@ class PointerIdManager:
         self._allocated_ids: dict[int, int] = {}  # widget_id -> pointer_id
         self._initialized = True
 
-    def allocate(self, widget: "Gtk.Widget") -> int | None:
+    def allocate(self, widget:Any) -> int | None:
         """为 widget 分配一个 pointer_id"""
         widget_id = id(widget)
 
@@ -101,7 +101,7 @@ class PointerIdManager:
 
         return pointer_id
 
-    def release(self, widget: "Gtk.Widget") -> bool:
+    def release(self, widget: Any) -> bool:
         """释放 widget 的 pointer_id"""
         widget_id = id(widget)
 
