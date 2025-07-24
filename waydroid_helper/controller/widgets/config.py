@@ -582,6 +582,7 @@ class ConfigManager(GObject.Object):
                     if value is not None:
                         self.set_value(key, value)
                     self.set_visible(key, config_data.get("visible", True))
+            self.emit("confirmed")
         finally:
             self.restoring = False
     

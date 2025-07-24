@@ -124,57 +124,105 @@ class ClickCommand(Command):
     def __init__(self, point: list[str]):
         # ["x,y", "x1,y1"...]
         self.points = point
-        self.current_position  = (0,0)
         self._obj = [object() for _ in range(len(point))]
     
-    async def execute(self, context: "Macro") -> None:
-        for idx,point in enumerate(self.points, start=0):
-            x, y = point.split(",")
-            x, y = int(x), int(y)
-            root = context.get_root()
-            root = cast("Gtk.Window", root)
-            w, h = root.get_width(), root.get_height()
+    def _parse_coordinates(self, context: "Macro") -> list[tuple[int, int]]:
+        """
+        Parse all point coordinates once at the beginning.
+
+        Args:
+            context: The macro context
+
+        Returns:
+            list[tuple[int, int]]: List of (x, y) coordinates
+        """
+        coordinates:list[tuple[int,int]] = []
+        for point in self.points:
+            if point == "mouse":
+                x, y = context.get_cursor_position()
+            else:
+                x, y = point.split(",")
+                x, y = int(x), int(y)
+            coordinates.append((x, y))
+        return coordinates
+
+    def _send_touch_event(self, context: "Macro", idx: int, x: int, y: int, w: int, h: int, action: AMotionEventAction) -> bool:
+        """
+        Helper method to send a touch event for specific coordinates.
+
+        Args:
+            context: The macro context
+            idx: Index of the point in self.points
+            x, y: Coordinates for the touch event
+            w, h: Window dimensions
+            action: The touch action (DOWN or UP)
+
+        Returns:
+            bool: True if the event was sent successfully, False otherwise
+        """
+        # Handle pointer ID based on action
+        if action == AMotionEventAction.DOWN:
             pointer_id = pointer_id_manager.allocate(self._obj[idx])
             if pointer_id is None:
                 logger.warning(f"Failed to allocate pointer_id for Click command")
-                return
+                return False
+        else:  # UP action
+            pointer_id = pointer_id_manager.get_allocated_id(self._obj[idx])
+            if pointer_id is None:
+                logger.warning(f"Failed to get pointer_id for Click command")
+                return False
 
+        # Create and send the touch event message
+        if action == AMotionEventAction.DOWN:
             msg = InjectTouchEventMsg(
-                action=AMotionEventAction.DOWN,
+                action=action,
                 pointer_id=pointer_id,
-                position=(int(x), int(y), w, h),
+                position=(x, y, w, h),
                 pressure=1.0,
                 action_button=AMotionEventButtons.PRIMARY,
                 buttons=AMotionEventButtons.PRIMARY,
             )
-            event_bus.emit(Event(EventType.CONTROL_MSG, context, msg))
-
-        await asyncio.sleep(0.001)
-
-        for idx,point in enumerate(self.points, start=0):
-            x, y = point.split(",")
-            x, y = int(x), int(y)
-            root = context.get_root()
-            root = cast("Gtk.Window", root)
-            w, h = root.get_width(), root.get_height()
-            pointer_id = pointer_id_manager.get_allocated_id(self._obj[idx])
-            if pointer_id is None:
-                logger.warning(f"Failed to allocate pointer_id for Click command")
-                return
-
+        else:  # UP action
             msg = InjectTouchEventMsg(
-                action=AMotionEventAction.UP,
+                action=action,
                 pointer_id=pointer_id,
-                position=(int(x), int(y), w, h),
+                position=(x, y, w, h),
                 pressure=0.0,
                 action_button=AMotionEventButtons.PRIMARY,
                 buttons=0,
             )
-            event_bus.emit(Event(EventType.CONTROL_MSG, context, msg))
+
+        event_bus.emit(Event(EventType.CONTROL_MSG, context, msg))
+
+        # Release pointer ID for UP action
+        if action == AMotionEventAction.UP:
             pointer_id_manager.release(self._obj[idx])
 
+        return True
 
-        # 模拟点击事件
+    async def execute(self, context: "Macro") -> None:
+        # Parse all coordinates once at the beginning
+        coordinates = self._parse_coordinates(context)
+
+        # Get window dimensions once
+        root = context.get_root()
+        root = cast("Gtk.Window", root)
+        w, h = root.get_width(), root.get_height()
+
+        # Send DOWN events for all points
+        for idx, (x, y) in enumerate(coordinates):
+            if not self._send_touch_event(context, idx, x, y, w, h, AMotionEventAction.DOWN):
+                return  # Exit early if allocation fails
+
+        # Wait 0.05 seconds between DOWN and UP events
+        await asyncio.sleep(0.05)
+
+        # Send UP events for all points
+        for idx, (x, y) in enumerate(coordinates):
+            self._send_touch_event(context, idx, x, y, w, h, AMotionEventAction.UP)
+            # Note: For UP events, we continue even if sending fails (using continue in original)
+
+
 
 class SleepCommand(Command):
     """延迟命令"""
@@ -361,9 +409,9 @@ class Macro(BaseWidget):
 
         # 按键状态跟踪 - 记录已按下但未释放的按键
         self.pressed_keys: set[str] = set()
-        self._cursor_position = (0,0)
+        self._cursor_position:tuple[int,int] = (0,0)
     
-    def get_current_position(self):
+    def get_cursor_position(self)->tuple[int,int]:
         return self._cursor_position
 
     def setup_config(self) -> None:
@@ -392,6 +440,8 @@ class Macro(BaseWidget):
         event_bus.subscribe(EventType.MOUSE_MOTION, self.on_mouse_motion)
 
     def on_mouse_motion(self, event:Event[InputEvent]):
+        if event.data.position is None:
+            return
         self._cursor_position = event.data.position
     
     def on_mask_clicked(self, event):

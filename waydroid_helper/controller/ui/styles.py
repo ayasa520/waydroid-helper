@@ -13,7 +13,7 @@ from gi.repository import Gtk, Gdk
 # 透明窗口样式
 CSS_TRANSPARENT = """
 #transparent-window {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: rgba(128, 0, 0, 0.8);
 }
 #mapping-widget {
     background-color: rgba(0, 0, 0, 0);

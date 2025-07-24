@@ -121,7 +121,7 @@ class PointerIdManager:
 
         return True
 
-    def get_allocated_id(self, widget: "Gtk.Widget") -> int | None:
+    def get_allocated_id(self, widget: Any) -> int | None:
         """获取 widget 当前分配的 pointer_id"""
         widget_id = id(widget)
         return self._allocated_ids.get(widget_id)

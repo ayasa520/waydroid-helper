@@ -450,14 +450,17 @@ class TransparentWindow(Adw.Window):
         self.realize()
         self.set_decorated(False)
 
-        surface = self.get_surface()
-        if surface:
-            display = self.get_display()
-            if display:
-                monitor = display.get_monitor_at_surface(surface)
-                if monitor:
-                    geometry = monitor.get_geometry()
-                    self.set_default_size(geometry.width, geometry.height)
+        self.set_size_request(1080,498)
+        self.set_default_size(1080,498)
+        self.set_resizable(False)
+        # surface = self.get_surface()
+        # if surface:
+        #     display = self.get_display()
+        #     if display:
+        #         monitor = display.get_monitor_at_surface(surface)
+        #         if monitor:
+        #             geometry = monitor.get_geometry()
+        #             self.set_default_size(geometry.width, geometry.height)
 
         self.set_name("transparent-window")
 
