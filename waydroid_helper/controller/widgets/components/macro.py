@@ -244,7 +244,7 @@ class ReleaseCommand(Command):
             coordinates.append((x, y))
         return coordinates
 
-    def set_point_identifiers(self, identifiers: list[str]) -> None:
+    def set_point_identifiers(self, identifiers: list[tuple[int, int]]) -> None:
         """
         Set point identifiers to match those used by a corresponding PressCommand.
         This enables proper pointer ID sharing between press and release commands.
@@ -288,6 +288,28 @@ class ReleaseCommand(Command):
 
             # Release the pointer ID after sending UP event
             pointer_id_manager.release(point_id)
+
+
+class SwitchCommand(Command):
+    """切换命令 - 处理触摸切换事件，在按下和释放之间切换"""
+
+    def __init__(self, points: list[str]):
+        # ["x,y", "x1,y1"...]
+        self.points = points
+        self.is_pressed = False
+        # 创建内部的 press 和 release 命令
+        self.press_command = PressCommand(points)
+        self.release_command = ReleaseCommand(points)
+
+    async def execute(self, context: "Macro") -> None:
+        if self.is_pressed:
+            # 当前是按下状态，执行释放
+            await self.release_command.execute(context)
+        else:
+            # 当前是释放状态，执行按下
+            await self.press_command.execute(context)
+        # 切换状态
+        self.is_pressed = not self.is_pressed
 
 
 class ClickCommand(Command):
@@ -429,6 +451,12 @@ class CommandFactory:
             else:
                 logger.warning("Macro command: release missing parameters.")
                 return None
+        elif command_type == "switch":
+            if args:
+                return SwitchCommand(args)
+            else:
+                logger.warning("Macro command: switch missing parameters.")
+                return None
         elif command_type == "other_command":
             return OtherCommand(args)
 
@@ -526,10 +554,11 @@ class Macro(BaseWidget):
                 "The macro commands to execute when triggered. Supported commands:\n"
                 "- key_press <key1,key2,...>: Press keys\n"
                 "- key_release <key1,key2,...>: Release keys\n"
-                "- key_switch <key1,key2,...>: Switch keys\n"
+                "- key_switch <key1,key2,...>: Switch keys (toggle between press/release)\n"
                 "- click <x,y> [x1,y1] ...: Click at coordinates (combines press and release)\n"
                 "- press <x,y> [x1,y1] ...: Press at coordinates (DOWN events only)\n"
                 "- release <x,y> [x1,y1] ...: Release at coordinates (UP events only)\n"
+                "- switch <x,y> [x1,y1] ...: Switch at coordinates (toggle between press/release)\n"
                 "- sleep <seconds>: Delay execution (supports decimals)\n"
                 "- release_all: Release all currently pressed keys\n"
                 "- Use 'release_actions' to separate press and release commands\n"
@@ -586,7 +615,7 @@ class Macro(BaseWidget):
             # 处理参数
             if command_type in ["key_press", "key_release", "key_switch"] and args_str:
                 args = [k.strip() for k in args_str.split(",")]
-            elif command_type in ["click", "press", "release"] and args_str:
+            elif command_type in ["click", "press", "release", "switch"] and args_str:
                 args = args_str.split()
             elif command_type == "sleep" and args_str:
                 args = [args_str]
