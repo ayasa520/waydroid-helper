@@ -199,10 +199,9 @@ class SkillCasting(BaseWidget):
 
         # 测试：监听取消按钮销毁事件
         event_bus.subscribe(
-            EventType.CUSTOM,
+            EventType.CANCEL_BUTTON_DESTROYED,
             self._on_custom_event,
-            filter=lambda e: e.data.get("type") == "cancel_button_destroyed"
-            and e.data.get("widget_class") == "CancelCasting"
+            filter=lambda e: e.data.get("widget_class") == "CancelCasting"
             and self._cancel_button_widget["widget"] is not None,
             subscriber=self,
         )

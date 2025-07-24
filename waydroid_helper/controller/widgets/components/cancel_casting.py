@@ -361,8 +361,7 @@ class CancelCasting(BaseWidget):
         
         # 发送销毁通知
         event_data = {
-            'type': 'cancel_button_destroyed',
             'widget_class': 'CancelCasting',
             'widget_id': id(self)
         }
-        event_bus.emit(Event(EventType.CUSTOM, self, event_data))
+        event_bus.emit(Event(EventType.CANCEL_BUTTON_DESTROYED, self, event_data))

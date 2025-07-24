@@ -34,6 +34,7 @@ class EventType(Enum):
 
     # 自定义事件（组件可以定义自己的事件）
     CUSTOM = auto()  # 自定义事件基类
+    CANCEL_BUTTON_DESTROYED =auto()
     CREATE_WIDGET = auto()  # 创建组件
     DELETE_WIDGET = auto()  # 删除组件
     SETTINGS_WIDGET = auto() # 设置组件
