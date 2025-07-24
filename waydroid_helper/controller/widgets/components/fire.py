@@ -60,8 +60,8 @@ class Fire(BaseWidget):
             min_height=25,
         )
         self.aim_triggered: bool = False
-        event_bus.subscribe(EventType.AIM_TRIGGERED, self._on_aim_triggered)
-        event_bus.subscribe(EventType.AIM_RELEASED, self._on_aim_released)
+        event_bus.subscribe(EventType.AIM_TRIGGERED, self._on_aim_triggered, subscriber=self)
+        event_bus.subscribe(EventType.AIM_RELEASED, self._on_aim_released, subscriber=self)
 
     def _on_aim_triggered(self, event: Event[None]):
         """处理瞄准触发事件"""

@@ -31,8 +31,8 @@ class WorkspaceManager:
         self.interaction_start_x = 0
         self.interaction_start_y = 0
         self.pending_resize_direction = None
-        event_bus.subscribe(EventType.CREATE_WIDGET, lambda event: self.window.create_widget_at_position(event.data['widget'], event.data['x'], event.data['y']))
-        event_bus.subscribe(EventType.DELETE_WIDGET, lambda event: self.delete_specific_widget(event.data))
+        event_bus.subscribe(EventType.CREATE_WIDGET, lambda event: self.window.create_widget_at_position(event.data['widget'], event.data['x'], event.data['y']), subscriber=self)
+        event_bus.subscribe(EventType.DELETE_WIDGET, lambda event: self.delete_specific_widget(event.data), subscriber=self)
 
     def handle_mouse_press(self, controller, n_press, x, y):
         """处理鼠标按下事件"""
@@ -275,6 +275,22 @@ class WorkspaceManager:
             if self.selected_widget == widget:
                 self.selected_widget = None
             widget.on_delete()
+
+    def cleanup(self):
+        """清理WorkspaceManager的资源，包括事件订阅"""
+        from waydroid_helper.controller.core import event_bus
+
+        # 清理事件总线订阅
+        unsubscribed_count = event_bus.unsubscribe_by_subscriber(self)
+        if unsubscribed_count > 0:
+            logger.debug(f"WorkspaceManager 清理了 {unsubscribed_count} 个事件订阅")
+
+        # 清理状态
+        self.dragging_widget = None
+        self.resizing_widget = None
+        self.selected_widget = None
+
+        logger.info("WorkspaceManager cleanup completed")
 
     # def delete_selected_widgets(self):
     #     """删除所有选中的widget"""

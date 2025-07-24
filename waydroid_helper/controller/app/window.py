@@ -146,10 +146,10 @@ class TransparentWindow(Adw.Window):
 
         # Subscribe to events
         event_bus.subscribe(
-            EventType.SETTINGS_WIDGET, self._on_widget_settings_requested
+            EventType.SETTINGS_WIDGET, self._on_widget_settings_requested, subscriber=self
         )
         event_bus.subscribe(
-            EventType.WIDGET_SELECTION_OVERLAY, self._on_widget_selection_overlay
+            EventType.WIDGET_SELECTION_OVERLAY, self._on_widget_selection_overlay, subscriber=self
         )
         
         # Create circular drawing overlay
@@ -160,7 +160,7 @@ class TransparentWindow(Adw.Window):
         # Create global event handler chain
         self.event_handler_chain = InputEventHandlerChain()
         # Import and add default handler
-        self.server = Server("0.0.0.0", 10721)
+        self.server = Server("0.0.0.0", 10721)  # 使用单例模式
         self.adb_helper = AdbHelper()
         self.scrcpy_setup_task = asyncio.create_task(self.setup_scrcpy())
         self.key_mapping_handler = KeyMappingEventHandler()
@@ -355,11 +355,32 @@ class TransparentWindow(Adw.Window):
         return False
 
     def close(self):
+        # Clean up workspace manager first
+        if hasattr(self, 'workspace_manager'):
+            self.workspace_manager.cleanup()
+
+        # Clean up window's own event subscriptions
+        from waydroid_helper.controller.core import event_bus
+        unsubscribed_count = event_bus.unsubscribe_by_subscriber(self)
+        if unsubscribed_count > 0:
+            logger.debug(f"TransparentWindow 清理了 {unsubscribed_count} 个事件订阅")
+
+        # 关闭服务器
         self.server.close()
         if not self.scrcpy_setup_task.done():
             self.scrcpy_setup_task.cancel()
 
         asyncio.create_task(self.cleanup_scrcpy())
+
+        # 重置单例状态，确保下次打开窗口时是全新的状态
+        from waydroid_helper.controller.core.event_bus import EventBus
+        from waydroid_helper.controller.core.server import Server
+        from waydroid_helper.controller.core.key_system import KeyRegistry
+        EventBus.reset_singleton()
+        Server.reset_singleton()
+        # KeyRegistry 通常不需要重置，因为按键映射是静态的
+        # KeyRegistry.reset_singleton()
+
         super().close()
 
     async def cleanup_scrcpy(self):

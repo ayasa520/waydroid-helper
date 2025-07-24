@@ -4,6 +4,7 @@
 负责管理和处理所有的按键映射订阅和触发
 """
 import itertools
+import threading
 from typing import Any, Callable, TYPE_CHECKING
 
 from waydroid_helper.controller.core.handler.event_handlers import InputEvent

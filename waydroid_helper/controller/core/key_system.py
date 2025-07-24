@@ -6,6 +6,7 @@
 
 from enum import Enum
 from dataclasses import dataclass
+import threading
 import gi
 
 gi.require_version("Gdk", "4.0")
@@ -38,12 +39,33 @@ class Key:
 
 
 class KeyRegistry:
-    """按键注册表 - 管理所有标准按键"""
+    """按键注册表 - 管理所有标准按键 (严格单例模式)"""
+
+    _instance = None
+    _lock = threading.Lock()
+    _initialized = False
+
+    def __new__(cls):
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+        return cls._instance
 
     def __init__(self):
-        self._keys: dict[int, Key] = {}  # keyval -> Key
-        self._names: dict[str, Key] = {}  # name -> Key
-        self._init_standard_keys()
+        # 防止重复初始化
+        if KeyRegistry._initialized:
+            return
+
+        with KeyRegistry._lock:
+            if KeyRegistry._initialized:
+                return
+
+            self._keys: dict[int, Key] = {}  # keyval -> Key
+            self._names: dict[str, Key] = {}  # name -> Key
+            self._init_standard_keys()
+
+            KeyRegistry._initialized = True
 
     def _init_standard_keys(self):
         """初始化标准按键"""
@@ -158,6 +180,13 @@ class KeyRegistry:
         self._keys[keyval] = key
         self._names[name] = key
         return key
+
+    @classmethod
+    def reset_singleton(cls) -> None:
+        """重置单例状态 - 主要用于测试"""
+        with cls._lock:
+            cls._instance = None
+            cls._initialized = False
 
 
 @dataclass(frozen=True)

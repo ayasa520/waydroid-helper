@@ -588,5 +588,12 @@ class BaseWidget(Gtk.DrawingArea):
         return distance <= radius
 
     def on_delete(self):
+        """Widget被删除时的清理方法"""
         self.set_selected(False)
         pointer_id_manager.release(self)
+
+        # 清理事件总线订阅
+        from waydroid_helper.controller.core import event_bus
+        unsubscribed_count = event_bus.unsubscribe_by_subscriber(self)
+        if unsubscribed_count > 0:
+            logger.debug(f"Widget {type(self).__name__}(id={id(self)}) 清理了 {unsubscribed_count} 个事件订阅")

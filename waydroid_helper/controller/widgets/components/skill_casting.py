@@ -194,8 +194,8 @@ class SkillCasting(BaseWidget):
         self._start_event_processor()
 
         # 订阅事件总线
-        event_bus.subscribe(EventType.MOUSE_MOTION, self._on_mouse_motion)
-        event_bus.subscribe(EventType.CANCEL_CASTING, self._on_cancel_casting)
+        event_bus.subscribe(EventType.MOUSE_MOTION, self._on_mouse_motion, subscriber=self)
+        event_bus.subscribe(EventType.CANCEL_CASTING, self._on_cancel_casting, subscriber=self)
 
         # 测试：监听取消按钮销毁事件
         event_bus.subscribe(
@@ -204,6 +204,7 @@ class SkillCasting(BaseWidget):
             filter=lambda e: e.data.get("type") == "cancel_button_destroyed"
             and e.data.get("widget_class") == "CancelCasting"
             and self._cancel_button_widget["widget"] is not None,
+            subscriber=self,
         )
 
     def _start_event_processor(self):

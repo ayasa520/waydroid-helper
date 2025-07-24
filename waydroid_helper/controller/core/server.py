@@ -1,19 +1,44 @@
 import asyncio
+import threading
 from waydroid_helper.controller.core.event_bus import EventType, event_bus, Event
 from waydroid_helper.controller.core.control_msg import ControlMsg
 from waydroid_helper.util.log import logger
 
 
 class Server:
-    def __init__(self, host: str, port: int):
-        self.host: str = host
-        self.port: int = port
-        self.message_queue: asyncio.Queue[bytes | None] = asyncio.Queue()
-        event_bus.subscribe(EventType.CONTROL_MSG, self.send_msg)
-        self.server: asyncio.Server | None = None
-        self.writers: list[asyncio.StreamWriter] = []
-        self.started_event = asyncio.Event()
-        self.server_task: asyncio.Task[None] = asyncio.create_task(self.start_server())
+    """服务器类 - 严格单例模式"""
+
+    _instance = None
+    _lock = threading.Lock()
+    _initialized = False
+
+    def __new__(cls, host: str = "0.0.0.0", port: int = 10721):
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(self, host: str = "0.0.0.0", port: int = 10721):
+        # 防止重复初始化
+        if Server._initialized:
+            return
+
+        with Server._lock:
+            if Server._initialized:
+                return
+
+            self.host: str = host
+            self.port: int = port
+            self.message_queue: asyncio.Queue[bytes | None] = asyncio.Queue()
+            event_bus.subscribe(EventType.CONTROL_MSG, self.send_msg, subscriber=self)
+            self.server: asyncio.Server | None = None
+            self.writers: list[asyncio.StreamWriter] = []
+            self.started_event = asyncio.Event()
+            self.server_task: asyncio.Task[None] = asyncio.create_task(self.start_server())
+
+            Server._initialized = True
+            logger.info(f"Server singleton initialized on {host}:{port}")
 
     async def handler(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         addr = writer.get_extra_info("peername")
@@ -89,6 +114,17 @@ class Server:
         packed_msg: bytes | None = msg.pack()
         if packed_msg is not None:
             self.send(packed_msg)
+
+    @classmethod
+    def reset_singleton(cls) -> None:
+        """重置单例状态 - 主要用于测试和窗口重新打开"""
+        with cls._lock:
+            if cls._instance is not None:
+                # 先关闭现有的服务器
+                cls._instance.close()
+            cls._instance = None
+            cls._initialized = False
+            logger.info("Server singleton reset")
 
 
 # async def main():

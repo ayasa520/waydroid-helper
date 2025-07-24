@@ -7,6 +7,7 @@
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any, Callable, Generic, TypeVar
+import threading
 
 from waydroid_helper.util.log import logger
 
@@ -60,18 +61,41 @@ class BusEventHandler:
     callback: Callable[[Event[Any]], None]  # 回调函数
     filter: Callable[[Event[Any]], bool] | None = None  # 事件过滤器
     priority: int = 0  # 优先级（越大越先执行）
+    subscriber: Any = None  # 订阅者对象（用于批量取消订阅）
 
 
 class EventBus:
-    """事件总线 - 提供事件驱动的组件通信"""
+    """事件总线 - 提供事件驱动的组件通信 (严格单例模式)"""
+
+    _instance = None
+    _lock = threading.Lock()
+    _initialized = False
+
+    def __new__(cls):
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+        return cls._instance
 
     def __init__(self):
-        # 事件处理器: {事件类型: [处理器列表]}
-        self._handlers: dict[EventType, list[BusEventHandler]] = {}
+        # 防止重复初始化
+        if EventBus._initialized:
+            return
 
-        # 初始化事件类型
-        for event_type in EventType:
-            self._handlers[event_type] = []
+        with EventBus._lock:
+            if EventBus._initialized:
+                return
+
+            # 事件处理器: {事件类型: [处理器列表]}
+            self._handlers: dict[EventType, list[BusEventHandler]] = {}
+
+            # 初始化事件类型
+            for event_type in EventType:
+                self._handlers[event_type] = []
+
+            EventBus._initialized = True
+            logger.info("EventBus singleton initialized")
 
     def subscribe(
         self,
@@ -79,6 +103,7 @@ class EventBus:
         handler: Callable[[Event[Any]], None],
         filter: Callable[[Event[Any]], bool] | None = None,
         priority: int = 0,
+        subscriber: Any = None,
     ) -> None:
         """
         订阅事件
@@ -86,13 +111,14 @@ class EventBus:
         :param handler: 处理函数
         :param filter: 可选的事件过滤器
         :param priority: 处理优先级
+        :param subscriber: 订阅者对象（用于批量取消订阅）
         """
-        event_handler = BusEventHandler(handler, filter, priority)
+        event_handler = BusEventHandler(handler, filter, priority, subscriber)
         self._handlers[event_type].append(event_handler)
         # 按优先级排序
         self._handlers[event_type].sort(key=lambda h: h.priority, reverse=True)
 
-        logger.debug(f"订阅事件: {event_type.name}, 优先级={priority}")
+        logger.debug(f"订阅事件: {event_type.name}, 优先级={priority}, 订阅者={type(subscriber).__name__ if subscriber else 'None'}")
 
     def unsubscribe(
         self, event_type: EventType, handler: Callable[[Event[Any]], None]
@@ -107,6 +133,32 @@ class EventBus:
         ]
 
         return len(self._handlers[event_type]) < original_len
+
+    def unsubscribe_by_subscriber(self, subscriber: Any) -> int:
+        """根据订阅者对象取消所有相关的事件订阅
+
+        :param subscriber: 订阅者对象
+        :return: 取消的订阅数量
+        """
+        unsubscribed_count = 0
+        subscriber_id = id(subscriber)
+
+        for event_type in list(self._handlers.keys()):
+            original_len = len(self._handlers[event_type])
+            self._handlers[event_type] = [
+                h for h in self._handlers[event_type]
+                if h.subscriber is None or id(h.subscriber) != subscriber_id
+            ]
+            removed_count = original_len - len(self._handlers[event_type])
+            unsubscribed_count += removed_count
+
+            if removed_count > 0:
+                logger.debug(f"取消订阅者 {type(subscriber).__name__}(id={subscriber_id}) 在事件 {event_type.name} 的 {removed_count} 个订阅")
+
+        if unsubscribed_count > 0:
+            logger.info(f"取消订阅者 {type(subscriber).__name__}(id={subscriber_id}) 的总共 {unsubscribed_count} 个事件订阅")
+
+        return unsubscribed_count
 
     def emit(self, event: Event[Any]) -> None:
         """
@@ -134,6 +186,16 @@ class EventBus:
         for event_type in self._handlers:
             self._handlers[event_type].clear()
         logger.info("EventBus cleared.")
+
+    @classmethod
+    def reset_singleton(cls) -> None:
+        """重置单例状态 - 主要用于测试和窗口重新打开"""
+        with cls._lock:
+            if cls._instance is not None:
+                cls._instance.clear()
+            cls._instance = None
+            cls._initialized = False
+            logger.info("EventBus singleton reset")
 
 
 # 全局事件总线实例
