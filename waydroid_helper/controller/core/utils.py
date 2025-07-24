@@ -70,12 +70,13 @@ class PointerIdManager:
 
         # pointer_id 范围是 1-10
         self._available_ids: set[int] = set(range(1, 11))
-        self._allocated_ids: dict[int, int] = {}  # widget_id -> pointer_id
+        self._allocated_ids: dict[Any, int] = {}  # widget_id -> pointer_id
         self._initialized = True
 
     def allocate(self, widget:Any) -> int | None:
         """为 widget 分配一个 pointer_id"""
-        widget_id = id(widget)
+        # widget_id = id(widget)
+        widget_id = widget
 
         # 如果该 widget 已经有分配的 pointer_id，直接返回
         if widget_id in self._allocated_ids:
@@ -103,7 +104,8 @@ class PointerIdManager:
 
     def release(self, widget: Any) -> bool:
         """释放 widget 的 pointer_id"""
-        widget_id = id(widget)
+        # widget_id = id(widget)
+        widget_id = widget
 
         if widget_id not in self._allocated_ids:
             logger.debug(
@@ -123,7 +125,8 @@ class PointerIdManager:
 
     def get_allocated_id(self, widget: Any) -> int | None:
         """获取 widget 当前分配的 pointer_id"""
-        widget_id = id(widget)
+        # widget_id = id(widget)
+        widget_id = widget
         return self._allocated_ids.get(widget_id)
 
     def get_status(self) -> PointerIdManagerStatus:

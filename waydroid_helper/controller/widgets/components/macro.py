@@ -118,14 +118,34 @@ class KeySwitchCommand(Command):
             await self.press_command.execute(context)
         self.is_pressed = not self.is_pressed
 
-class ClickCommand(Command):
-    """点击命令"""
+class PressCommand(Command):
+    """按下命令 - 处理触摸按下事件"""
 
-    def __init__(self, point: list[str]):
+    def __init__(self, points: list[str]):
         # ["x,y", "x1,y1"...]
-        self.points = point
-        self._obj = [object() for _ in range(len(point))]
-    
+        self.points = points
+        # Use deterministic identifiers based on point content for consistent pointer ID management
+        self._point_identifiers = [self._create_point_identifier(point) for point in points]
+
+    def _create_point_identifier(self, point: str) -> tuple[int, int]:
+        """
+        Create a deterministic identifier for a point that can be shared across commands.
+
+        Args:
+            point: Point string (either "mouse" or "x,y" format)
+
+        Returns:
+            str: Deterministic identifier for the point
+        """
+        # For "mouse", use a special identifier since coordinates change
+        if point == "mouse":
+            return (-1,-1)  # Use command instance ID for mouse points
+        else:
+            # For fixed coordinates, use the coordinates as identifier
+            x, y = point.split(",")
+            x, y = int(x), int(y)
+            return (x,y)
+
     def _parse_coordinates(self, context: "Macro") -> list[tuple[int, int]]:
         """
         Parse all point coordinates once at the beginning.
@@ -136,7 +156,7 @@ class ClickCommand(Command):
         Returns:
             list[tuple[int, int]]: List of (x, y) coordinates
         """
-        coordinates:list[tuple[int,int]] = []
+        coordinates: list[tuple[int, int]] = []
         for point in self.points:
             if point == "mouse":
                 x, y = context.get_cursor_position()
@@ -145,60 +165,6 @@ class ClickCommand(Command):
                 x, y = int(x), int(y)
             coordinates.append((x, y))
         return coordinates
-
-    def _send_touch_event(self, context: "Macro", idx: int, x: int, y: int, w: int, h: int, action: AMotionEventAction) -> bool:
-        """
-        Helper method to send a touch event for specific coordinates.
-
-        Args:
-            context: The macro context
-            idx: Index of the point in self.points
-            x, y: Coordinates for the touch event
-            w, h: Window dimensions
-            action: The touch action (DOWN or UP)
-
-        Returns:
-            bool: True if the event was sent successfully, False otherwise
-        """
-        # Handle pointer ID based on action
-        if action == AMotionEventAction.DOWN:
-            pointer_id = pointer_id_manager.allocate(self._obj[idx])
-            if pointer_id is None:
-                logger.warning(f"Failed to allocate pointer_id for Click command")
-                return False
-        else:  # UP action
-            pointer_id = pointer_id_manager.get_allocated_id(self._obj[idx])
-            if pointer_id is None:
-                logger.warning(f"Failed to get pointer_id for Click command")
-                return False
-
-        # Create and send the touch event message
-        if action == AMotionEventAction.DOWN:
-            msg = InjectTouchEventMsg(
-                action=action,
-                pointer_id=pointer_id,
-                position=(x, y, w, h),
-                pressure=1.0,
-                action_button=AMotionEventButtons.PRIMARY,
-                buttons=AMotionEventButtons.PRIMARY,
-            )
-        else:  # UP action
-            msg = InjectTouchEventMsg(
-                action=action,
-                pointer_id=pointer_id,
-                position=(x, y, w, h),
-                pressure=0.0,
-                action_button=AMotionEventButtons.PRIMARY,
-                buttons=0,
-            )
-
-        event_bus.emit(Event(EventType.CONTROL_MSG, context, msg))
-
-        # Release pointer ID for UP action
-        if action == AMotionEventAction.UP:
-            pointer_id_manager.release(self._obj[idx])
-
-        return True
 
     async def execute(self, context: "Macro") -> None:
         # Parse all coordinates once at the beginning
@@ -211,16 +177,138 @@ class ClickCommand(Command):
 
         # Send DOWN events for all points
         for idx, (x, y) in enumerate(coordinates):
-            if not self._send_touch_event(context, idx, x, y, w, h, AMotionEventAction.DOWN):
+            point_id = self._point_identifiers[idx]
+            pointer_id = pointer_id_manager.allocate(point_id)
+            logger.warning(f"Press command: point_id={point_id}, id(point_id)={id(point_id)}")
+            if pointer_id is None:
+                logger.warning(f"Failed to allocate pointer_id for Press command at point {self.points[idx]}")
                 return  # Exit early if allocation fails
+
+            msg = InjectTouchEventMsg(
+                action=AMotionEventAction.DOWN,
+                pointer_id=pointer_id,
+                position=(x, y, w, h),
+                pressure=1.0,
+                action_button=AMotionEventButtons.PRIMARY,
+                buttons=AMotionEventButtons.PRIMARY,
+            )
+            event_bus.emit(Event(EventType.CONTROL_MSG, context, msg))
+
+class ReleaseCommand(Command):
+    """释放命令 - 处理触摸释放事件"""
+
+    def __init__(self, points: list[str]):
+        # ["x,y", "x1,y1"...]
+        self.points = points
+        # Use the same deterministic identifier system as PressCommand
+        self._point_identifiers = [self._create_point_identifier(point) for point in points]
+
+    def _create_point_identifier(self, point: str) -> tuple[int, int]:
+        """
+        Create a deterministic identifier for a point that matches PressCommand.
+
+        Note: For "mouse" points, this will create a different identifier than PressCommand
+        since each command instance has a different ID. For proper mouse point release,
+        the identifier should be shared between PressCommand and ReleaseCommand instances.
+
+        Args:
+            point: Point string (either "mouse" or "x,y" format)
+
+        Returns:
+            str: Deterministic identifier for the point
+        """
+        if point == "mouse":
+            return (-1,-1)  # This needs to be coordinated with PressCommand
+        else:
+            x, y = point.split(",")
+            x, y = int(x), int(y)
+            return (x,y)
+
+    def _parse_coordinates(self, context: "Macro") -> list[tuple[int, int]]:
+        """
+        Parse all point coordinates once at the beginning.
+
+        Args:
+            context: The macro context
+
+        Returns:
+            list[tuple[int, int]]: List of (x, y) coordinates
+        """
+        coordinates: list[tuple[int, int]] = []
+        for point in self.points:
+            if point == "mouse":
+                x, y = context.get_cursor_position()
+            else:
+                x, y = point.split(",")
+                x, y = int(x), int(y)
+            coordinates.append((x, y))
+        return coordinates
+
+    def set_point_identifiers(self, identifiers: list[str]) -> None:
+        """
+        Set point identifiers to match those used by a corresponding PressCommand.
+        This enables proper pointer ID sharing between press and release commands.
+
+        Args:
+            identifiers: List of point identifiers from PressCommand
+        """
+        if len(identifiers) != len(self.points):
+            logger.warning(f"Identifier count mismatch: expected {len(self.points)}, got {len(identifiers)}")
+            return
+        self._point_identifiers = identifiers
+
+    async def execute(self, context: "Macro") -> None:
+        # Parse all coordinates once at the beginning
+        coordinates = self._parse_coordinates(context)
+
+        # Get window dimensions once
+        root = context.get_root()
+        root = cast("Gtk.Window", root)
+        w, h = root.get_width(), root.get_height()
+
+        # Send UP events for all points
+        for idx, (x, y) in enumerate(coordinates):
+            point_id = self._point_identifiers[idx]
+            # 打印一下 id(point_id) 红色
+            logger.warning(f"Release command: point_id={point_id}, id(point_id)={id(point_id)}")
+            pointer_id = pointer_id_manager.get_allocated_id(point_id)
+            if pointer_id is None:
+                logger.warning(f"Failed to get pointer_id for Release command at point {self.points[idx]}")
+                continue  # Continue with other points even if one fails
+
+            msg = InjectTouchEventMsg(
+                action=AMotionEventAction.UP,
+                pointer_id=pointer_id,
+                position=(x, y, w, h),
+                pressure=0.0,
+                action_button=AMotionEventButtons.PRIMARY,
+                buttons=0,
+            )
+            event_bus.emit(Event(EventType.CONTROL_MSG, context, msg))
+
+            # Release the pointer ID after sending UP event
+            pointer_id_manager.release(point_id)
+
+
+class ClickCommand(Command):
+    """点击命令 - 组合按下和释放命令"""
+
+    def __init__(self, points: list[str]):
+        # ["x,y", "x1,y1"...]
+        self.points = points
+        # Create press and release commands
+        self.press_command = PressCommand(points)
+        self.release_command = ReleaseCommand(points)
+
+    async def execute(self, context: "Macro") -> None:
+        # Execute press command (DOWN events)
+        await self.press_command.execute(context)
 
         # Wait 0.05 seconds between DOWN and UP events
         await asyncio.sleep(0.05)
 
-        # Send UP events for all points
-        for idx, (x, y) in enumerate(coordinates):
-            self._send_touch_event(context, idx, x, y, w, h, AMotionEventAction.UP)
-            # Note: For UP events, we continue even if sending fails (using continue in original)
+        # Execute release command (UP events)
+        await self.release_command.execute(context)
 
 
 
@@ -329,6 +417,18 @@ class CommandFactory:
             else:
                 logger.warning("Macro command: click missing parameters.")
                 return None
+        elif command_type == "press":
+            if args:
+                return PressCommand(args)
+            else:
+                logger.warning("Macro command: press missing parameters.")
+                return None
+        elif command_type == "release":
+            if args:
+                return ReleaseCommand(args)
+            else:
+                logger.warning("Macro command: release missing parameters.")
+                return None
         elif command_type == "other_command":
             return OtherCommand(args)
 
@@ -427,10 +527,14 @@ class Macro(BaseWidget):
                 "- key_press <key1,key2,...>: Press keys\n"
                 "- key_release <key1,key2,...>: Release keys\n"
                 "- key_switch <key1,key2,...>: Switch keys\n"
+                "- click <x,y> [x1,y1] ...: Click at coordinates (combines press and release)\n"
+                "- press <x,y> [x1,y1] ...: Press at coordinates (DOWN events only)\n"
+                "- release <x,y> [x1,y1] ...: Release at coordinates (UP events only)\n"
                 "- sleep <seconds>: Delay execution (supports decimals)\n"
                 "- release_all: Release all currently pressed keys\n"
                 "- Use 'release_actions' to separate press and release commands\n"
-                "- Lines starting with # are comments",
+                "- Lines starting with # are comments\n"
+                "- Use 'mouse' as coordinate to use current cursor position",
             ),
         )
         self.add_config_item(macro_config)
@@ -482,7 +586,7 @@ class Macro(BaseWidget):
             # 处理参数
             if command_type in ["key_press", "key_release", "key_switch"] and args_str:
                 args = [k.strip() for k in args_str.split(",")]
-            elif command_type == "click" and args_str:
+            elif command_type in ["click", "press", "release"] and args_str:
                 args = args_str.split()
             elif command_type == "sleep" and args_str:
                 args = [args_str]
