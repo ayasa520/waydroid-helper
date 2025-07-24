@@ -376,6 +376,44 @@ class ReleaseAllCommand(Command):
         context.pressed_keys.clear()
 
 
+class EnterStaringCommand(Command):
+    """进入瞄准模式命令"""
+
+    async def execute(self, context: "Macro") -> None:
+        from waydroid_helper.controller.core import (
+            Event,
+            EventType,
+            event_bus,
+        )
+
+        event_bus.emit(
+            Event(
+                type=EventType.ENTER_STARING,
+                source=context,
+                data=None,
+            )
+        )
+
+
+class ExitStaringCommand(Command):
+    """退出瞄准模式命令"""
+
+    async def execute(self, context: "Macro") -> None:
+        from waydroid_helper.controller.core import (
+            Event,
+            EventType,
+            event_bus,
+        )
+
+        event_bus.emit(
+            Event(
+                type=EventType.EXIT_STARING,
+                source=context,
+                data=None,
+            )
+        )
+
+
 class OtherCommand(Command):
     """其他命令占位符"""
 
@@ -457,6 +495,10 @@ class CommandFactory:
             else:
                 logger.warning("Macro command: switch missing parameters.")
                 return None
+        elif command_type == "enter_staring":
+            return EnterStaringCommand()
+        elif command_type == "exit_staring":
+            return ExitStaringCommand()
         elif command_type == "other_command":
             return OtherCommand(args)
 
@@ -561,6 +603,8 @@ class Macro(BaseWidget):
                 "- switch <x,y> [x1,y1] ...: Switch at coordinates (toggle between press/release)\n"
                 "- sleep <seconds>: Delay execution (supports decimals)\n"
                 "- release_all: Release all currently pressed keys\n"
+                "- enter_staring: Enter staring/aiming mode\n"
+                "- exit_staring: Exit staring/aiming mode\n"
                 "- Use 'release_actions' to separate press and release commands\n"
                 "- Lines starting with # are comments\n"
                 "- Use 'mouse' as coordinate to use current cursor position",

@@ -1,6 +1,6 @@
 from __future__ import annotations
 import math
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 from gettext import pgettext
 
 from waydroid_helper.controller.android.input import (
@@ -79,6 +79,8 @@ class Aim(BaseWidget):
         self._current_pos: tuple[int | float | None, int | float | None] = (None, None)
         # self.sensitivity: int = 20
         self.setup_config()
+        event_bus.subscribe(EventType.ENTER_STARING, self.enter_staring, subscriber=self)
+        event_bus.subscribe(EventType.EXIT_STARING, self.exit_staring, subscriber=self)
 
     def setup_config(self) -> None:
         """设置配置项"""
@@ -276,6 +278,43 @@ class Aim(BaseWidget):
         """映射模式下的内容绘制 - 完全透明，什么都不绘制"""
         pass
 
+    def enter_staring(self, event: Event[Any] | None = None):
+        self.is_triggered = True
+        self.platform.lock_pointer()
+        root = self.get_root()
+        root = cast("Gtk.Window", root)
+        root.set_cursor_from_name("none")
+        event_bus.emit(Event(type=EventType.AIM_TRIGGERED, source=self, data=None))
+    
+    def exit_staring(self, event: Event[Any] | None = None):
+        self.is_triggered = False
+        self.platform.unlock_pointer()
+        root = self.get_root()
+        root = cast("Gtk.Window", root)
+        root.set_cursor_from_name("default")
+        event_bus.emit(Event(type=EventType.AIM_RELEASED, source=self, data=None))
+        if self._current_pos != (None, None):
+            x, y = self._current_pos
+            if x is None or y is None:
+                logger.error(f"Invalid current position for Aim button")
+                return
+            w, h = root.get_width(), root.get_height()
+            pointer_id = pointer_id_manager.allocate(self)
+            if pointer_id is None:
+                logger.warning(f"Failed to allocate pointer_id for Aim button")
+                return
+            msg = InjectTouchEventMsg(
+                action=AMotionEventAction.UP,
+                pointer_id=pointer_id,
+                position=(int(x), int(y), w, h),
+                pressure=0.0,
+                action_button=AMotionEventButtons.PRIMARY,
+                buttons=0,
+            )
+            event_bus.emit(Event(EventType.CONTROL_MSG, self, msg))
+            pointer_id_manager.release(self)
+            self._current_pos = (None, None)
+
     def on_key_triggered(
         self,
         key_combination: KeyCombination | None = None,
@@ -298,43 +337,12 @@ class Aim(BaseWidget):
         else:
             used_key = "未知按键"
         if not self.is_triggered:
-            self.is_triggered = True
-            self.platform.lock_pointer()
-            root = self.get_root()
-            root = cast("Gtk.Window", root)
-            root.set_cursor_from_name("none")
-            event_bus.emit(Event(type=EventType.AIM_TRIGGERED, source=self, data=None))
+            self.enter_staring()
             logger.debug(
                 f"Aim button triggered by key {used_key} at {self.center_x}, {self.center_y}"
             )
         else:
-            self.is_triggered = False
-            self.platform.unlock_pointer()
-            root = self.get_root()
-            root = cast("Gtk.Window", root)
-            root.set_cursor_from_name("default")
-            event_bus.emit(Event(type=EventType.AIM_RELEASED, source=self, data=None))
-            if self._current_pos != (None, None):
-                x, y = self._current_pos
-                if x is None or y is None:
-                    logger.error(f"Invalid current position for Aim button")
-                    return False
-                w, h = root.get_width(), root.get_height()
-                pointer_id = pointer_id_manager.allocate(self)
-                if pointer_id is None:
-                    logger.warning(f"Failed to allocate pointer_id for Aim button")
-                    return False
-                msg = InjectTouchEventMsg(
-                    action=AMotionEventAction.UP,
-                    pointer_id=pointer_id,
-                    position=(int(x), int(y), w, h),
-                    pressure=0.0,
-                    action_button=AMotionEventButtons.PRIMARY,
-                    buttons=0,
-                )
-                event_bus.emit(Event(EventType.CONTROL_MSG, self, msg))
-                pointer_id_manager.release(self)
-                self._current_pos = (None, None)
+            self.exit_staring()
             logger.debug(
                 f"Aim button released by key {used_key} at {self.center_x}, {self.center_y}"
             )
