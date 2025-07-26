@@ -5,12 +5,11 @@
 """
 
 from __future__ import annotations
+import asyncio
 from enum import Enum
 from gettext import pgettext
 import math
 from typing import TYPE_CHECKING, Callable, cast, TypedDict
-
-from gi.repository import GLib
 
 from waydroid_helper.controller.core.handler.event_handlers import InputEvent
 
@@ -35,10 +34,17 @@ from waydroid_helper.controller.android.input import (
 )
 from waydroid_helper.controller.core.event_bus import event_bus, Event, EventType
 from waydroid_helper.util.log import logger
+from waydroid_helper.util.task import Task
 
 class MovementMode(Enum):
     SMOOTH = "smooth"
     INSTANT = "instant"
+
+class MovementState(Enum):
+    """方向盘移动状态"""
+    IDLE = "idle"           # 空闲状态
+    MOVING = "moving"       # 正在移动
+    STOPPING = "stopping"   # 正在停止
 
 class DirectionalPadEditableRegion(TypedDict):
     """可编辑区域信息"""
@@ -120,29 +126,33 @@ class DirectionalPad(BaseWidget):
 
         self._current_position: tuple[float, float] = (x + width / 2, y + height / 2)
 
-        # region 平滑移动系统
-        self._timer: int | None = None
-        self._timer_interval: int = 20  # ms
+        # region 异步移动系统
+        self._movement_state: MovementState = MovementState.IDLE
+        self._state_lock = asyncio.Lock()
+        self._movement_task: asyncio.Task[None] | None = None
+        self._task_manager = Task()
+
+        # 移动参数
+        self._move_interval: float = 0.02  # 20ms in seconds
         self._move_steps_total: int = 6
-        self._move_steps_count: int = 0
         self._target_position: tuple[float, float] = self._current_position
 
         self._target_points_map: dict[
             tuple[bool, bool, bool, bool], Callable[[], tuple[float, float]]
         ] = {
-            (True, False, False, False): lambda: self.top,  # Up
-            (False, True, False, False): lambda: self.left,  # Left
-            (False, False, True, False): lambda: self.bottom,  # Down
-            (False, False, False, True): lambda: self.right,  # Right
-            (True, True, False, False): lambda: self.top_left,
-            (True, False, False, True): lambda: self.top_right,
-            (False, True, True, False): lambda: self.bottom_left,
-            (False, False, True, True): lambda: self.bottom_right,
+            (True, False, False, False): lambda: self.top_with_factor,  # Up
+            (False, True, False, False): lambda: self.left_with_factor,  # Left
+            (False, False, True, False): lambda: self.bottom_with_factor,  # Down
+            (False, False, False, True): lambda: self.right_with_factor,  # Right
+            (True, True, False, False): lambda: self.top_left_with_factor,
+            (True, False, False, True): lambda: self.top_right_with_factor,
+            (False, True, True, False): lambda: self.bottom_left_with_factor,
+            (False, False, True, True): lambda: self.bottom_right_with_factor,
             # 3-key combos resolve to the middle key's axis
-            (True, True, True, False): lambda: self.left,
-            (True, True, False, True): lambda: self.top,
-            (True, False, True, True): lambda: self.right,
-            (False, True, True, True): lambda: self.bottom,
+            (True, True, True, False): lambda: self.left_with_factor,
+            (True, True, False, True): lambda: self.top_with_factor,
+            (True, False, True, True): lambda: self.right_with_factor,
+            (False, True, True, True): lambda: self.bottom_with_factor,
             # 4-key combo returns to center
             (True, True, True, True): lambda: self.center,
         }
@@ -151,8 +161,6 @@ class DirectionalPad(BaseWidget):
         self.edit_regions: dict[str, DirectionalPadEditableRegion] = {}
 
         
-        # 计算四个方向按钮的区域（用于编辑）
-        self._update_edit_regions()
 
         # 移动模式设置
         # self._movement_mode: MovementMode = MovementMode.SMOOTH
@@ -169,10 +177,23 @@ class DirectionalPad(BaseWidget):
         )
         self.add_config_item(movement_mode_config)
         self.add_config_change_callback("movement_mode", lambda key, value, restoring: self.set_movement_mode(value))
+        self.swipehold_radius_factor = 1
+
+        event_bus.subscribe(EventType.SWIPEHOLD_RADIUS, self.on_swipehold_radius_changed, subscriber=self)
+    
+    def on_swipehold_radius_changed(self, event: Event[float]):
+        """滑动半径系数设置"""
+        self.swipehold_radius_factor = event.data
+
+        # 如果摇杆处于激活状态且有按键按下，立即移动到新的目标位置
+        if self._joystick_active and any(self.pressed_directions.values()):
+            new_target = self._get_target_position()
+            self._move_to(new_target, smooth=False)     
+            logger.debug(f"Swipehold radius changed, moved to new target: {new_target}")
 
     def set_movement_params(self, interval: int, max_steps: int):
         """设置平滑移动的参数"""
-        self._timer_interval = interval
+        self._move_interval = interval / 1000.0  # 转换为秒
         self._move_steps_total = max_steps
         logger.info(
             f"Directional pad movement parameters updated: interval={interval}ms, steps={max_steps}"
@@ -187,9 +208,24 @@ class DirectionalPad(BaseWidget):
         logger.info(f"Directional pad movement mode set to: {mode}")
 
     def __del__(self):
-        if self._timer:
-            GLib.source_remove(self._timer)
-            self._timer = None
+        """清理异步任务"""
+        self._cancel_movement_task()
+
+    def _cancel_movement_task(self) -> None:
+        """取消当前的移动任务"""
+        if self._movement_task and not self._movement_task.done():
+            self._movement_task.cancel()
+            self._movement_task = None
+
+    async def _get_movement_state(self) -> MovementState:
+        """获取当前移动状态"""
+        async with self._state_lock:
+            return self._movement_state
+
+    async def _set_movement_state(self, state: MovementState) -> None:
+        """设置移动状态"""
+        async with self._state_lock:
+            self._movement_state = state
 
     def _get_target_position(self) -> tuple[float, float]:
         """根据当前按键状态获取目标位置"""
@@ -200,53 +236,91 @@ class DirectionalPad(BaseWidget):
         return self._target_points_map.get(key_state, lambda: self.center)()
 
     def _move_to(self, target: tuple[float, float], smooth: bool = False):
-        """统一的移动入口点"""
+        """统一的移动入口点 - 创建异步任务"""
         self._target_position = target
-        if self._timer:
-            # 如果正在平滑移动，只需更新目标点，让定时器完成
-            return
+
+        # 取消现有的移动任务
+        self._cancel_movement_task()
 
         # 根据移动模式决定是否使用平滑移动
         use_smooth = smooth and self.get_config_value("movement_mode") == MovementMode.SMOOTH.value
-        
+
         if use_smooth:
-            self._move_steps_count = 0
-            self._timer = GLib.timeout_add(
-                self._timer_interval, self._update_smooth_move
+            # 创建平滑移动任务
+            self._movement_task = self._task_manager.create_task(
+                self._smooth_move_to(target)
             )
             logger.debug(f"Directional pad smooth move started -> {target}")
         else:
+            # 创建瞬间移动任务
+            self._movement_task = self._task_manager.create_task(
+                self._instant_move_to(target)
+            )
+            logger.debug(f"Directional pad instant move to -> {target}")
+
+    async def _instant_move_to(self, target: tuple[float, float]) -> None:
+        """瞬间移动到目标位置"""
+        try:
+            await self._set_movement_state(MovementState.MOVING)
             self._current_position = target
             self.queue_draw()
             if self._joystick_active:
                 self._emit_touch_event(AMotionEventAction.MOVE)
-            logger.debug(f"Directional pad instant move to -> {target}")
+            logger.debug(f"Directional pad instant move completed -> {target}")
+        except asyncio.CancelledError:
+            logger.debug("Instant move task cancelled")
+            raise
+        except Exception as e:
+            logger.error(f"Error in instant move: {e}")
+        finally:
+            await self._set_movement_state(MovementState.IDLE)
 
-    def _update_smooth_move(self) -> bool:
-        """平滑移动的定时器回调"""
-        if self._move_steps_count < self._move_steps_total:
-            dx = self._target_position[0] - self._current_position[0]
-            dy = self._target_position[1] - self._current_position[1]
-            remaining_steps = self._move_steps_total - self._move_steps_count
+    async def _smooth_move_to(self, target: tuple[float, float]) -> None:
+        """平滑移动到目标位置"""
+        try:
+            await self._set_movement_state(MovementState.MOVING)
 
-            self._current_position = (
-                self._current_position[0] + dx / remaining_steps,
-                self._current_position[1] + dy / remaining_steps,
-            )
-            self._move_steps_count += 1
-            if self._joystick_active:
-                self._emit_touch_event(AMotionEventAction.MOVE)
+            start_position = self._current_position
+            move_steps_count = 0
+
+            while move_steps_count < self._move_steps_total:
+                # 检查是否被取消
+                current_state = await self._get_movement_state()
+                if current_state == MovementState.STOPPING:
+                    break
+
+                # 计算当前步骤的位置
+                progress = (move_steps_count + 1) / self._move_steps_total
+                dx = target[0] - start_position[0]
+                dy = target[1] - start_position[1]
+
+                self._current_position = (
+                    start_position[0] + dx * progress,
+                    start_position[1] + dy * progress,
+                )
+
+                if self._joystick_active:
+                    self._emit_touch_event(AMotionEventAction.MOVE)
+                self.queue_draw()
+
+                move_steps_count += 1
+
+                # 等待下一帧
+                if move_steps_count < self._move_steps_total:
+                    await asyncio.sleep(self._move_interval)
+
+            # 确保到达最终位置
+            self._current_position = target
             self.queue_draw()
-            return True  # Continue timer
+            logger.debug(f"Directional pad smooth move completed -> {target}")
 
-        # Finish move
-        self._current_position = self._target_position
-        self._timer = None
-        self.queue_draw()
-        logger.debug(
-            f"Directional pad smooth move finished -> {self._current_position}"
-        )
-        return False  # Stop timer
+        except asyncio.CancelledError:
+            logger.debug("Smooth move task cancelled")
+            raise
+        except Exception as e:
+            logger.error(f"Error in smooth move: {e}")
+        finally:
+            await self._set_movement_state(MovementState.IDLE)
 
     def _set_default_keys(self):
         """为未设置的方向设置默认按键"""
@@ -287,6 +361,7 @@ class DirectionalPad(BaseWidget):
 
     def get_editable_regions(self) -> list[EditableRegion]:
         """重写：返回四个方向的可编辑区域"""
+        self._update_edit_regions()
         regions: list[EditableRegion] = []
 
         for direction in self.DIRECTIONS:
@@ -340,8 +415,6 @@ class DirectionalPad(BaseWidget):
             else:
                 self.direction_keys[direction] = None
 
-            # 更新编辑区域和总按键列表
-            self._update_edit_regions()
             self._update_final_keys()
 
             # 重绘以更新显示
@@ -589,9 +662,7 @@ class DirectionalPad(BaseWidget):
             if not any(self.pressed_directions.values()):
                 # 所有键释放: 停用摇杆，瞬移回中心
                 self._joystick_active = False
-                if self._timer:
-                    GLib.source_remove(self._timer)
-                    self._timer = None
+                self._cancel_movement_task()
                 self._emit_touch_event(AMotionEventAction.UP)
                 pointer_id_manager.release(self)
                 self._move_to(self.center, smooth=False)
@@ -645,32 +716,7 @@ class DirectionalPad(BaseWidget):
             f"Directional pad {direction} direction released: {key_combination}"
         )
 
-    def on_resize_release(self):
-        """调整大小完成后重新计算编辑区域"""
-        self._update_edit_regions()
-        self._move_to(self._get_target_position())
-        logger.debug(
-            f"Directional pad size adjusted, re-calculating edit regions: {self.width}x{self.height}"
-        )
-
     def draw_widget_content(self, cr: "Context[Surface]", width: int, height: int):
-        """绘制圆形按钮的具体内容 - 重写以监听尺寸变化"""
-        # 检查尺寸是否改变
-        if width != self.width or height != self.height:
-            self.width = width
-            self.height = height
-            self._update_edit_regions()
-            logger.debug(
-                f"Directional pad size changed, re-calculating edit regions: {width}x{height}"
-            )
-
-        # 调用原来的绘制逻辑
-        self._draw_directional_pad_content(cr, width, height)
-
-    def _draw_directional_pad_content(
-        self, cr: "Context[Surface]", width: int, height: int
-    ):
-        """绘制方向盘的原始内容"""
         # 计算圆心和半径
         center_x = width / 2
         center_y = height / 2
@@ -743,3 +789,49 @@ class DirectionalPad(BaseWidget):
     def bottom_right(self) -> tuple[float, float]:
         r = min(self.width, self.height) / 2
         return (self.center[0] + 0.7071 * r, self.center[1] + 0.7071 * r)
+
+     # 乘了系数的左
+    @property
+    def left_with_factor(self):
+        return (self.center[0]-self.width/2*self.swipehold_radius_factor, self.center[1])
+
+    @property
+    def right_with_factor(self):
+        return (self.center[0]+self.width/2*self.swipehold_radius_factor, self.center[1])
+
+    @property
+    def top_with_factor(self):
+        return (self.center[0], self.center[1]-self.height/2*self.swipehold_radius_factor)
+
+    @property
+    def bottom_with_factor(self):
+        return (self.center[0], self.center[1]+self.height/2*self.swipehold_radius_factor)
+
+    @property
+    def top_left_with_factor(self) -> tuple[float, float]:
+        r = min(self.width, self.height) / 2 * self.swipehold_radius_factor
+        return (self.center[0] - 0.7071 * r, self.center[1] - 0.7071 * r)
+
+    @property
+    def top_right_with_factor(self) -> tuple[float, float]:
+        r = min(self.width, self.height) / 2 * self.swipehold_radius_factor
+        return (self.center[0] + 0.7071 * r, self.center[1] - 0.7071 * r)
+
+    @property
+    def bottom_left_with_factor(self) -> tuple[float, float]:
+        r = min(self.width, self.height) / 2 * self.swipehold_radius_factor
+        return (self.center[0] - 0.7071 * r, self.center[1] + 0.7071 * r)
+
+    @property
+    def bottom_right_with_factor(self) -> tuple[float, float]:
+        r = min(self.width, self.height) / 2 * self.swipehold_radius_factor
+        return (self.center[0] + 0.7071 * r, self.center[1] + 0.7071 * r)
+
+
+    def on_delete(self):
+        """清理资源"""
+        # 取消异步任务
+        self._cancel_movement_task()
+        # 取消事件订阅
+        event_bus.unsubscribe_by_subscriber(self)
+        return super().on_delete()

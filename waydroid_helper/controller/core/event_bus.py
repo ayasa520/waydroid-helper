@@ -49,6 +49,7 @@ class EventType(str, Enum):
     CANCEL_BUTTON_DESTROYED = "cancel-button-destroyed"  # 取消施法按钮销毁
     ENTER_STARING = "enter-staring"  # 进入瞄准模式
     EXIT_STARING = "exit-staring"  # 退出瞄准模式
+    SWIPEHOLD_RADIUS = "swipehold-radius"  # 滑动半径设置
 
 
 @dataclass
@@ -96,6 +97,7 @@ class GlobalEventEmitter(GObject.Object):
         EventType.CANCEL_BUTTON_DESTROYED: (GObject.SignalFlags.RUN_FIRST, None, (object, object)),
         EventType.ENTER_STARING: (GObject.SignalFlags.RUN_FIRST, None, (object, object)),
         EventType.EXIT_STARING: (GObject.SignalFlags.RUN_FIRST, None, (object, object)),
+        EventType.SWIPEHOLD_RADIUS: (GObject.SignalFlags.RUN_FIRST, None, (object, object)),
     }
 
     def __new__(cls):

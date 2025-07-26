@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, NamedTuple, cast
 from waydroid_helper.controller.android import AMotionEventAction, AMotionEventButtons
 from waydroid_helper.controller.core.control_msg import InjectTouchEventMsg
 from waydroid_helper.util.log import logger
+
 if TYPE_CHECKING:
     from cairo import Context, Surface, FontSlant, FontWeight
     from gi.repository import Gtk
@@ -102,7 +103,8 @@ class KeyReleaseCommand(Command):
                 )
             except ValueError:
                 logger.warning(f"Macro command: cannot recognize key '{key_name}'")
-                
+
+
 class KeySwitchCommand(Command):
     """按键切换命令"""
 
@@ -111,12 +113,14 @@ class KeySwitchCommand(Command):
         self.is_pressed = False
         self.press_command = KeyPressCommand(key_names)
         self.release_command = KeyReleaseCommand(key_names)
+
     async def execute(self, context: "Macro") -> None:
         if self.is_pressed:
             await self.release_command.execute(context)
         else:
             await self.press_command.execute(context)
         self.is_pressed = not self.is_pressed
+
 
 class PressCommand(Command):
     """按下命令 - 处理触摸按下事件"""
@@ -125,7 +129,9 @@ class PressCommand(Command):
         # ["x,y", "x1,y1"...]
         self.points = points
         # Use deterministic identifiers based on point content for consistent pointer ID management
-        self._point_identifiers = [self._create_point_identifier(point) for point in points]
+        self._point_identifiers = [
+            self._create_point_identifier(point) for point in points
+        ]
 
     def _create_point_identifier(self, point: str) -> tuple[int, int]:
         """
@@ -139,12 +145,12 @@ class PressCommand(Command):
         """
         # For "mouse", use a special identifier since coordinates change
         if point == "mouse":
-            return (-1,-1)  # Use command instance ID for mouse points
+            return (-1, -1)  # Use command instance ID for mouse points
         else:
             # For fixed coordinates, use the coordinates as identifier
             x, y = point.split(",")
             x, y = int(x), int(y)
-            return (x,y)
+            return (x, y)
 
     def _parse_coordinates(self, context: "Macro") -> list[tuple[int, int]]:
         """
@@ -179,9 +185,13 @@ class PressCommand(Command):
         for idx, (x, y) in enumerate(coordinates):
             point_id = self._point_identifiers[idx]
             pointer_id = pointer_id_manager.allocate(point_id)
-            logger.warning(f"Press command: point_id={point_id}, id(point_id)={id(point_id)}")
+            logger.warning(
+                f"Press command: point_id={point_id}, id(point_id)={id(point_id)}"
+            )
             if pointer_id is None:
-                logger.warning(f"Failed to allocate pointer_id for Press command at point {self.points[idx]}")
+                logger.warning(
+                    f"Failed to allocate pointer_id for Press command at point {self.points[idx]}"
+                )
                 return  # Exit early if allocation fails
 
             msg = InjectTouchEventMsg(
@@ -194,6 +204,7 @@ class PressCommand(Command):
             )
             event_bus.emit(Event(EventType.CONTROL_MSG, context, msg))
 
+
 class ReleaseCommand(Command):
     """释放命令 - 处理触摸释放事件"""
 
@@ -201,7 +212,9 @@ class ReleaseCommand(Command):
         # ["x,y", "x1,y1"...]
         self.points = points
         # Use the same deterministic identifier system as PressCommand
-        self._point_identifiers = [self._create_point_identifier(point) for point in points]
+        self._point_identifiers = [
+            self._create_point_identifier(point) for point in points
+        ]
 
     def _create_point_identifier(self, point: str) -> tuple[int, int]:
         """
@@ -218,11 +231,11 @@ class ReleaseCommand(Command):
             str: Deterministic identifier for the point
         """
         if point == "mouse":
-            return (-1,-1)  # This needs to be coordinated with PressCommand
+            return (-1, -1)  # This needs to be coordinated with PressCommand
         else:
             x, y = point.split(",")
             x, y = int(x), int(y)
-            return (x,y)
+            return (x, y)
 
     def _parse_coordinates(self, context: "Macro") -> list[tuple[int, int]]:
         """
@@ -253,7 +266,9 @@ class ReleaseCommand(Command):
             identifiers: List of point identifiers from PressCommand
         """
         if len(identifiers) != len(self.points):
-            logger.warning(f"Identifier count mismatch: expected {len(self.points)}, got {len(identifiers)}")
+            logger.warning(
+                f"Identifier count mismatch: expected {len(self.points)}, got {len(identifiers)}"
+            )
             return
         self._point_identifiers = identifiers
 
@@ -270,10 +285,14 @@ class ReleaseCommand(Command):
         for idx, (x, y) in enumerate(coordinates):
             point_id = self._point_identifiers[idx]
             # 打印一下 id(point_id) 红色
-            logger.warning(f"Release command: point_id={point_id}, id(point_id)={id(point_id)}")
+            logger.warning(
+                f"Release command: point_id={point_id}, id(point_id)={id(point_id)}"
+            )
             pointer_id = pointer_id_manager.get_allocated_id(point_id)
             if pointer_id is None:
-                logger.warning(f"Failed to get pointer_id for Release command at point {self.points[idx]}")
+                logger.warning(
+                    f"Failed to get pointer_id for Release command at point {self.points[idx]}"
+                )
                 continue  # Continue with other points even if one fails
 
             msg = InjectTouchEventMsg(
@@ -331,7 +350,6 @@ class ClickCommand(Command):
 
         # Execute release command (UP events)
         await self.release_command.execute(context)
-
 
 
 class SleepCommand(Command):
@@ -414,6 +432,51 @@ class ExitStaringCommand(Command):
         )
 
 
+class SwipeholdRadiusCommand(Command):
+    """滑动半径设置命令"""
+
+    # 参数是倍数(float), 如 0.5
+    def __init__(self, factor: float):
+        self.factor = factor
+
+    async def execute(self, context: "Macro") -> None:
+        event_bus.emit(
+            Event(
+                type=EventType.SWIPEHOLD_RADIUS,
+                source=context,
+                data=self.factor,
+            )
+        )
+
+
+class SwipeholdRadiusSwitchCommand(Command):
+    """滑动半径增加切换命令"""
+
+    # 参数是倍数(float), 如 0.5
+    def __init__(self, factor: float):
+        self.factor = factor
+        self.is_enabled = False
+
+    async def execute(self, context: "Macro") -> None:
+        if self.is_enabled:
+            event_bus.emit(
+                Event(
+                    type=EventType.SWIPEHOLD_RADIUS,
+                    source=context,
+                    data=1,
+                )
+            )
+        else:
+            event_bus.emit(
+                Event(
+                    type=EventType.SWIPEHOLD_RADIUS,
+                    source=context,
+                    data=self.factor,
+                )
+            )
+        self.is_enabled = not self.is_enabled
+
+
 class OtherCommand(Command):
     """其他命令占位符"""
 
@@ -452,7 +515,7 @@ class CommandFactory:
         elif command_type == "sleep":
             if args:
                 try:
-                    sleep_time = int(args[0])/1000
+                    sleep_time = int(args[0]) / 1000
                     return SleepCommand(sleep_time)
                 except ValueError:
                     logger.warning(
@@ -499,6 +562,21 @@ class CommandFactory:
             return EnterStaringCommand()
         elif command_type == "exit_staring":
             return ExitStaringCommand()
+        elif command_type == "swipehold_radius":
+            if args:
+                return SwipeholdRadiusCommand(float(args[0]))
+            else:
+                logger.warning("Macro command: swipehold_radius missing parameters.")
+                return None
+        elif command_type == "swipehold_radius_switch":
+            if args:
+                return SwipeholdRadiusSwitchCommand(float(args[0]))
+            else:
+                logger.warning(
+                    "Macro command: swipehold_radius_switch missing parameters."
+                )
+                return None
+
         elif command_type == "other_command":
             return OtherCommand(args)
 
@@ -579,9 +657,9 @@ class Macro(BaseWidget):
 
         # 按键状态跟踪 - 记录已按下但未释放的按键
         self.pressed_keys: set[str] = set()
-        self._cursor_position:tuple[int,int] = (0,0)
-    
-    def get_cursor_position(self)->tuple[int,int]:
+        self._cursor_position: tuple[int, int] = (0, 0)
+
+    def get_cursor_position(self) -> tuple[int, int]:
         return self._cursor_position
 
     def setup_config(self) -> None:
@@ -615,14 +693,16 @@ class Macro(BaseWidget):
         self.config_manager.connect("confirmed", self.on_macro_command_changed)
         event_bus.subscribe(EventType.MOUSE_MOTION, self.on_mouse_motion)
 
-    def on_mouse_motion(self, event:Event[InputEvent]):
+    def on_mouse_motion(self, event: Event[InputEvent]):
         if event.data.position is None:
             return
         self._cursor_position = event.data.position
 
     def on_macro_command_changed(self, config_manager):
         """当宏命令文本框内容改变时，解析并存储预解析的命令对象"""
-        parts = self.config_manager.get_value("macro_command").split("release_actions", 1)
+        parts = self.config_manager.get_value("macro_command").split(
+            "release_actions", 1
+        )
 
         # 解析按下命令
         self.press_commands = self._parse_command_lines(parts[0].strip().splitlines())
