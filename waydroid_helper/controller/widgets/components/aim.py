@@ -1,7 +1,9 @@
 from __future__ import annotations
 import math
+import asyncio
 from typing import TYPE_CHECKING, Any, cast
 from gettext import pgettext
+from enum import Enum
 
 from waydroid_helper.controller.android.input import (
     AMotionEventAction,
@@ -35,6 +37,13 @@ if TYPE_CHECKING:
     from gi.repository import Gtk
     from waydroid_helper.controller.widgets.base.base_widget import EditableRegion
     from waydroid_helper.controller.core.handler import InputEvent
+
+
+class AimState(Enum):
+    """瞄准状态枚举"""
+    IDLE = "idle"           # 空闲状态
+    AIMING = "aiming"       # 瞄准状态
+    MOVING = "moving"       # 移动状态
 
 
 @Editable
@@ -74,13 +83,29 @@ class Aim(BaseWidget):
             min_width=200,
             min_height=150,
         )
-        self.is_triggered: bool = False
+
+        # 状态管理
+        self._state: AimState = AimState.IDLE
+        self._state_lock = asyncio.Lock()
+
+        # 平台相关
         self.platform: "PlatformBase | None" = None
-        self._current_pos: tuple[int | float | None, int | float | None] = (None, None)
-        # self.sensitivity: int = 20
+
+        # 位置跟踪
+        self._current_pos: tuple[float, float] | None = None
+
+        # 异步任务管理
+        self._aim_task: asyncio.Task[None] | None = None
+        self._motion_task: asyncio.Task[None] | None = None
+        self._motion_queue: asyncio.Queue[tuple[float, float, float, float]] = asyncio.Queue()
+        self._motion_processor_running = False
+
+        # 配置
         self.setup_config()
-        event_bus.subscribe(EventType.ENTER_STARING, self.enter_staring, subscriber=self)
-        event_bus.subscribe(EventType.EXIT_STARING, self.exit_staring, subscriber=self)
+
+        # 事件订阅
+        event_bus.subscribe(EventType.ENTER_STARING, self._handle_enter_staring, subscriber=self)
+        event_bus.subscribe(EventType.EXIT_STARING, self._handle_exit_staring, subscriber=self)
 
     def setup_config(self) -> None:
         """设置配置项"""
@@ -111,81 +136,205 @@ class Aim(BaseWidget):
         except (ValueError, TypeError):
             logger.error(f"Invalid sensitivity value: {value}")
 
+    async def _set_state(self, new_state: AimState) -> None:
+        """安全地设置状态"""
+        async with self._state_lock:
+            if self._state != new_state:
+                old_state = self._state
+                self._state = new_state
+                logger.debug(f"Aim state changed: {old_state.value} -> {new_state.value}")
+
+    async def _get_state(self) -> AimState:
+        """安全地获取状态"""
+        async with self._state_lock:
+            return self._state
+
+    def _cancel_tasks(self) -> None:
+        """取消所有异步任务"""
+        if self._aim_task and not self._aim_task.done():
+            self._aim_task.cancel()
+            self._aim_task = None
+
+        if self._motion_task and not self._motion_task.done():
+            self._motion_task.cancel()
+            self._motion_task = None
+
+        # 清空移动队列
+        while not self._motion_queue.empty():
+            try:
+                self._motion_queue.get_nowait()
+            except asyncio.QueueEmpty:
+                break
+
+        # 重置处理器状态
+        self._motion_processor_running = False
+
     def on_relative_pointer_motion(
         self, dx: float, dy: float, dx_unaccel: float, dy_unaccel: float
     ) -> None:
-        """处理相对鼠标移动事件"""
+        """处理相对鼠标移动事件 - 使用队列机制避免频繁取消任务"""
+        # 将移动事件放入队列
+        try:
+            self._motion_queue.put_nowait((dx, dy, dx_unaccel, dy_unaccel))
+        except asyncio.QueueFull:
+            # 队列满了，丢弃最旧的事件
+            try:
+                self._motion_queue.get_nowait()
+                self._motion_queue.put_nowait((dx, dy, dx_unaccel, dy_unaccel))
+            except asyncio.QueueEmpty:
+                pass
 
-        if self.is_triggered:
+        # 如果处理器没有运行，启动它
+        if not self._motion_processor_running:
+            self._motion_task = asyncio.create_task(self._motion_processor())
+
+    async def _motion_processor(self) -> None:
+        """异步处理鼠标移动事件的处理器"""
+        self._motion_processor_running = True
+        try:
+            while True:
+                # 等待队列中的移动事件
+                dx, dy, dx_unaccel, dy_unaccel = await self._motion_queue.get()
+
+                # 检查状态
+                current_state = await self._get_state()
+                if current_state != AimState.AIMING:
+                    # 清空队列并退出
+                    while not self._motion_queue.empty():
+                        try:
+                            self._motion_queue.get_nowait()
+                        except asyncio.QueueEmpty:
+                            break
+                    break
+
+                # 处理移动事件
+                await self._handle_single_motion(dx, dy, dx_unaccel, dy_unaccel)
+
+                # 标记任务完成
+                self._motion_queue.task_done()
+
+        except asyncio.CancelledError:
+            logger.debug("Motion processor cancelled")
+        except Exception as e:
+            logger.error(f"Error in motion processor: {e}")
+        finally:
+            self._motion_processor_running = False
+
+    async def _handle_single_motion(
+        self, dx: float, dy: float, dx_unaccel: float, dy_unaccel: float
+    ) -> None:
+        """处理单个鼠标移动事件"""
+        try:
             logger.debug(
-                f"[RELATIVE_MOTION] Aim button triggered by relative mouse motion {dx}, {dy} at {self.center_x}, {self.center_y}"
+                f"[RELATIVE_MOTION] Aim motion {dx}, {dy} at {self.center_x}, {self.center_y}"
             )
 
-            _dx = dx_unaccel * self.get_config_value("sensitivity") / 50
-            _dy = dy_unaccel * self.get_config_value("sensitivity") / 50
+            # 计算移动增量
+            sensitivity = self.get_config_value("sensitivity")
+            _dx = dx_unaccel * sensitivity / 50
+            _dy = dy_unaccel * sensitivity / 50
 
+            # 获取根窗口尺寸
             root = self.get_root()
+            if not root:
+                return
             root = cast("Gtk.Window", root)
             w, h = root.get_width(), root.get_height()
 
-            if self._current_pos != (None, None):
-                x, y = self._current_pos
-                if x is None or y is None:
-                    logger.error(f"Invalid current position for Aim button")
-                    return
-                if not is_point_in_rect(
-                    x + _dx, y + _dy, self.x, self.y, self.width, self.height
-                ):
-                    pointer_id = pointer_id_manager.allocate(self)
-                    if pointer_id is None:
-                        logger.error(f"Failed to get pointer_id for Aim button")
-                        return
-                    msg = InjectTouchEventMsg(
-                        action=AMotionEventAction.UP,
-                        pointer_id=pointer_id,
-                        position=(int(x + _dx), int(y + _dy), w, h),
-                        pressure=0.0,
-                        action_button=AMotionEventButtons.PRIMARY,
-                        buttons=0,
-                    )
-                    event_bus.emit(Event(EventType.CONTROL_MSG, self, msg))
-                    self._current_pos = (None, None)
+            # 处理位置更新
+            await self._update_aim_position(_dx, _dy, w, h)
 
-            if self._current_pos == (None, None):
-                self._current_pos = (self.center_x, self.center_y)
-                pointer_id = pointer_id_manager.allocate(self)
-                if pointer_id is None:
-                    logger.warning(f"Failed to allocate pointer_id for Aim button")
-                    return
-                msg = InjectTouchEventMsg(
-                    action=AMotionEventAction.DOWN,
-                    pointer_id=pointer_id,
-                    position=(int(self.center_x), int(self.center_y), w, h),
-                    pressure=1.0,
-                    action_button=AMotionEventButtons.PRIMARY,
-                    buttons=0,
-                )
-                event_bus.emit(Event(EventType.CONTROL_MSG, self, msg))
+        except Exception as e:
+            logger.error(f"Error in single motion handling: {e}")
 
-            if self._current_pos[0] is None or self._current_pos[1] is None:
-                logger.error(f"Invalid current position for Aim button")
-                return
+    async def _update_aim_position(self, dx: float, dy: float, w: int, h: int) -> None:
+        """更新瞄准位置"""
+        # 如果没有当前位置，初始化为中心点
+        if self._current_pos is None:
+            self._current_pos = (float(self.center_x), float(self.center_y))
+            await self._send_touch_down(w, h)
 
-            pointer_id = pointer_id_manager.get_allocated_id(self)
-            if pointer_id is None:
-                logger.error(f"Invalid pointer_id for Aim button")
-                return
+        # 计算新位置
+        new_x = self._current_pos[0] + dx
+        new_y = self._current_pos[1] + dy
 
-            self._current_pos = (self._current_pos[0] + _dx, self._current_pos[1] + _dy)
-            msg = InjectTouchEventMsg(
-                action=AMotionEventAction.MOVE,
-                pointer_id=pointer_id,
-                position=(int(self._current_pos[0]), int(self._current_pos[1]), w, h),
-                pressure=1.0,
-                action_button=0,
-                buttons=AMotionEventButtons.PRIMARY,
-            )
-            event_bus.emit(Event(EventType.CONTROL_MSG, self, msg))
+        # 检查是否超出边界
+        if not is_point_in_rect(new_x, new_y, self.x, self.y, self.width, self.height):
+            # 超出边界，发送UP事件并重置位置
+            await self._send_touch_up(w, h)
+            self._current_pos = (float(self.center_x), float(self.center_y))
+            await asyncio.sleep(0.05)
+            await self._send_touch_down(w, h)
+            self._current_pos = (float(self.center_x)+dx, float(self.center_y)+dy)
+            print(self._current_pos)
+            await self._send_touch_move(w, h)
+            return
+
+        # 更新位置并发送MOVE事件
+        self._current_pos = (new_x, new_y)
+        await self._send_touch_move(w, h)
+
+    async def _send_touch_down(self, w: int, h: int) -> None:
+        """发送触摸按下事件"""
+        if self._current_pos is None:
+            return
+
+        pointer_id = pointer_id_manager.allocate(self)
+        if pointer_id is None:
+            logger.warning("Failed to allocate pointer_id for Aim button")
+            return
+
+        msg = InjectTouchEventMsg(
+            action=AMotionEventAction.DOWN,
+            pointer_id=pointer_id,
+            position=(int(self._current_pos[0]), int(self._current_pos[1]), w, h),
+            pressure=1.0,
+            action_button=AMotionEventButtons.PRIMARY,
+            buttons=AMotionEventButtons.PRIMARY,
+        )
+        event_bus.emit(Event(EventType.CONTROL_MSG, self, msg))
+
+    async def _send_touch_move(self, w: int, h: int) -> None:
+        """发送触摸移动事件"""
+        if self._current_pos is None:
+            return
+
+        pointer_id = pointer_id_manager.get_allocated_id(self)
+        if pointer_id is None:
+            logger.error("Invalid pointer_id for Aim button")
+            return
+
+        msg = InjectTouchEventMsg(
+            action=AMotionEventAction.MOVE,
+            pointer_id=pointer_id,
+            position=(int(self._current_pos[0]), int(self._current_pos[1]), w, h),
+            pressure=1.0,
+            action_button=0,
+            buttons=AMotionEventButtons.PRIMARY,
+        )
+        event_bus.emit(Event(EventType.CONTROL_MSG, self, msg))
+
+    async def _send_touch_up(self, w: int, h: int, x: float | None = None, y: float | None = None) -> None:
+        """发送触摸抬起事件"""
+        # 使用提供的坐标或当前位置
+        pos_x = x if x is not None else (self._current_pos[0] if self._current_pos else self.center_x)
+        pos_y = y if y is not None else (self._current_pos[1] if self._current_pos else self.center_y)
+
+        pointer_id = pointer_id_manager.get_allocated_id(self)
+        if pointer_id is None:
+            logger.warning("Failed to allocate pointer_id for Aim button UP event")
+            return
+
+        msg = InjectTouchEventMsg(
+            action=AMotionEventAction.UP,
+            pointer_id=pointer_id,
+            position=(int(pos_x), int(pos_y), w, h),
+            pressure=0.0,
+            action_button=AMotionEventButtons.PRIMARY,
+            buttons=0,
+        )
+        event_bus.emit(Event(EventType.CONTROL_MSG, self, msg))
+        pointer_id_manager.release(self)
 
     def draw_widget_content(self, cr: "Context[Surface]", width: int, height: int):
         """绘制瞄准按钮的具体内容 - 中心50*50圆形区域"""
@@ -278,53 +427,109 @@ class Aim(BaseWidget):
         """映射模式下的内容绘制 - 完全透明，什么都不绘制"""
         pass
 
-    def enter_staring(self, event: Event[Any] | None = None):
-        if self.is_triggered == True:
-            return
-        if not self.platform:
-            self.platform = get_platform(self.get_root())
-        if self.platform:
+    def _handle_enter_staring(self, event: Event[Any]) -> None:
+        """处理进入瞄准事件 - 创建异步任务"""
+        if self._aim_task and not self._aim_task.done():
+            return  # 已经在瞄准状态
+
+        self._aim_task = asyncio.create_task(self._enter_aiming_state())
+
+    def _handle_exit_staring(self, event: Event[Any]) -> None:
+        """处理退出瞄准事件 - 创建异步任务"""
+        if self._aim_task and not self._aim_task.done():
+            self._aim_task.cancel()
+
+        self._aim_task = asyncio.create_task(self._exit_aiming_state())
+
+    async def _enter_aiming_state(self) -> None:
+        """异步进入瞄准状态"""
+        try:
+            current_state = await self._get_state()
+            if current_state != AimState.IDLE:
+                return
+
+            await self._set_state(AimState.AIMING)
+
+            # 初始化平台
+            if not self.platform:
+                self.platform = get_platform(self.get_root())
+
+            if not self.platform:
+                logger.error("Failed to get platform")
+                await self._set_state(AimState.IDLE)
+                return
+
+            # 设置相对指针回调
             self.platform.set_relative_pointer_callback(self.on_relative_pointer_motion)
-        else:
-            logger.error("Failed to get platform")
-            return False
-        self.is_triggered = True
-        self.platform.lock_pointer()
-        root = self.get_root()
-        root = cast("Gtk.Window", root)
-        root.set_cursor_from_name("none")
-        event_bus.emit(Event(type=EventType.AIM_TRIGGERED, source=self, data=None))
-    
-    def exit_staring(self, event: Event[Any] | None = None):
-        if self.is_triggered == False:
-            return
-        self.is_triggered = False
-        self.platform.unlock_pointer()
-        root = self.get_root()
-        root = cast("Gtk.Window", root)
-        root.set_cursor_from_name("default")
-        event_bus.emit(Event(type=EventType.AIM_RELEASED, source=self, data=None))
-        if self._current_pos != (None, None):
-            x, y = self._current_pos
-            if x is None or y is None:
-                logger.error(f"Invalid current position for Aim button")
+
+            # 锁定指针并隐藏光标
+            self.platform.lock_pointer()
+            root = self.get_root()
+            if root:
+                root = cast("Gtk.Window", root)
+                root.set_cursor_from_name("none")
+
+            # 发送瞄准触发事件
+            event_bus.emit(Event(type=EventType.AIM_TRIGGERED, source=self, data=None))
+
+            logger.debug("Entered aiming state")
+
+        except Exception as e:
+            logger.error(f"Error entering aiming state: {e}")
+            await self._set_state(AimState.IDLE)
+
+    async def _exit_aiming_state(self) -> None:
+        """异步退出瞄准状态"""
+        try:
+            current_state = await self._get_state()
+            if current_state == AimState.IDLE:
                 return
-            w, h = root.get_width(), root.get_height()
-            pointer_id = pointer_id_manager.allocate(self)
-            if pointer_id is None:
-                logger.warning(f"Failed to allocate pointer_id for Aim button")
-                return
-            msg = InjectTouchEventMsg(
-                action=AMotionEventAction.UP,
-                pointer_id=pointer_id,
-                position=(int(x), int(y), w, h),
-                pressure=0.0,
-                action_button=AMotionEventButtons.PRIMARY,
-                buttons=0,
-            )
-            event_bus.emit(Event(EventType.CONTROL_MSG, self, msg))
-            pointer_id_manager.release(self)
-            self._current_pos = (None, None)
+
+            await self._set_state(AimState.IDLE)
+
+            # 停止运动处理器 - 设置状态为IDLE后，处理器会自动退出
+            # 等待处理器完成当前正在处理的事件
+            if self._motion_task and not self._motion_task.done():
+                try:
+                    await asyncio.wait_for(self._motion_task, timeout=0.1)
+                except asyncio.TimeoutError:
+                    # 如果超时，强制取消
+                    self._motion_task.cancel()
+                    try:
+                        await self._motion_task
+                    except asyncio.CancelledError:
+                        pass
+
+            # 清空队列
+            while not self._motion_queue.empty():
+                try:
+                    self._motion_queue.get_nowait()
+                except asyncio.QueueEmpty:
+                    break
+
+            # 解锁指针并恢复光标
+            if self.platform:
+                self.platform.unlock_pointer()
+
+            root = self.get_root()
+            if root:
+                root = cast("Gtk.Window", root)
+                root.set_cursor_from_name("default")
+
+            # 如果有当前位置，发送UP事件
+            if self._current_pos is not None:
+                if root:
+                    w, h = root.get_width(), root.get_height()
+                    await self._send_touch_up(w, h)
+                self._current_pos = None
+
+            # 发送瞄准释放事件
+            event_bus.emit(Event(type=EventType.AIM_RELEASED, source=self, data=None))
+
+            logger.debug("Exited aiming state")
+
+        except Exception as e:
+            logger.error(f"Error exiting aiming state: {e}")
 
     def on_key_triggered(
         self,
@@ -332,40 +537,68 @@ class Aim(BaseWidget):
         event: "InputEvent | None" = None,
     ) -> bool:
         """当映射的按键被触发时的行为 - 瞄准触发"""
-
-
         if key_combination:
             used_key = str(key_combination)
         elif self.final_keys:
             used_key = str(next(iter(self.final_keys)))
         else:
             used_key = "未知按键"
-        if not self.is_triggered:
-            self.enter_staring()
-            logger.debug(
-                f"Aim button triggered by key {used_key} at {self.center_x}, {self.center_y}"
-            )
-        else:
-            self.exit_staring()
-            logger.debug(
-                f"Aim button released by key {used_key} at {self.center_x}, {self.center_y}"
-            )
+
+        # 创建异步任务处理按键触发
+        asyncio.create_task(self._handle_key_triggered(used_key))
         return True
+
+    async def _handle_key_triggered(self, used_key: str) -> None:
+        """异步处理按键触发"""
+        try:
+            current_state = await self._get_state()
+
+            if current_state == AimState.IDLE:
+                # 进入瞄准状态
+                await self._enter_aiming_state()
+                logger.debug(
+                    f"Aim button triggered by key {used_key} at {self.center_x}, {self.center_y}"
+                )
+            else:
+                # 退出瞄准状态
+                await self._exit_aiming_state()
+                logger.debug(
+                    f"Aim button released by key {used_key} at {self.center_x}, {self.center_y}"
+                )
+        except Exception as e:
+            logger.error(f"Error handling key triggered: {e}")
 
     def on_key_released(
         self,
         key_combination: KeyCombination | None = None,
         event: "InputEvent|None" = None,
     ) -> bool:
+        """按键释放处理 - 在可重入模式下不做任何操作"""
         return True
-        # """当映射的按键被弹起时的行为 - 瞄准释放"""
-        # if key_combination:
-        #     used_key = str(key_combination)
-        # elif self.final_keys:
-        #     used_key = str(next(iter(self.final_keys)))
-        # else:
-        #     used_key = "未知按键"
-        # logging.debug(f"[RELEASE]🎯 瞄准按钮通过按键 {used_key} 被释放!")
+
+    def cleanup(self) -> None:
+        """清理资源"""
+        # 取消所有异步任务
+        self._cancel_tasks()
+
+        # 如果处于瞄准状态，异步退出
+        asyncio.create_task(self._cleanup_async())
+
+    async def _cleanup_async(self) -> None:
+        """异步清理"""
+        try:
+            current_state = await self._get_state()
+            if current_state != AimState.IDLE:
+                await self._exit_aiming_state()
+        except Exception as e:
+            logger.error(f"Error during cleanup: {e}")
+
+    def __del__(self) -> None:
+        """析构函数 - 确保资源被清理"""
+        try:
+            self.cleanup()
+        except Exception as e:
+            logger.error(f"Error in destructor: {e}")
 
     def get_delete_button_bounds(self) -> tuple[int, int, int, int]:
         """获取删除按钮的边界 (x, y, w, h) - 将按钮定位在中心圆的右上角边缘"""

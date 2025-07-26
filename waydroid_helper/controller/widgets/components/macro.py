@@ -452,7 +452,7 @@ class CommandFactory:
         elif command_type == "sleep":
             if args:
                 try:
-                    sleep_time = float(args[0])
+                    sleep_time = int(args[0])/1000
                     return SleepCommand(sleep_time)
                 except ValueError:
                     logger.warning(
