@@ -1,5 +1,5 @@
-1. window.py 与 workspace_manager 划分
-2. 检查 widget 删除时的内存释放
-3. 实现取消技能释放逻辑
-4. overlay 圆没有在 skill_casting 删除后消失
-5. 配置可以直接读 config 代替 self._
+1. 尺寸问题?
+2. aim 不连续
+3. 宏按键的 click 共享了, 好糟糕
+4. 切换轮盘半径 event
+5. 插入 textarea 位置不能简单粗暴插入末尾

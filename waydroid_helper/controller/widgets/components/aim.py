@@ -279,6 +279,15 @@ class Aim(BaseWidget):
         pass
 
     def enter_staring(self, event: Event[Any] | None = None):
+        if self.is_triggered == True:
+            return
+        if not self.platform:
+            self.platform = get_platform(self.get_root())
+        if self.platform:
+            self.platform.set_relative_pointer_callback(self.on_relative_pointer_motion)
+        else:
+            logger.error("Failed to get platform")
+            return False
         self.is_triggered = True
         self.platform.lock_pointer()
         root = self.get_root()
@@ -287,6 +296,8 @@ class Aim(BaseWidget):
         event_bus.emit(Event(type=EventType.AIM_TRIGGERED, source=self, data=None))
     
     def exit_staring(self, event: Event[Any] | None = None):
+        if self.is_triggered == False:
+            return
         self.is_triggered = False
         self.platform.unlock_pointer()
         root = self.get_root()
@@ -322,13 +333,6 @@ class Aim(BaseWidget):
     ) -> bool:
         """当映射的按键被触发时的行为 - 瞄准触发"""
 
-        if not self.platform:
-            self.platform = get_platform(self.get_root())
-        if self.platform:
-            self.platform.set_relative_pointer_callback(self.on_relative_pointer_motion)
-        else:
-            logger.error("Failed to get platform")
-            return False
 
         if key_combination:
             used_key = str(key_combination)

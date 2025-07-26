@@ -613,20 +613,12 @@ class Macro(BaseWidget):
         self.add_config_item(macro_config)
         # self.add_config_change_callback("macro_command", self.on_macro_command_changed)
         self.config_manager.connect("confirmed", self.on_macro_command_changed)
-        event_bus.subscribe(event_type=EventType.MASK_CLICKED, handler=self.on_mask_clicked)
         event_bus.subscribe(EventType.MOUSE_MOTION, self.on_mouse_motion)
 
     def on_mouse_motion(self, event:Event[InputEvent]):
         if event.data.position is None:
             return
         self._cursor_position = event.data.position
-    
-    def on_mask_clicked(self, event):
-        data = event.data
-        logger.debug(f"Mask clicked at coordinates: ({data['x']}, {data['y']})")
-        value = self.config_manager.get_value("macro_command")
-        self.config_manager.set_value("macro_command", f"{value} {data['x']},{data['y']}", True)
-
 
     def on_macro_command_changed(self, config_manager):
         """当宏命令文本框内容改变时，解析并存储预解析的命令对象"""

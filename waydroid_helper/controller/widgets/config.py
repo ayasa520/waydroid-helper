@@ -11,6 +11,8 @@ from dataclasses import dataclass, field
 import json
 
 import gi
+
+from waydroid_helper.controller.core import event_bus,EventType
 gi.require_version("Gtk", "4.0")
 from gi.repository import GLib, Gtk, GObject, Gdk
 
@@ -371,6 +373,11 @@ class TextAreaConfig(ConfigItem):
     """多行文本输入配置项"""
     max_length: int = 0
     
+    def insert_point(self, widget:Gtk.TextView, event):
+        buffer = widget.get_buffer()
+        data = event.data
+        buffer.insert_at_cursor(f" {data['x']},{data['y']}")
+
     def create_ui_widget(self, on_change_callback: Callable[[str, Any], None]) -> Gtk.Widget:
         """创建多行文本输入UI控件"""
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
@@ -408,6 +415,8 @@ class TextAreaConfig(ConfigItem):
         # 添加到容器
         box.append(scrolled)
         box.set_visible(self.visible)
+
+        event_bus.subscribe(event_type=EventType.MASK_CLICKED, handler= lambda event: self.insert_point(text_view, event), subscriber=box)
         return box
     
     def get_value_from_ui(self, widget: Gtk.Widget) -> str:
@@ -588,10 +597,16 @@ class ConfigManager(GObject.Object):
     
     def clear_ui_references(self) -> None:
         """清空UI控件引用，防止内存泄漏"""
+        for _, w in self.ui_widgets.items():
+            print("已经删除")
+            event_bus.unsubscribe_by_subscriber(w)
+            w.unparent()
         self.ui_widgets.clear()
 
     def clear(self) -> None:
         """清空所有配置"""
+        for _, w in self.ui_widgets.items():
+            w.unparent()
         self.configs.clear()
         self.ui_widgets.clear()
     

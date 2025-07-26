@@ -281,6 +281,7 @@ class TransparentWindow(Adw.Window):
                     config_manager = widget.get_config_manager()
                     config_manager.clear_ui_references()
                     p.unparent()
+                    self.queue_draw()
                 
                 popover.connect("closed", on_popover_closed_with_mask)
         else:
@@ -302,6 +303,7 @@ class TransparentWindow(Adw.Window):
                 config_manager = widget.get_config_manager()
                 config_manager.clear_ui_references()
                 p.unparent()
+                self.queue_draw()
             
             popover.connect("closed", on_popover_closed)
 
@@ -1236,6 +1238,7 @@ class TransparentWindow(Adw.Window):
             logger.debug("- Left click drag: move widget")
             logger.debug("- Delete: delete selected widget")
             logger.debug("- F1: Switch to mapping mode")
+            event_bus.emit(Event(EventType.EXIT_STARING, self, None))
 
     def switch_mode(self, new_mode):
         """Switches mode"""
