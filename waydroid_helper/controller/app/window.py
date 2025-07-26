@@ -56,35 +56,35 @@ RETRY_DELAY_SECONDS = 3
 
 class CircleOverlay(Gtk.DrawingArea):
     """Circular overlay for drawing skill release range indicators"""
-    
+
     def __init__(self):
         super().__init__()
         self.circle_data = None
         self.set_draw_func(self._draw_circle, None)
-    
+
     def set_circle_data(self, data):
         """Sets circular data and triggers redraw"""
         self.circle_data = data
         self.queue_draw()
-    
+
     def _draw_circle(self, widget, cr, width, height, user_data):
         """Draws a circle"""
         if not self.circle_data:
             return
-            
+
         # Get circle parameters
-        circle_radius = self.circle_data.get('circle_radius', 200)
-        
+        circle_radius = self.circle_data.get("circle_radius", 200)
+
         # Calculate circle parameters
         window_center_x = width / 2
         window_center_y = height / 2
-        
+
         # Draw circle boundary
         cr.set_source_rgba(0.6, 0.6, 0.6, 0.8)  # Semi-transparent gray
         cr.set_line_width(3)
         cr.arc(window_center_x, window_center_y, circle_radius, 0, 2 * math.pi)
         cr.stroke()
-        
+
         # Draw circle center point
         cr.set_source_rgba(0.5, 0.5, 0.5, 0.9)
         cr.arc(window_center_x, window_center_y, 4, 0, 2 * math.pi)
@@ -146,12 +146,16 @@ class TransparentWindow(Adw.Window):
 
         # Subscribe to events
         event_bus.subscribe(
-            EventType.SETTINGS_WIDGET, self._on_widget_settings_requested, subscriber=self
+            EventType.SETTINGS_WIDGET,
+            self._on_widget_settings_requested,
+            subscriber=self,
         )
         event_bus.subscribe(
-            EventType.WIDGET_SELECTION_OVERLAY, self._on_widget_selection_overlay, subscriber=self
+            EventType.WIDGET_SELECTION_OVERLAY,
+            self._on_widget_selection_overlay,
+            subscriber=self,
         )
-        
+
         # Create circular drawing overlay
         self.circle_overlay = CircleOverlay()
         self.circle_overlay.set_can_target(False)  # Ignore mouse events
@@ -187,10 +191,10 @@ class TransparentWindow(Adw.Window):
     def _on_widget_selection_overlay(self, event):
         """Handles component selection overlay events"""
         overlay_data = event.data
-        if overlay_data['action'] == 'show':
+        if overlay_data["action"] == "show":
             self.circle_overlay.set_circle_data(overlay_data)
             logger.debug(f"Displaying circular overlay: {overlay_data}")
-        elif overlay_data['action'] == 'hide':
+        elif overlay_data["action"] == "hide":
             self.circle_overlay.set_circle_data(None)
             logger.debug(f"Hiding circular overlay: {overlay_data}")
 
@@ -200,10 +204,10 @@ class TransparentWindow(Adw.Window):
         logger.info(
             f"Widget {type(widget).__name__} (id={id(widget)}) requested settings."
         )
-        
+
         popover = Gtk.Popover()
         popover.set_autohide(event.data)
-        
+
         if not event.data:
             # 当 autohide 为 false 时，创建遮罩层
             overlay = self.get_content()
@@ -215,75 +219,87 @@ class TransparentWindow(Adw.Window):
                 mask_layer.set_name("mask-layer")
                 mask_layer.set_visible(False)
                 mask_layer.set_cursor_from_name("default")
-                
+
                 # 设置遮罩层样式，确保它覆盖整个窗口并阻止事件
                 # mask_layer.set_css_classes(["modal-mask"])
                 # mask_layer.set_opacity(0.01)  # 几乎透明但可见，确保能接收事件
-                
+
                 # 关键：设置遮罩层为模态，阻止其他widget接收事件
                 mask_layer.set_can_target(True)
                 mask_layer.set_focusable(True)
-                
+
                 # 添加事件控制器，确保消费所有事件
                 controllers = []
-                
+
                 # 鼠标点击控制器
                 click_controller = Gtk.GestureClick()
                 click_controller.set_button(0)
-                
+
                 def on_mask_clicked(controller, n_press, x, y):
                     """遮罩层点击事件处理"""
                     logger.debug(f"Mask clicked at coordinates: ({x}, {y})")
-                    event_bus.emit(Event(EventType.MASK_CLICKED, self, {"x": int(x), "y": int(y)}))
-                    
+                    event_bus.emit(
+                        Event(EventType.MASK_CLICKED, self, {"x": int(x), "y": int(y)})
+                    )
+
                     # 关键：停止事件传播
                     controller.set_state(Gtk.EventSequenceState.CLAIMED)
                     return True
-                
+
                 click_controller.connect("pressed", on_mask_clicked)
                 click_controller.connect("released", lambda c, n, x, y: True)
                 mask_layer.add_controller(click_controller)
                 controllers.append(click_controller)
+
                 def disable_window_controllers():
                     """临时禁用窗口级别的控制器"""
                     # 获取窗口的所有控制器
                     window_controllers = []
                     for controller in self.observe_controllers():
-                        if isinstance(controller, (Gtk.EventControllerKey, Gtk.GestureClick, 
-                                                 Gtk.EventControllerMotion, Gtk.EventControllerScroll)):
+                        if isinstance(
+                            controller,
+                            (
+                                Gtk.EventControllerKey,
+                                Gtk.GestureClick,
+                                Gtk.EventControllerMotion,
+                                Gtk.EventControllerScroll,
+                            ),
+                        ):
                             original_state = controller.get_propagation_phase()
                             controller.set_propagation_phase(Gtk.PropagationPhase.NONE)
                             window_controllers.append((controller, original_state))
                     return window_controllers
-                
+
                 def restore_window_controllers(window_controllers):
                     """恢复窗口级别的控制器"""
                     for controller, original_state in window_controllers:
                         controller.set_propagation_phase(original_state)
-                
+
                 # 禁用窗口控制器
                 disabled_controllers = disable_window_controllers()
-                
+
                 overlay.add_overlay(mask_layer)
                 mask_layer.set_visible(True)
                 mask_layer.grab_focus()
-                
+
                 # 设置弹出窗口关闭时的清理逻辑
-                def on_popover_closed_with_mask(p):
+                async def on_popover_closed_with_mask(p):
                     """弹出窗口关闭时的清理"""
                     # 恢复窗口控制器
                     restore_window_controllers(disabled_controllers)
-                    
+
                     if mask_layer.get_parent():
                         overlay.remove_overlay(mask_layer)
-                    
+
                     # 清理UI引用
                     config_manager = widget.get_config_manager()
                     config_manager.clear_ui_references()
                     p.unparent()
-                    self.queue_draw()
-                
-                popover.connect("closed", on_popover_closed_with_mask)
+
+                popover.connect(
+                    "closed",
+                    lambda w: asyncio.create_task(on_popover_closed_with_mask(w)),
+                )
         else:
             # 原有的 autohide 为 true 的逻辑
             def workaround_popover_auto_hide(controller, n_press, x, y):
@@ -295,16 +311,17 @@ class TransparentWindow(Adw.Window):
                         or y > popover.get_height()
                     ):
                         popover.popdown()
+
             click_controller = Gtk.GestureClick()
             click_controller.connect("pressed", workaround_popover_auto_hide)
             popover.add_controller(click_controller)
-            
+
             def on_popover_closed(p):
                 config_manager = widget.get_config_manager()
                 config_manager.clear_ui_references()
                 p.unparent()
                 self.queue_draw()
-            
+
             popover.connect("closed", on_popover_closed)
 
         popover.set_parent(self)
@@ -332,7 +349,7 @@ class TransparentWindow(Adw.Window):
 
             def on_confirm_clicked(btn):
                 logger.info("Configuration popover closed by user.")
-                config_manager.emit('confirmed')
+                config_manager.emit("confirmed")
                 popover.popdown()
 
             confirm_button.connect("clicked", on_confirm_clicked)
@@ -358,11 +375,12 @@ class TransparentWindow(Adw.Window):
 
     def close(self):
         # Clean up workspace manager first
-        if hasattr(self, 'workspace_manager'):
+        if hasattr(self, "workspace_manager"):
             self.workspace_manager.cleanup()
 
         # Clean up window's own event subscriptions
         from waydroid_helper.controller.core import event_bus
+
         unsubscribed_count = event_bus.unsubscribe_by_subscriber(self)
         if unsubscribed_count > 0:
             logger.debug(f"TransparentWindow 清理了 {unsubscribed_count} 个事件订阅")
@@ -378,6 +396,7 @@ class TransparentWindow(Adw.Window):
         from waydroid_helper.controller.core.event_bus import EventBus
         from waydroid_helper.controller.core.server import Server
         from waydroid_helper.controller.core.key_system import KeyRegistry
+
         EventBus.reset_singleton()
         Server.reset_singleton()
         # KeyRegistry 通常不需要重置，因为按键映射是静态的
@@ -1291,8 +1310,10 @@ class TransparentWindow(Adw.Window):
     ) -> bool:
         """Registers widget's key mapping"""
         # Automatically read widget's reentrant attribute
-        reentrant = getattr(widget, 'IS_REENTRANT', False)
-        return key_mapping_manager.subscribe(widget, key_combination, reentrant=reentrant)
+        reentrant = getattr(widget, "IS_REENTRANT", False)
+        return key_mapping_manager.subscribe(
+            widget, key_combination, reentrant=reentrant
+        )
 
     def unregister_widget_key_mapping(self, widget) -> bool:
         """Unsubscribes all key mappings for a widget"""

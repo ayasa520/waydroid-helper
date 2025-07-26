@@ -598,7 +598,6 @@ class ConfigManager(GObject.Object):
     def clear_ui_references(self) -> None:
         """清空UI控件引用，防止内存泄漏"""
         for _, w in self.ui_widgets.items():
-            print("已经删除")
             event_bus.unsubscribe_by_subscriber(w)
             w.unparent()
         self.ui_widgets.clear()
