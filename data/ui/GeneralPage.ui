@@ -37,10 +37,10 @@
         </child>
         <child>
           <object class="AdwPreferencesGroup">
-                         <property name="title" translatable="yes">Key Mapping</property>
+                         <property name="title" translatable="yes">Key Mapper</property>
             <child>
               <object class="AdwActionRow">
-                                 <property name="title" translatable="yes">Key Mapping Controller</property>
+                                 <property name="title" translatable="yes">Key Mapping Window</property>
                  <property name="subtitle" translatable="yes">Manage key mapping overlay window for game control</property>
                 <child type="suffix">
                   <object class="GtkBox">

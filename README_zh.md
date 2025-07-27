@@ -1,18 +1,18 @@
 # Waydroid Helper
 
-**Language**: [English](README.md) | [中文](README_zh.md)
+**语言**: [English](README.md) | [中文](README_zh.md)
 
-Waydroid Helper is a graphical user interface application written in Python using PyGObject. It provides a user-friendly way to configure Waydroid and install extensions, including Magisk and ARM translation.
+Waydroid Helper 是一个使用 Python 和 PyGObject 编写的图形用户界面应用程序。它提供了一种用户友好的方式来配置 Waydroid 并安装扩展，包括 Magisk 和 ARM 转换。
 
-## Features
+## 功能特性
 
-- Configure Waydroid settings
-- **Key Mapping System**: Advanced keyboard and mouse mapping for Android apps and games
-  - Multiple control widgets (buttons, directional pad, aim controls, macros)
-  - Customizable key bindings and layouts
-  - Support for complex gaming scenarios (FPS, MOBA, strategy games)
-  - See the [Key Mapping Guide](KEY_MAPPING.md) for detailed instructions
-- Install extensions for Waydroid
+- 配置 Waydroid 设置
+- **按键映射系统**：为 Android 应用和游戏提供高级键盘和鼠标映射
+  - 多种控制组件（按钮、方向键盘、瞄准控制、宏）
+  - 可自定义的按键绑定和布局
+  - 支持复杂的游戏场景（FPS、MOBA、策略游戏）
+  - 查看[按键映射指南](KEY_MAPPING_zh.md)获取详细说明
+- 为 Waydroid 安装扩展
   - [Magisk](https://github.com/HuskyDG/magisk-files/)
   - [libhoudini](https://github.com/supremegamers/vendor_intel_proprietary_houdini)
   - [libndk](https://github.com/supremegamers/vendor_google_proprietary_ndk_translation-prebuilt)
@@ -21,23 +21,23 @@ Waydroid Helper is a graphical user interface application written in Python usin
   - [MicroG](https://microg.org/)
   - [SmartDock](https://github.com/axel358/smartdock)
 
-## Installation
+## 安装
 
-### Installing from Releases
-1. Go to the [releases](https://github.com/ayasa520/waydroid-helper/releases) page
-2. Download the appropriate package for your distribution
-3. Install the package
+### 从发布版本安装
+1. 前往[发布页面](https://github.com/ayasa520/waydroid-helper/releases)
+2. 下载适合您发行版的软件包
+3. 安装软件包
 
 ### Arch
 
-For Arch users, Waydroid Helper is available in the AUR:
+对于 Arch 用户，Waydroid Helper 在 AUR 中可用：
 ```
 yay -S waydroid-helper
 ```
 
 ### Debian
 
-##### For **Debian Unstable** run the following:
+##### 对于 **Debian Unstable** 运行以下命令：
 
 ```
 echo 'deb http://download.opensuse.org/repositories/home:/CuteNeko:/waydroid-helper/Debian_Unstable/ /' | sudo tee /etc/apt/sources.list.d/home:CuteNeko:waydroid-helper.list
@@ -46,7 +46,7 @@ sudo apt update
 sudo apt install waydroid-helper
 ```
 
-##### For **Debian Testing** run the following
+##### 对于 **Debian Testing** 运行以下命令
 
 ```
 echo 'deb http://download.opensuse.org/repositories/home:/CuteNeko:/waydroid-helper/Debian_Testing/ /' | sudo tee /etc/apt/sources.list.d/home:CuteNeko:waydroid-helper.list
@@ -55,7 +55,7 @@ sudo apt update
 sudo apt install waydroid-helper
 ```
 
-##### For **Debian 12** run the following:
+##### 对于 **Debian 12** 运行以下命令：
 
 ```
 echo 'deb http://download.opensuse.org/repositories/home:/CuteNeko:/waydroid-helper/Debian_12/ /' | sudo tee /etc/apt/sources.list.d/home:CuteNeko:waydroid-helper.list
@@ -81,24 +81,23 @@ sudo apt update
 sudo apt install waydroid-helper
 ```
 
-### Manual Build and Installation
+### 手动构建和安装
 
-For manual installation, you'll need to install the dependencies and build the project using Meson.
+对于手动安装，您需要安装依赖项并使用 Meson 构建项目。
 
-#### Arch, Manjaro and EndeavourOS based distributions
-1. Install dependencies:
+#### Arch、Manjaro 和 EndeavourOS 基础发行版
+1. 安装依赖项：
 
     ```bash
     sudo pacman -S gtk4 libadwaita meson ninja
     ```
 
-
-2. Clone the repository:
+2. 克隆仓库：
     ```
     git clone https://github.com/ayasa520/waydroid-helper.git
     cd waydroid-helper
     ```
-3. Build and install using Meson:
+3. 使用 Meson 构建和安装：
     ```
     python3 -m venv .venv
     source .venv/bin/activate
@@ -106,24 +105,23 @@ For manual installation, you'll need to install the dependencies and build the p
     meson setup --prefix /usr build
     sudo ninja -C build install
     
-    # Uninstall waydroid helper
+    # 卸载 waydroid helper
     # sudo ninja -C build uninstall
     ```
 
-#### Debian and Ubuntu based distributions
-1. Install dependencies:
+#### Debian 和 Ubuntu 基础发行版
+1. 安装依赖项：
 
     ```bash
     sudo apt install libgtk-4-1 libgtk-4-dev libadwaita-1-dev libadwaita-1-0 libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-4.0 gir1.2-adw-1 gettext ninja-build fakeroot attr libcap-dev libdbus-1-dev desktop-file-utils software-properties-common -y
     ```
 
-
-2. Clone the repository:
+2. 克隆仓库：
     ```
     git clone https://github.com/ayasa520/waydroid-helper.git
     cd waydroid-helper
     ```
-3. Build and install using Meson:
+3. 使用 Meson 构建和安装：
     ```
     python3 -m venv .venv
     source .venv/bin/activate
@@ -132,23 +130,23 @@ For manual installation, you'll need to install the dependencies and build the p
     meson setup --prefix /usr build
     sudo ninja -C build install
     
-    # Uninstall waydroid helper
+    # 卸载 waydroid helper
     # sudo ninja -C build uninstall
     ```
 
-#### RHEL, Fedora and Rocky based distributions
-1. Install dependencies:
+#### RHEL、Fedora 和 Rocky 基础发行版
+1. 安装依赖项：
 
     ```bash
     sudo dnf install gtk4 gtk4-devel libadwaita libadwaita-devel gobject-introspection-devel gcc cairo-devel pkgconf-pkg-config python3-devel gobject-introspection gtk4-devel libadwaita-devel gettext ninja-build fakeroot attr libcap-devel dbus-devel desktop-file-utils -y
     ```
 
-2. Clone the repository:
+2. 克隆仓库：
     ```
     git clone https://github.com/ayasa520/waydroid-helper.git
     cd waydroid-helper
     ```
-3. Build and install using Meson:
+3. 使用 Meson 构建和安装：
     ```
     python3 -m venv .venv
     source .venv/bin/activate
@@ -157,31 +155,30 @@ For manual installation, you'll need to install the dependencies and build the p
     meson setup --prefix /usr build
     sudo ninja -C build install
     
-    # Uninstall waydroid helper
+    # 卸载 waydroid helper
     # sudo ninja -C build uninstall
     ```
 
-## Screenshots
+## 截图
 
 ![image-20241125011305536](assets/img/README/1_en.png)
 
 ![](./assets/img/README/2_en.png)
 ![](./assets/img/README/3_en.png)
 
-## Documentation
+## 文档
 
-- **[Key Mapping Guide](KEY_MAPPING.md)**: Comprehensive guide for using the key mapping system to control Android apps and games with keyboard and mouse
-- **[中文文档](README_zh.md)**: 中文版本的完整文档和[按键映射指南](KEY_MAPPING_zh.md)
+- **[按键映射指南](KEY_MAPPING_zh.md)**：使用按键映射系统通过键盘和鼠标控制 Android 应用和游戏的综合指南
 
-## Troubleshooting
+## 故障排除
 
-### Shared Folders not working
-Enable systemd service
+### 共享文件夹不工作
+启用 systemd 服务
 ```
 systemctl --user enable waydroid-monitor.service --now
 ```
 
-For AppImage users, you need to manually copy the D-Bus configuration files and systemd unit files to their respective system locations to enable proper functionality. Here's the suggested file structure:
+对于 AppImage 用户，您需要手动将 D-Bus 配置文件和 systemd 单元文件复制到各自的系统位置以启用正确的功能。建议的文件结构如下：
 
 ```
 usr
@@ -199,5 +196,3 @@ usr
     │       └── id.waydro.Mount.service
 
 ```
-
-

@@ -555,12 +555,12 @@ msgstr ""
 "（粘性模式）"
 
 #: data/ui/GeneralPage.ui:40
-msgid "Key Mapping"
-msgstr "按键映射"
+msgid "Key Mapper"
+msgstr "按键映射器"
 
 #: data/ui/GeneralPage.ui:43
-msgid "Key Mapping Controller"
-msgstr "按键映射控制器"
+msgid "Key Mapping Window"
+msgstr "按键映射窗口"
 
 #: data/ui/GeneralPage.ui:44
 msgid "Manage key mapping overlay window for game control"

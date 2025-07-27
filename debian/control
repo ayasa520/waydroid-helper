@@ -38,7 +38,8 @@ Depends: ${misc:Depends},
          python3-gi (>= 3.50.0),
          python3-pywayland,
          python3-yaml,
-         python3-dbus
+         python3-dbus,
+         adb
 Suggests: bindfs
 Description: GUI helper for Waydroid configuration and extensions
  Waydroid Helper is a graphical user interface application that provides

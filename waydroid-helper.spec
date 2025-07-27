@@ -1,5 +1,5 @@
 Name:           waydroid-helper
-Version:        0.1.2
+Version:        0.2.0
 Release:        1%{?dist}
 Summary:        A GUI application for Waydroid configuration and extension installation
 
@@ -36,6 +36,7 @@ Requires:       python3-gobject >= 3.50
 Requires:       python3-pywayland
 Requires:       python3-yaml
 Requires:       python3-dbus
+Requires:       android-tools
 
 Recommends:     bindfs
 
