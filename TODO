@@ -1,0 +1,3 @@
+1. 尺寸
+2. + android-tools 依赖
+3. 测试打包, 因为不是所有系统的 pywayland 都包含了协议

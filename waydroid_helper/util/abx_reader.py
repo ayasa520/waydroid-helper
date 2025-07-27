@@ -1,5 +1,6 @@
-import struct
 import base64
+import struct
+
 
 class AbxDecodeError(Exception):
     pass

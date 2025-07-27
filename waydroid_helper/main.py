@@ -12,7 +12,7 @@ import os
 import sys
 
 from gi.events import GLibEventLoopPolicy
-from gi.repository import Adw, Gio, GObject, Gtk
+from gi.repository import Adw, Gio, GLib, GObject, Gtk
 
 from waydroid_helper.compat_widget import GLIB_VERSION, MessageDialog
 from waydroid_helper.util import logger
@@ -33,6 +33,16 @@ class WaydroidHelperApplication(Adw.Application):
     def __init__(self, version: str):
         super().__init__(application_id="com.jaoushingan.WaydroidHelper", flags=flags)
         self.version = version
+
+        self.add_main_option(
+            "log-level",
+            ord("l"),  # Using 'l' as a short name
+            GLib.OptionFlags.NONE,
+            GLib.OptionArg.STRING,
+            "Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+            "LEVEL",
+        )
+
         self.create_action(
             "quit",
             lambda *_: self.quit(),  # pyright: ignore[reportUnknownArgumentType]

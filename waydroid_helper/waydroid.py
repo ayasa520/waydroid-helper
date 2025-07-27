@@ -488,7 +488,7 @@ class Waydroid(GObject.Object):
     #             value = "true"
     #         else:
     #             value = "false"
-    #     print("触发了!")
+    #     print("Triggered!")
     #     ProcessLauncher(["waydroid", "prop", "set", param.nick, value])
 
     async def reset_persist_props(self):

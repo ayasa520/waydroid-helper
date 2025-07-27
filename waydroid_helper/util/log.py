@@ -1,6 +1,7 @@
 import logging
-import sys
 import os
+import sys
+
 import gi
 
 gi.require_version("GLib", "2.0")
@@ -38,12 +39,16 @@ def _reset_logger(log: logging.Logger):
     log.addHandler(console_handle)
 
 
-def _get_logger():
+def _get_logger(log_level: str|None=None):
     log = logging.getLogger("log")
     _reset_logger(log)
-    log.setLevel(logging.INFO)
+    if log_level is not None:
+        log_level_str = log_level.upper()
+        level:int = getattr(logging, log_level_str, logging.INFO)
+        log.setLevel(level)
+    else:
+        log.setLevel(logging.INFO)
     return log
 
-
 # 日志句柄
-logger = _get_logger()
+logger = _get_logger(os.environ.get('LOG_LEVEL', ''))
