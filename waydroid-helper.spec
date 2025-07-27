@@ -81,6 +81,9 @@ including Magisk, ARM translation, and various Google services alternatives.
 
 # Localization
 %{_datadir}/locale/zh_CN/LC_MESSAGES/waydroid-helper.mo
+%{_datadir}/locale/de/LC_MESSAGES/waydroid-helper.mo
+%{_datadir}/locale/ru/LC_MESSAGES/waydroid-helper.mo
+%{_datadir}/locale/zh_TW/LC_MESSAGES/waydroid-helper.mo
 
 # D-Bus configuration
 %{_datadir}/dbus-1/system.d/id.waydro.Mount.conf
