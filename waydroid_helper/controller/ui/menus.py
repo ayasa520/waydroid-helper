@@ -32,19 +32,41 @@ class ContextMenuManager:
 
     def __init__(self, parent_window: "TransparentWindow"):
         self.parent_window: "TransparentWindow" = parent_window
+        self._popover: "Gtk.Popover | None" = None
+        self._main_box: "Gtk.Box | None" = None
+        self._flow_box: "Gtk.FlowBox | None" = None
+        self._tool_flow: "Gtk.FlowBox | None" = None
 
     def show_widget_creation_menu(
         self, x: int, y: int, widget_factory: "WidgetFactory"
     ):
         """显示动态生成的组件创建菜单（网格布局）"""
-        popover = Gtk.Popover()
-        popover.set_parent(self.parent_window)
-        popover.set_has_arrow(False)
-        popover.set_autohide(True)
+        # 如果 popover 不存在，创建一个新的
+        if self._popover is None:
+            self._create_popover()
+
+        # 更新菜单内容
+        self._update_menu_content(x, y, widget_factory)
+
+        # 设置菜单位置
+        rect = Gdk.Rectangle()
+        rect.x = int(x)
+        rect.y = int(y)
+        rect.width = 1
+        rect.height = 1
+        self._popover.set_pointing_to(rect)
+        self._popover.popup()
+
+    def _create_popover(self):
+        """创建可复用的 popover 结构"""
+        self._popover = Gtk.Popover()
+        self._popover.set_parent(self.parent_window)
+        self._popover.set_has_arrow(False)
+        self._popover.set_autohide(True)
 
         # 创建主容器
-        main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        popover.set_child(main_box)
+        self._main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        self._popover.set_child(self._main_box)
 
         # 创建滚动窗口
         scrolled = Gtk.ScrolledWindow()
@@ -53,21 +75,65 @@ class ContextMenuManager:
         scrolled.set_max_content_width(400)   # 限制最大宽度
         scrolled.set_propagate_natural_height(True)
         scrolled.set_propagate_natural_width(True)
-        main_box.append(scrolled)
+        self._main_box.append(scrolled)
 
         # 创建网格容器
-        flow_box = Gtk.FlowBox()
-        flow_box.set_orientation(Gtk.Orientation.HORIZONTAL)
-        flow_box.set_selection_mode(Gtk.SelectionMode.NONE)
-        flow_box.set_column_spacing(4)
-        flow_box.set_row_spacing(4)
-        flow_box.set_margin_top(8)
-        flow_box.set_margin_bottom(8)
-        flow_box.set_margin_start(8)
-        flow_box.set_margin_end(8)
-        flow_box.set_min_children_per_line(2)
-        flow_box.set_max_children_per_line(4)  # 最多4列
-        scrolled.set_child(flow_box)
+        self._flow_box = Gtk.FlowBox()
+        self._flow_box.set_orientation(Gtk.Orientation.HORIZONTAL)
+        self._flow_box.set_selection_mode(Gtk.SelectionMode.NONE)
+        self._flow_box.set_column_spacing(4)
+        self._flow_box.set_row_spacing(4)
+        self._flow_box.set_margin_top(8)
+        self._flow_box.set_margin_bottom(8)
+        self._flow_box.set_margin_start(8)
+        self._flow_box.set_margin_end(8)
+        self._flow_box.set_min_children_per_line(2)
+        self._flow_box.set_max_children_per_line(4)  # 最多4列
+        scrolled.set_child(self._flow_box)
+
+        # 添加分隔线
+        separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+        separator.set_margin_top(4)
+        separator.set_margin_bottom(4)
+        self._main_box.append(separator)
+
+        # 创建工具菜单容器
+        tool_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        tool_box.set_margin_top(4)
+        tool_box.set_margin_bottom(8)
+        tool_box.set_margin_start(8)
+        tool_box.set_margin_end(8)
+        self._main_box.append(tool_box)
+
+        # 创建工具按钮的网格
+        self._tool_flow = Gtk.FlowBox()
+        self._tool_flow.set_orientation(Gtk.Orientation.HORIZONTAL)
+        self._tool_flow.set_selection_mode(Gtk.SelectionMode.NONE)
+        self._tool_flow.set_column_spacing(4)
+        self._tool_flow.set_row_spacing(4)
+        self._tool_flow.set_min_children_per_line(3)
+        self._tool_flow.set_max_children_per_line(5)
+        tool_box.append(self._tool_flow)
+
+    def _clear_flow_box(self, flow_box: "Gtk.FlowBox | None"):
+        """清空 FlowBox 中的所有子组件"""
+        if flow_box is None:
+            return
+        child = flow_box.get_first_child()
+        while child:
+            next_child = child.get_next_sibling()
+            flow_box.remove(child)
+            child = next_child
+
+    def _update_menu_content(self, x: int, y: int, widget_factory: "WidgetFactory"):
+        """更新菜单内容"""
+        # 清空现有内容
+        self._clear_flow_box(self._flow_box)
+        self._clear_flow_box(self._tool_flow)
+
+        # 确保组件已初始化
+        if self._flow_box is None or self._tool_flow is None or self._popover is None:
+            return
 
         # 动态生成组件菜单项
         available_types = widget_factory.get_available_types()
@@ -84,7 +150,7 @@ class ContextMenuManager:
             label = Gtk.Label(label=_("No widgets found"))
             label.set_margin_top(20)
             label.set_margin_bottom(20)
-            flow_box.append(label)
+            self._flow_box.append(label)
         else:
             # 为每个发现的组件类型创建紧凑的按钮
             for widget_type in sorted(filtered_types):
@@ -100,62 +166,29 @@ class ContextMenuManager:
                     "clicked",
                     lambda btn, wtype=widget_type: [
                         self._create_widget_callback(wtype, x, y, widget_factory),
-                        popover.popdown(),
+                        self._popover.popdown(),
                     ],
                 )
-                
+
                 # 添加到网格
-                flow_box.append(button)
-
-        # 添加分隔线
-        separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
-        separator.set_margin_top(4)
-        separator.set_margin_bottom(4)
-        main_box.append(separator)
-
-        # 创建工具菜单容器
-        tool_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-        tool_box.set_margin_top(4)
-        tool_box.set_margin_bottom(8)
-        tool_box.set_margin_start(8)
-        tool_box.set_margin_end(8)
-        main_box.append(tool_box)
+                self._flow_box.append(button)
 
         # 添加工具菜单项（使用更紧凑的布局）
         tool_items = [
             (_("Refresh widgets"), lambda: self._refresh_widgets(widget_factory)),
-            (_("Show widget info"), lambda: self._show_widget_info(widget_factory)),
+            # (_("Show widget info"), lambda: self._show_widget_info(widget_factory)),
             (_("Clear all"), lambda: self._clear_all_widgets()),
             (_("Save layout"), lambda: self._save_layout()),
             (_("Load layout"), lambda: self._load_layout(widget_factory)),
         ]
 
-        # 创建工具按钮的网格
-        tool_flow = Gtk.FlowBox()
-        tool_flow.set_orientation(Gtk.Orientation.HORIZONTAL)
-        tool_flow.set_selection_mode(Gtk.SelectionMode.NONE)
-        tool_flow.set_column_spacing(4)
-        tool_flow.set_row_spacing(4)
-        tool_flow.set_min_children_per_line(3)
-        tool_flow.set_max_children_per_line(5)
-        tool_box.append(tool_flow)
-
         for label, callback in tool_items:
             button = Gtk.Button(label=label)
             button.set_size_request(70, 35)  # 更小的工具按钮
             button.connect(
-                "clicked", lambda btn, cb=callback: [cb(), popover.popdown()]
+                "clicked", lambda btn, cb=callback: [cb(), self._popover.popdown()]
             )
-            tool_flow.append(button)
-
-        # 设置菜单位置
-        rect = Gdk.Rectangle()
-        rect.x = int(x)
-        rect.y = int(y)
-        rect.width = 1
-        rect.height = 1
-        popover.set_pointing_to(rect)
-        popover.popup()
+            self._tool_flow.append(button)
 
     def _create_widget_callback(
         self, widget_type: str, x: int, y: int, widget_factory: "WidgetFactory"
@@ -230,7 +263,7 @@ class ContextMenuManager:
 
     def _deserialize_key_combination(
         self, key_names: list[str]
-    ) -> KeyCombination | None:
+    ) -> "KeyCombination | None":
         """从字符串列表反序列化按键组合"""
         keys: list[Key] = []
         for key_name in key_names:
@@ -239,6 +272,7 @@ class ContextMenuManager:
                 keys.append(key)
         return KeyCombination(keys) if keys else None
 
+    # TODO 在每个 widget 内部单独实现
     def _save_layout(self):
         """保存当前布局到文件，包括屏幕尺寸信息"""
         try:
@@ -253,7 +287,7 @@ class ContextMenuManager:
             # 收集所有widget的信息
             widgets_data = []
             if hasattr(self.parent_window, "fixed"):
-                child: "BaseWidget" | None = self.parent_window.fixed.get_first_child()
+                child: "BaseWidget | None" = self.parent_window.fixed.get_first_child()
                 while child:
                     # 获取widget的位置
                     x, y = child.x, child.y
@@ -315,7 +349,7 @@ class ContextMenuManager:
 
             # 创建完整的布局数据，包括屏幕尺寸信息
             layout_data = {
-                "version": "1.2",  # 增加版本号
+                "version": "1.0",  # 增加版本号
                 "screen_resolution": {"width": screen_width, "height": screen_height},
                 "widgets": widgets_data,
                 "created_at": str(Path().absolute()),  # 保存创建时间戳
@@ -461,7 +495,9 @@ class ContextMenuManager:
             if cancel_widget:
                 from waydroid_helper.controller.widgets.components.skill_casting import \
                     SkillCasting
+                # FIXME?
                 SkillCasting._cancel_button_widget["widget"] = cancel_widget
+                SkillCasting.cancel_button_config.value = True
 
         except Exception as e:
             logger.error(f"Failed to load layout: {e}")
