@@ -27,7 +27,7 @@ The key mapping interface has two modes:
 ### 1. Single Click
 - **Purpose**: Maps a key/mouse button to a single tap at a specific screen location
 - **Use Case**: Menu buttons, simple interactions
-- **Default Key**: None (must be configured)
+- **Default Key**: None
 - **Configuration**: Position the widget over the target area and assign a key
 
 ### 2. Fire Button
@@ -79,8 +79,8 @@ The key mapping interface has two modes:
   - `switch <x,y>`: Toggle between press and release at coordinates
   - `sleep <milliseconds>`: Delay execution
   - `release_all`: Release all currently pressed keys
-  - `enter_staring`: Enter staring/aiming mode
-  - `exit_staring`: Exit staring/aiming mode
+  - `enter_staring`: Enter aiming mode
+  - `exit_staring`: Exit aiming mode
   - `swipehold_radius <factor>`: Set dpad radius
   - `swipehold_radius_switch <factor>`: Switch between original and specified radius
   - `mouse`: Use current cursor position for coordinates
@@ -134,70 +134,3 @@ Many widgets have additional settings accessible through their settings panel:
 2. **Position your game window** behind the transparent overlay
 3. **Use your configured keys** to control the game
 4. The overlay will show minimal visual indicators
-
-## Layout Management
-
-### Saving Layouts
-
-Layouts are automatically saved to `~/.controller_layouts/layout.json` and include:
-- Widget positions and sizes
-- Key mappings
-- Widget-specific configurations
-- Screen resolution information
-
-### Loading Layouts
-
-Layouts are automatically loaded when opening the key mapper, with automatic scaling for different screen resolutions.
-
-## Keyboard Shortcuts
-
-| Key | Function |
-|-----|----------|
-| `F1` | Toggle between Edit Mode and Mapping Mode |
-| `Escape` | Clear selections (Edit Mode) / Cancel key capture |
-| `Delete` | Delete selected widgets (Edit Mode) |
-| `Double-click` | Enter key capture mode for widgets |
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Keys not responding**: Ensure you're in Mapping Mode (`F1` to switch)
-2. **Widget not visible**: Check if widget is positioned within screen bounds
-3. **Conflicting key mappings**: Each key combination should be unique across widgets
-4. **Game not responding**: Ensure the game window is active and positioned correctly
-
-### Performance Tips
-
-- Use Mapping Mode during gameplay to reduce visual overhead
-- Minimize the number of active widgets for better performance
-- Position widgets precisely to avoid accidental triggers
-
-## Advanced Features
-
-### Multi-Region Editing
-
-Some widgets (like Directional Pad) support multiple key mapping regions:
-- Double-click on specific areas to configure different keys
-- Each direction can have its own key assignment
-
-### Macro Commands
-
-The Macro widget supports complex command sequences:
-```
-key_press W,A
-click 100,200
-key_release W,A
-```
-
-This example presses W and A keys, clicks at coordinates (100,200), then releases the keys.
-
-## Best Practices
-
-1. **Test in Edit Mode first**: Verify widget placement before switching to Mapping Mode
-2. **Use intuitive key mappings**: Choose keys that feel natural for the game type
-3. **Save frequently**: Layouts are auto-saved, but manual backups are recommended
-4. **Optimize for your playstyle**: Customize widget sizes and positions for comfort
-5. **Start simple**: Begin with basic widgets before using advanced features like macros
-
-For additional support or to report issues, please visit the [Waydroid Helper GitHub repository](https://github.com/ayasa520/waydroid-helper).

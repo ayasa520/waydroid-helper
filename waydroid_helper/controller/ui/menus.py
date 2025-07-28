@@ -7,16 +7,18 @@
 from __future__ import annotations
 
 import json
+import os
 from gettext import gettext as _
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import gi
-from gi.repository import Gdk, Gtk
+from gi.repository import Gdk, Gtk, GLib
 
 from waydroid_helper.controller.core import key_system
 from waydroid_helper.controller.core.key_system import Key, KeyCombination
 from waydroid_helper.util.log import logger
+from waydroid_helper.compat_widget.file_dialog import FileDialog
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Gdk", "4.0")
@@ -273,14 +275,49 @@ class ContextMenuManager:
         return KeyCombination(keys) if keys else None
 
     # TODO 在每个 widget 内部单独实现
+    def _get_default_layouts_dir(self) -> str:
+        """获取默认的布局文件目录"""
+        # 使用 XDG 配置目录标准：~/.config/waydroid-helper/layouts/
+        config_dir = os.getenv("XDG_CONFIG_HOME", GLib.get_user_config_dir())
+        layouts_dir = os.path.join(config_dir, "waydroid-helper", "layouts")
+
+        # 确保目录存在
+        os.makedirs(layouts_dir, exist_ok=True)
+
+        return layouts_dir
+
     def _save_layout(self):
         """保存当前布局到文件，包括屏幕尺寸信息"""
-        try:
-            # 获取用户主目录下的保存路径
-            save_dir = Path.home() / ".controller_layouts"
-            save_dir.mkdir(exist_ok=True)
-            save_file = save_dir / "layout.json"
+        # 创建文件过滤器，只显示 JSON 文件
+        json_filter = Gtk.FileFilter()
+        json_filter.set_name(_("JSON files"))
+        json_filter.add_pattern("*.json")
 
+        # 创建文件对话框
+        dialog = FileDialog(
+            parent=self.parent_window,
+            title=_("Save Layout"),
+            modal=True
+        )
+
+        # 设置默认目录
+        default_dir = self._get_default_layouts_dir()
+
+        # 显示保存对话框
+        dialog.save_file(
+            callback=self._on_save_layout_file_selected,
+            suggested_name="layout.json",
+            file_filter=json_filter,
+            initial_folder=default_dir
+        )
+
+    def _on_save_layout_file_selected(self, success: bool, file_path: str | None):
+        """处理保存文件选择的回调"""
+        if not success or not file_path:
+            logger.info("Save layout cancelled by user")
+            return
+
+        try:
             # 获取当前屏幕尺寸
             screen_width, screen_height = self._get_screen_size()
 
@@ -356,10 +393,10 @@ class ContextMenuManager:
             }
 
             # 保存到文件
-            with open(save_file, "w", encoding="utf-8") as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(layout_data, f, indent=2, ensure_ascii=False)
 
-            logger.info(f"Layout saved to: {save_file}")
+            logger.info(f"Layout saved to: {file_path}")
             logger.info(f"Saved {len(widgets_data)} widgets")
             logger.info(f"Screen resolution: {screen_width}x{screen_height}")
 
@@ -368,17 +405,42 @@ class ContextMenuManager:
 
     def _load_layout(self, widget_factory: "WidgetFactory"):
         """从文件加载布局，支持屏幕尺寸缩放适配"""
-        try:
-            # 获取保存文件路径
-            save_dir = Path.home() / ".controller_layouts"
-            save_file = save_dir / "layout.json"
+        # 创建文件过滤器，只显示 JSON 文件
+        json_filter = Gtk.FileFilter()
+        json_filter.set_name(_("JSON files"))
+        json_filter.add_pattern("*.json")
 
-            if not save_file.exists():
-                logger.info(f"Layout file does not exist: {save_file}")
+        # 创建文件对话框
+        dialog = FileDialog(
+            parent=self.parent_window,
+            title=_("Load Layout"),
+            modal=True
+        )
+
+        # 设置默认目录
+        default_dir = self._get_default_layouts_dir()
+
+        # 显示打开对话框
+        dialog.open_file(
+            callback=lambda success, path: self._on_load_layout_file_selected(success, path, widget_factory),
+            file_filter=json_filter,
+            initial_folder=default_dir
+        )
+
+    def _on_load_layout_file_selected(self, success: bool, file_path: str | None, widget_factory: "WidgetFactory"):
+        """处理加载文件选择的回调"""
+        if not success or not file_path:
+            logger.info("Load layout cancelled by user")
+            return
+
+        try:
+            # 检查文件是否存在
+            if not Path(file_path).exists():
+                logger.error(f"Layout file does not exist: {file_path}")
                 return
 
             # 读取布局文件
-            with open(save_file, "r", encoding="utf-8") as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 layout_data = json.load(f)
 
             # 验证布局数据

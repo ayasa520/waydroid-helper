@@ -7,10 +7,10 @@ Waydroid Helper is a graphical user interface application written in Python usin
 ## Features
 
 - Configure Waydroid settings
-- **Key Mapping System**: Advanced keyboard and mouse mapping for Android apps and games
+- **Key Mapping System**: Keyboard and mouse mapping for Android apps and games
   - Multiple control widgets (buttons, directional pad, aim controls, macros)
   - Customizable key bindings and layouts
-  - Support for complex gaming scenarios (FPS, MOBA, strategy games)
+  - Support for complex gaming scenarios (FPS, MOBA)
   - See the [Key Mapping Guide](KEY_MAPPING.md) for detailed instructions
 - Install extensions for Waydroid
   - [Magisk](https://github.com/HuskyDG/magisk-files/)
@@ -22,11 +22,6 @@ Waydroid Helper is a graphical user interface application written in Python usin
   - [SmartDock](https://github.com/axel358/smartdock)
 
 ## Installation
-
-### Installing from Releases
-1. Go to the [releases](https://github.com/ayasa520/waydroid-helper/releases) page
-2. Download the appropriate package for your distribution
-3. Install the package
 
 ### Arch
 
@@ -80,6 +75,11 @@ echo -e "Package: python3-pywayland\nPin: origin \"ppa.launchpadcontent.net\"\nP
 sudo apt update
 sudo apt install waydroid-helper
 ```
+
+### Installing from Releases
+1. Go to the [releases](https://github.com/ayasa520/waydroid-helper/releases) page
+2. Download the appropriate package for your distribution
+3. Install the package
 
 ### Manual Build and Installation
 
@@ -171,7 +171,6 @@ For manual installation, you'll need to install the dependencies and build the p
 ## Documentation
 
 - **[Key Mapping Guide](KEY_MAPPING.md)**: Comprehensive guide for using the key mapping system to control Android apps and games with keyboard and mouse
-- **[中文文档](README_zh.md)**: 中文版本的完整文档和[按键映射指南](KEY_MAPPING_zh.md)
 
 ## Troubleshooting
 

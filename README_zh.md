@@ -2,15 +2,15 @@
 
 **语言**: [English](README.md) | [中文](README_zh.md)
 
-Waydroid Helper 是一个使用 Python 和 PyGObject 编写的图形用户界面应用程序。它提供了一种用户友好的方式来配置 Waydroid 并安装扩展，包括 Magisk 和 ARM 转换。
+Waydroid Helper 是一个使用 Python 和 PyGObject 编写的图形用户界面应用程序。它提供了一种用户友好的方式来配置 Waydroid 并安装扩展，包括 Magisk 和 ARM 兼容层。
 
 ## 功能特性
 
 - 配置 Waydroid 设置
-- **按键映射系统**：为 Android 应用和游戏提供高级键盘和鼠标映射
+- **按键映射系统**：为 Android 应用和游戏提供键盘和鼠标映射
   - 多种控制组件（按钮、方向键盘、瞄准控制、宏）
   - 可自定义的按键绑定和布局
-  - 支持复杂的游戏场景（FPS、MOBA、策略游戏）
+  - 支持复杂的游戏场景（FPS、MOBA）
   - 查看[按键映射指南](KEY_MAPPING_zh.md)获取详细说明
 - 为 Waydroid 安装扩展
   - [Magisk](https://github.com/HuskyDG/magisk-files/)
@@ -22,11 +22,6 @@ Waydroid Helper 是一个使用 Python 和 PyGObject 编写的图形用户界面
   - [SmartDock](https://github.com/axel358/smartdock)
 
 ## 安装
-
-### 从发布版本安装
-1. 前往[发布页面](https://github.com/ayasa520/waydroid-helper/releases)
-2. 下载适合您发行版的软件包
-3. 安装软件包
 
 ### Arch
 
@@ -80,6 +75,12 @@ echo -e "Package: python3-pywayland\nPin: origin \"ppa.launchpadcontent.net\"\nP
 sudo apt update
 sudo apt install waydroid-helper
 ```
+
+### 从发布版本安装
+1. 前往[发布页面](https://github.com/ayasa520/waydroid-helper/releases)
+2. 下载适合您发行版的软件包
+3. 安装软件包
+
 
 ### 手动构建和安装
 
