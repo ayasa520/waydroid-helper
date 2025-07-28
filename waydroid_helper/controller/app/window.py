@@ -411,10 +411,18 @@ class TransparentWindow(Adw.Window):
         for attempt in range(MAX_RETRY_ATTEMPTS):
             logger.info(f"Scrcpy setup attempt {attempt + 1}/{MAX_RETRY_ATTEMPTS}...")
             try:
-                # 1. Get screen resolution. Not critical, so no retry on failure.
+                # 1. Connect to ADB device first
+                if not await self.adb_helper.connect():
+                    logger.warning(
+                        f"Failed to connect to ADB device. Retrying in {RETRY_DELAY_SECONDS}s..."
+                    )
+                    await asyncio.sleep(RETRY_DELAY_SECONDS)
+                    continue
+
+                # 2. Get screen resolution. Not critical, so no retry on failure.
                 await self.adb_helper.get_screen_resolution()
 
-                # 2. Push server to device
+                # 3. Push server to device
                 if not await self.adb_helper.push_scrcpy_server():
                     logger.warning(
                         f"Failed to push scrcpy-server. Retrying in {RETRY_DELAY_SECONDS}s..."
@@ -422,7 +430,7 @@ class TransparentWindow(Adw.Window):
                     await asyncio.sleep(RETRY_DELAY_SECONDS)
                     continue
 
-                # 3. Generate SCID and setup reverse tunnel
+                # 4. Generate SCID and setup reverse tunnel
                 scid, socket_name = self.adb_helper.generate_scid()
                 if not await self.adb_helper.reverse_tunnel(
                     socket_name, self.server.port
@@ -433,7 +441,7 @@ class TransparentWindow(Adw.Window):
                     await asyncio.sleep(RETRY_DELAY_SECONDS)
                     continue
 
-                # 4. Start scrcpy-server on device
+                # 5. Start scrcpy-server on device
                 if not await self.adb_helper.start_scrcpy_server(scid):
                     logger.warning(
                         f"Failed to start scrcpy-server. Retrying in {RETRY_DELAY_SECONDS}s..."
@@ -481,17 +489,7 @@ class TransparentWindow(Adw.Window):
         self.realize()
         self.set_decorated(False)
 
-        # self.set_size_request(1080,498)
-        # self.set_default_size(1080,498)
-        # self.set_resizable(False)
-        surface = self.get_surface()
-        if surface:
-            display = self.get_display()
-            if display:
-                monitor = display.get_monitor_at_surface(surface)
-                if monitor:
-                    geometry = monitor.get_geometry()
-                    self.set_default_size(geometry.width, geometry.height)
+        self.maximize()
 
         self.set_name("transparent-window")
 

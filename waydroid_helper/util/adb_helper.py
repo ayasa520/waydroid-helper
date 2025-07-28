@@ -18,11 +18,28 @@ SCRCPY_SERVER_PATH_ON_PC = os.path.join(
 class AdbHelper:
     def __init__(self):
         self.sm = SubprocessManager()
+        self.serial = "192.168.240.112:5555"
+
+    async def connect(self) -> bool:
+        """Connects to the ADB device using the configured serial."""
+        logger.info(f"Connecting to ADB device: {self.serial}")
+        try:
+            result = await self.sm.run(f"adb connect {self.serial}")
+            output = result["stdout"]
+            if "connected" in output.lower() or "already connected" in output.lower():
+                logger.info(f"Successfully connected to {self.serial}")
+                return True
+            else:
+                logger.warning(f"ADB connect output: {output}")
+                return False
+        except Exception as e:
+            logger.error(f"Failed to connect to ADB device {self.serial}: {e}")
+            return False
 
     async def get_screen_resolution(self) -> tuple[int, int] | None:
         logger.info("Getting device screen resolution...")
         try:
-            result = await self.sm.run("adb shell dumpsys window displays")
+            result = await self.sm.run(f"adb -s {self.serial} shell dumpsys window displays")
             output = result["stdout"]
             match = re.search(r"cur=(\d+)x(\d+)", output)
             if match:
@@ -47,7 +64,7 @@ class AdbHelper:
                 logger.error(f"scrcpy-server not found at {SCRCPY_SERVER_PATH_ON_PC}")
                 return False
             await self.sm.run(
-                f"adb push {SCRCPY_SERVER_PATH_ON_PC} {SCRCPY_SERVER_PATH_ON_DEVICE}"
+                f"adb -s {self.serial} push {SCRCPY_SERVER_PATH_ON_PC} {SCRCPY_SERVER_PATH_ON_DEVICE}"
             )
             return True
         except Exception as e:
@@ -57,8 +74,8 @@ class AdbHelper:
     async def reverse_tunnel(self, socket_name: str, port: int) -> bool:
         logger.info("Setting up adb reverse tunnel")
         try:
-            await self.sm.run("adb reverse --remove-all")
-            await self.sm.run(f"adb reverse localabstract:{socket_name} tcp:{port}")
+            await self.sm.run(f"adb -s {self.serial} reverse --remove-all")
+            await self.sm.run(f"adb -s {self.serial} reverse localabstract:{socket_name} tcp:{port}")
             return True
         except Exception as e:
             logger.error(f"Failed to set up adb reverse tunnel: {e}")
@@ -67,7 +84,7 @@ class AdbHelper:
     async def remove_reverse_tunnel(self) -> bool:
         logger.info("Removing adb reverse tunnel")
         try:
-            await self.sm.run("adb reverse --remove-all")
+            await self.sm.run(f"adb -s {self.serial} reverse --remove-all")
             return True
         except Exception as e:
             logger.error(f"Failed to remove adb reverse tunnel: {e}")
@@ -77,7 +94,7 @@ class AdbHelper:
         logger.info("Starting scrcpy-server on device")
         try:
             server_command = (
-                f"adb shell CLASSPATH={SCRCPY_SERVER_PATH_ON_DEVICE} app_process / com.genymobile.scrcpy.Server "
+                f"adb -s {self.serial} shell CLASSPATH={SCRCPY_SERVER_PATH_ON_DEVICE} app_process / com.genymobile.scrcpy.Server "
                 f"{SCRCPY_VERSION} scid={scid} log_level=debug video=false audio=false control=true"
             )
             await self.sm.run(server_command, flag=True)
