@@ -1,5 +1,5 @@
 Name:           waydroid-helper
-Version:        0.2.0
+Version:        0.2.1
 Release:        1%{?dist}
 Summary:        A GUI application for Waydroid configuration and extension installation
 

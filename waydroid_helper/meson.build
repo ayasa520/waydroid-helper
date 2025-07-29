@@ -83,6 +83,7 @@ compat_widget_sources = [
     'compat_widget/header_bar.py',
     'compat_widget/file_dialog.py',
     'compat_widget/shared_folder_dialog.py',
+    'compat_widget/animation_target.py',
 ]
 
 # 按子目录分组的 controller 源文件

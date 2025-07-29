@@ -5,6 +5,7 @@ gi.require_version("Adw", "1")
 
 from gi.repository import Adw, GLib, Gtk
 
+from .animation_target import PropertyAnimationTarget
 from .file_dialog import FileDialog
 from .header_bar import HeaderBar
 from .message_dialog import MessageDialog

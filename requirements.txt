@@ -2,7 +2,7 @@ aiofiles
 bidict
 httpx
 pycairo
-PyGObject>=3.50.0
+PyGObject==3.50.0
 pywayland
 PyYAML
 dbus-python

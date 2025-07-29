@@ -18,6 +18,7 @@ import asyncio
 
 from gi.repository import Adw, Gdk, GLib, GObject, Gtk
 
+from waydroid_helper.compat_widget import PropertyAnimationTarget
 from waydroid_helper.controller.app.workspace_manager import WorkspaceManager
 from waydroid_helper.controller.core import (Event, EventType, KeyCombination,
                                              Server, event_bus,
@@ -321,7 +322,7 @@ class TransparentWindow(Adw.Window):
         popover.set_child(main_box)
 
         title_label = Gtk.Label()
-        title_label.set_markup(f"<b>{widget.WIDGET_NAME}{_("Settings")}</b>")
+        title_label.set_markup(f"<b>{widget.WIDGET_NAME}{_('Settings')}</b>")
         title_label.set_halign(Gtk.Align.CENTER)
         main_box.append(title_label)
 
@@ -1170,7 +1171,7 @@ class TransparentWindow(Adw.Window):
 
         # Fade-in animation
         self.notification_box.set_opacity(0)
-        animation_target = Adw.PropertyAnimationTarget.new(
+        animation_target = PropertyAnimationTarget(
             self.notification_box, "opacity"
         )
         self._notification_animation = Adw.TimedAnimation.new(
@@ -1186,7 +1187,7 @@ class TransparentWindow(Adw.Window):
 
     def _fade_out_notification(self):
         """Executes fade-out animation"""
-        animation_target = Adw.PropertyAnimationTarget.new(
+        animation_target = PropertyAnimationTarget(
             self.notification_box, "opacity"
         )
         self._notification_animation = Adw.TimedAnimation.new(
