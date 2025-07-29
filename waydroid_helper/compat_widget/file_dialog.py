@@ -143,7 +143,10 @@ class FileDialogMeta(type(GObject.Object)):
                 if initial_folder:
                     from gi.repository import Gio
                     folder_file = Gio.File.new_for_path(initial_folder)
-                    self._filedialog.set_current_folder_file(folder_file)
+                    try:
+                        self._filedialog.set_current_folder(folder_file)
+                    except Exception as e:
+                        logger.error(f"Failed to set current folder: {e}")
                 self._filedialog.connect("response", self._on_file_opened, callback)
                 self._filedialog.present()
 
@@ -169,7 +172,10 @@ class FileDialogMeta(type(GObject.Object)):
                 if initial_folder:
                     from gi.repository import Gio
                     folder_file = Gio.File.new_for_path(initial_folder)
-                    self._filedialog.set_current_folder_file(folder_file)
+                    try:
+                        self._filedialog.set_current_folder(folder_file)
+                    except Exception as e:
+                        logger.error(f"Failed to set current folder: {e}")
                 self._filedialog.connect("response", self._on_file_saved, callback)
                 self._filedialog.present()
 
