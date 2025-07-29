@@ -84,7 +84,7 @@ class SkillCasting(BaseWidget):
     # 映射模式固定尺寸
     MAPPING_MODE_HEIGHT = 30
 
-    _cancel_button_widget = {"widget": None}
+    cancel_button_widget = {"widget": None}
     cancel_button_config = create_switch_config(
         key="enable_cancel_button",
         label=pgettext("Controller Widgets", "Enable Cancel Button"),
@@ -186,14 +186,14 @@ class SkillCasting(BaseWidget):
         event_bus.subscribe(EventType.MOUSE_MOTION, self._on_mouse_motion, subscriber=self)
         event_bus.subscribe(EventType.CANCEL_CASTING, self._on_cancel_casting, subscriber=self)
 
-        # 测试：监听取消按钮销毁事件
-        event_bus.subscribe(
-            EventType.CANCEL_BUTTON_DESTROYED,
-            self._on_custom_event,
-            filter=lambda e: e.data.get("widget_class") == "CancelCasting"
-            and self._cancel_button_widget["widget"] is not None,
-            subscriber=self,
-        )
+        # # 测试：监听取消按钮销毁事件
+        # event_bus.subscribe(
+        #     EventType.CANCEL_BUTTON_DESTROYED,
+        #     self._on_custom_event,
+        #     filter=lambda e: e.data.get("widget_class") == "CancelCasting"
+        #     and self._cancel_button_widget["widget"] is not None,
+        #     subscriber=self,
+        # )
 
     def _start_event_processor(self):
         """启动异步事件处理器"""
@@ -581,21 +581,21 @@ class SkillCasting(BaseWidget):
         except (ValueError, TypeError):
             logger.error(f"Invalid cancel button value: {value}")
 
-    def _on_custom_event(self, event):
-        """处理自定义事件"""
-        logger.debug(f"SkillCasting {id(self)} received custom event: {event.data}")
+    # def _on_custom_event(self, event):
+    #     """处理自定义事件"""
+    #     logger.debug(f"SkillCasting {id(self)} received custom event: {event.data}")
 
-        if self._cancel_button_widget["widget"] is not None and id(
-            self._cancel_button_widget["widget"]
-        ) == event.data.get("widget_id"):
+    #     if self._cancel_button_widget["widget"] is not None and id(
+    #         self._cancel_button_widget["widget"]
+    #     ) == event.data.get("widget_id"):
 
-            logger.info(f"Detected cancel button destruction, resetting state")
-            self._cancel_button_widget["widget"] = None
-            self.cancel_button_config.value = False
+    #         logger.info(f"Detected cancel button destruction, resetting state")
+    #         self._cancel_button_widget["widget"] = None
+    #         self.cancel_button_config.value = False
 
     def _enable_cancel_button(self):
         """启用取消施法按钮"""
-        if self._cancel_button_widget["widget"] is not None:
+        if self.cancel_button_widget["widget"] is not None:
             logger.debug("Cancel button already enabled")
             return
 
@@ -613,19 +613,19 @@ class SkillCasting(BaseWidget):
             f"Requesting creation of cancel button for skill widget {id(self)}"
         )
         event_bus.emit(Event(EventType.CREATE_WIDGET, self, create_data))
-        self._cancel_button_widget["widget"] = create_data["widget"]
+        self.cancel_button_widget["widget"] = create_data["widget"]
 
     def _disable_cancel_button(self):
         """禁用取消施法按钮"""
-        if self._cancel_button_widget["widget"] is None:
+        if self.cancel_button_widget["widget"] is None:
             logger.debug("Cancel button already disabled")
             return
 
         # 发送事件通知window删除取消按钮
         event_bus.emit(
-            Event(EventType.DELETE_WIDGET, self, self._cancel_button_widget["widget"])
+            Event(EventType.DELETE_WIDGET, self, self.cancel_button_widget["widget"])
         )
-        self._cancel_button_widget["widget"] = None
+        self.cancel_button_widget["widget"] = None
 
     def __del__(self):
         """析构时清理取消按钮和异步任务"""

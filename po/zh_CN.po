@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-21 01:09+0800\n"
+"POT-Creation-Date: 2025-07-29 22:18+0800\n"
 "PO-Revision-Date: 2024-02-25 15:37+0800\n"
 "Last-Translator: Takanashi Rikka<ayasa0520@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -27,7 +27,7 @@ msgstr "关于"
 msgid "Home"
 msgstr "主页"
 
-#: waydroid_helper/window.py:206 waydroid_helper/controller/app/window.py:230
+#: waydroid_helper/window.py:206 waydroid_helper/controller/app/window.py:324
 msgid "Settings"
 msgstr "设置"
 
@@ -106,7 +106,8 @@ msgstr "{0} 已成功安装。"
 #: waydroid_helper/available_version_page.py:231
 #: waydroid_helper/available_version_page.py:241
 #: waydroid_helper/available_version_page.py:296
-#: waydroid_helper/available_version_page.py:319 data/ui/InfoBar.ui:46
+#: waydroid_helper/available_version_page.py:319
+#: waydroid_helper/controller/app/window.py:337 data/ui/InfoBar.ui:46
 msgid "OK"
 msgstr "确认"
 
@@ -122,7 +123,7 @@ msgid "{0} has been successfully uninstalled."
 msgstr "{0} 已成功卸载。"
 
 #: waydroid_helper/available_version_page.py:240
-#: waydroid_helper/compat_widget/file_dialog.py:70
+#: waydroid_helper/compat_widget/file_dialog.py:118
 #: waydroid_helper/compat_widget/shared_folder_dialog.py:231
 #: data/ui/InfoBar.ui:39
 msgid "Cancel"
@@ -223,7 +224,7 @@ msgid ""
 "version: {1}."
 msgstr "该扩展不支持您的安卓版本，需要 Android {0}，当前 Android {1}"
 
-#: waydroid_helper/compat_widget/file_dialog.py:71
+#: waydroid_helper/compat_widget/file_dialog.py:119
 msgid "Select"
 msgstr "选择"
 
@@ -249,51 +250,63 @@ msgid "Select Folder"
 msgstr "选择文件夹"
 
 #. Initial hint
-#: waydroid_helper/controller/app/window.py:185
-#: waydroid_helper/controller/app/window.py:1131
+#: waydroid_helper/controller/app/window.py:179
+#: waydroid_helper/controller/app/window.py:1235
 msgid "Edit Mode (F1: Switch Mode)"
 msgstr "编辑模式（F1：切换模式）"
 
-#: waydroid_helper/controller/app/window.py:238
+#: waydroid_helper/controller/app/window.py:331
 msgid "This widget has no settings."
 msgstr "这个部件没有设置项"
 
-#: waydroid_helper/controller/app/window.py:1113
+#: waydroid_helper/controller/app/window.py:1217
 msgid "Mapping Mode (F1: Switch Mode)"
 msgstr "映射模式（F1：切换模式）"
 
 #. 如果没有发现任何可创建的组件，显示提示
-#: waydroid_helper/controller/ui/menus.py:89
+#: waydroid_helper/controller/ui/menus.py:153
 msgid "No widgets found"
 msgstr "没有发现任何组件"
 
-#: waydroid_helper/controller/ui/menus.py:131
+#: waydroid_helper/controller/ui/menus.py:181
 msgid "Refresh widgets"
 msgstr "刷新组件"
 
-#: waydroid_helper/controller/ui/menus.py:132
-msgid "Show widget info"
-msgstr "显示组件信息"
-
-#: waydroid_helper/controller/ui/menus.py:133
+#. (_("Show widget info"), lambda: self._show_widget_info(widget_factory)),
+#: waydroid_helper/controller/ui/menus.py:183
 msgid "Clear all"
 msgstr "清空全部"
 
-#: waydroid_helper/controller/ui/menus.py:134
+#: waydroid_helper/controller/ui/menus.py:184
 msgid "Save layout"
 msgstr "保存布局"
 
-#: waydroid_helper/controller/ui/menus.py:135
+#: waydroid_helper/controller/ui/menus.py:185
 msgid "Load layout"
 msgstr "加载布局"
 
-#: waydroid_helper/controller/widgets/components/aim.py:45
-#: waydroid_helper/controller/widgets/components/aim.py:71
+#: waydroid_helper/controller/ui/menus.py:294
+#: waydroid_helper/controller/ui/menus.py:411
+msgid "JSON files"
+msgstr ""
+
+#: waydroid_helper/controller/ui/menus.py:300
+#, fuzzy
+msgid "Save Layout"
+msgstr "保存布局"
+
+#: waydroid_helper/controller/ui/menus.py:417
+#, fuzzy
+msgid "Load Layout"
+msgstr "加载布局"
+
+#: waydroid_helper/controller/widgets/components/aim.py:44
+#: waydroid_helper/controller/widgets/components/aim.py:70
 msgctxt "Controller Widgets"
 msgid "Aim"
 msgstr "准星键"
 
-#: waydroid_helper/controller/widgets/components/aim.py:48
+#: waydroid_helper/controller/widgets/components/aim.py:47
 msgctxt "Controller Widgets"
 msgid ""
 "FPS staple: drag to game's view area, pair with Fire for mouse-aim shooting. "
@@ -302,37 +315,37 @@ msgstr ""
 "FPS游戏必备：拖拽到游戏视角区域，配合开火键实现鼠标瞄准射击。调整框体大小以匹"
 "配游戏内视角转动区域。"
 
-#: waydroid_helper/controller/widgets/components/aim.py:89
+#: waydroid_helper/controller/widgets/components/aim.py:106
 msgctxt "Controller Widgets"
 msgid "Sensitivity"
 msgstr "灵敏度"
 
-#: waydroid_helper/controller/widgets/components/aim.py:96
+#: waydroid_helper/controller/widgets/components/aim.py:113
 msgctxt "Controller Widgets"
 msgid "Adjusts the sensitivity of aim movement"
 msgstr "调整瞄准移动灵敏度"
 
 #. 组件元数据
-#: waydroid_helper/controller/widgets/components/cancel_casting.py:36
-#: waydroid_helper/controller/widgets/components/cancel_casting.py:86
+#: waydroid_helper/controller/widgets/components/cancel_casting.py:30
+#: waydroid_helper/controller/widgets/components/cancel_casting.py:80
 msgctxt "Controller Widgets"
 msgid "Cancel Casting"
 msgstr "取消施法"
 
-#: waydroid_helper/controller/widgets/components/cancel_casting.py:39
+#: waydroid_helper/controller/widgets/components/cancel_casting.py:33
 msgctxt "Controller Widgets"
 msgid ""
 "Drag the key to the cancel casting position. While casting a spell, hold "
 "down the cancel cast button to cancel the cast."
 msgstr "将按键拖拽到取消施法位置。施法过程中，按住取消施法键可中断施法。"
 
-#: waydroid_helper/controller/widgets/components/directional_pad.py:60
-#: waydroid_helper/controller/widgets/components/directional_pad.py:109
+#: waydroid_helper/controller/widgets/components/directional_pad.py:64
+#: waydroid_helper/controller/widgets/components/directional_pad.py:112
 msgctxt "Controller Widgets"
 msgid "Directional Pad"
 msgstr "方向按键"
 
-#: waydroid_helper/controller/widgets/components/directional_pad.py:63
+#: waydroid_helper/controller/widgets/components/directional_pad.py:67
 msgctxt "Controller Widgets"
 msgid ""
 "Drag and place it onto the game's movement wheel to control walking "
@@ -343,34 +356,34 @@ msgstr ""
 "拖拽并放置到游戏的移动轮盘上以控制行走方向。分配按键后，拖拽虚线框调整按钮大"
 "小；确保方向键的蓝色边框与游戏轮盘大小匹配。"
 
-#: waydroid_helper/controller/widgets/components/directional_pad.py:162
-#: waydroid_helper/controller/widgets/components/repeated_click.py:493
+#: waydroid_helper/controller/widgets/components/directional_pad.py:167
+#: waydroid_helper/controller/widgets/components/repeated_click.py:480
 msgctxt "Controller Widgets"
 msgid "Operating Method"
 msgstr "操作方式"
 
-#: waydroid_helper/controller/widgets/components/directional_pad.py:165
+#: waydroid_helper/controller/widgets/components/directional_pad.py:170
 msgctxt "Controller Widgets"
 msgid "Slide control"
 msgstr "滑动控制"
 
-#: waydroid_helper/controller/widgets/components/directional_pad.py:166
+#: waydroid_helper/controller/widgets/components/directional_pad.py:171
 msgctxt "Controller Widgets"
 msgid "Click control"
 msgstr "点击控制"
 
-#: waydroid_helper/controller/widgets/components/directional_pad.py:169
+#: waydroid_helper/controller/widgets/components/directional_pad.py:174
 msgctxt "Controller Widgets"
 msgid "Adjusts the operating method of the directional pad"
 msgstr "调整方向按键的控制方式"
 
-#: waydroid_helper/controller/widgets/components/fire.py:32
-#: waydroid_helper/controller/widgets/components/fire.py:56
+#: waydroid_helper/controller/widgets/components/fire.py:24
+#: waydroid_helper/controller/widgets/components/fire.py:48
 msgctxt "Controller Widgets"
 msgid "Fire"
 msgstr "攻击/开火按键"
 
-#: waydroid_helper/controller/widgets/components/fire.py:35
+#: waydroid_helper/controller/widgets/components/fire.py:27
 msgctxt "Controller Widgets"
 msgid ""
 "Commonly used in FPS games, add a button to the attack/fire button position, "
@@ -382,95 +395,117 @@ msgstr ""
 "配合使用。注意：仅支持鼠标左键，无法修改，单独使用无效。"
 
 #. 组件元数据
-#: waydroid_helper/controller/widgets/components/macro.py:233
-#: waydroid_helper/controller/widgets/components/macro.py:259
+#: waydroid_helper/controller/widgets/components/macro.py:652
+#: waydroid_helper/controller/widgets/components/macro.py:679
 msgctxt "Controller Widgets"
 msgid "Macro"
 msgstr "宏按键"
 
-#: waydroid_helper/controller/widgets/components/macro.py:236
+#: waydroid_helper/controller/widgets/components/macro.py:655
 msgctxt "Controller Widgets"
 msgid "Execute macro commands when triggered."
 msgstr "触发时执行宏命令。"
 
-#: waydroid_helper/controller/widgets/components/macro.py:286
+#: waydroid_helper/controller/widgets/components/macro.py:712
 msgctxt "Controller Widgets"
 msgid "Macro Command"
 msgstr "宏命令"
 
-#: waydroid_helper/controller/widgets/components/macro.py:290
+#: waydroid_helper/controller/widgets/components/macro.py:716
 msgctxt "Controller Widgets"
 msgid ""
 "The macro commands to execute when triggered. Supported commands:\n"
 "- key_press <key1,key2,...>: Press keys\n"
 "- key_release <key1,key2,...>: Release keys\n"
-"- sleep <seconds>: Delay execution (supports decimals)\n"
+"- key_switch <key1,key2,...>: Switch keys (toggle between press/release)\n"
+"- click <x,y> [x1,y1] ...: Click at coordinates (combines press and "
+"release)\n"
+"- press <x,y> [x1,y1] ...: Press at coordinates (DOWN events only)\n"
+"- release <x,y> [x1,y1] ...: Release at coordinates (UP events only)\n"
+"- switch <x,y> [x1,y1] ...: Switch at coordinates (toggle between press/"
+"release)\n"
+"- sleep <milliseconds>: Delay execution\n"
 "- release_all: Release all currently pressed keys\n"
+"- enter_staring: Enter staring/aiming mode\n"
+"- exit_staring: Exit staring/aiming mode\n"
+"- swipehold_radius <factor>: Set swipehold radius\n"
+"- swipehold_radius_switch <factor>: Set swipehold radius and switch\n"
 "- Use 'release_actions' to separate press and release commands\n"
-"- Lines starting with # are comments"
+"- Lines starting with # are comments\n"
+"- Use 'mouse' as coordinate to use current cursor position"
 msgstr ""
 "触发时执行的宏命令。支持的命令：\n"
 "- key_press <key1,key2,...>: 按下按键\n"
 "- key_release <key1,key2,...>: 释放按键\n"
-"- sleep <seconds>: 延迟执行（支持小数）\n"
+"- key_switch <key1,key2,...>: 切换按键状态（按下和释放之间切换）\n"
+"- click <x,y> [x1,y1] ...: 点击坐标（组合按下和释放）\n"
+"- press <x,y> [x1,y1] ...: 按下坐标（DOWN事件）\n"
+"- release <x,y> [x1,y1] ...: 释放坐标（UP事件）\n"
+"- switch <x,y> [x1,y1] ...: 切换坐标（按下和释放之间切换）\n"
+"- sleep <milliseconds>: 延迟执行\n"
 "- release_all: 释放所有当前按下的按键\n"
+"- enter_staring: 进入瞄准模式\n"
+"- exit_staring: 退出瞄准模式\n"
+"- swipehold_radius <factor>: 设置滑动半径\n"
+"- swipehold_radius_switch <factor>: 设置滑动半径并切换\n"
 "- 使用'release_actions'分隔按下和释放命令\n"
-"- 以#开头的行为注释"
+"- 以#开头的行为注释\n"
+"- 使用'mouse'作为坐标使用当前鼠标位置"
 
 #. 组件元数据
-#: waydroid_helper/controller/widgets/components/repeated_click.py:60
-#: waydroid_helper/controller/widgets/components/repeated_click.py:99
+#: waydroid_helper/controller/widgets/components/repeated_click.py:47
+#: waydroid_helper/controller/widgets/components/repeated_click.py:86
 msgctxt "Controller Widgets"
 msgid "Repeated Click"
 msgstr "连击按键"
 
-#: waydroid_helper/controller/widgets/components/repeated_click.py:63
+#: waydroid_helper/controller/widgets/components/repeated_click.py:50
 msgctxt "Controller Widgets"
 msgid "Simulate repeated click operations at a specific position."
 msgstr "在指定位置重复点击操作。"
 
-#: waydroid_helper/controller/widgets/components/repeated_click.py:496
+#: waydroid_helper/controller/widgets/components/repeated_click.py:483
 msgctxt "Controller Widgets"
 msgid "Long-press combo"
 msgstr "长按连击"
 
-#: waydroid_helper/controller/widgets/components/repeated_click.py:497
+#: waydroid_helper/controller/widgets/components/repeated_click.py:484
 msgctxt "Controller Widgets"
 msgid "Click after button"
 msgstr "按键后连击"
 
-#: waydroid_helper/controller/widgets/components/repeated_click.py:502
+#: waydroid_helper/controller/widgets/components/repeated_click.py:489
 msgctxt "Controller Widgets"
 msgid "Choose the operating method for repeated clicking"
 msgstr "选择连击按钮的操作方式"
 
-#: waydroid_helper/controller/widgets/components/repeated_click.py:509
+#: waydroid_helper/controller/widgets/components/repeated_click.py:496
 msgctxt "Controller Widgets"
 msgid "Number of clicks per second"
 msgstr "每秒连击次数"
 
-#: waydroid_helper/controller/widgets/components/repeated_click.py:513
+#: waydroid_helper/controller/widgets/components/repeated_click.py:500
 msgctxt "Controller Widgets"
 msgid "Number of clicks to perform per second in long-press combo mode"
 msgstr "长按连击时每秒连击次数"
 
-#: waydroid_helper/controller/widgets/components/repeated_click.py:520
+#: waydroid_helper/controller/widgets/components/repeated_click.py:507
 msgctxt "Controller Widgets"
 msgid "Number of clicks"
 msgstr "连击次数"
 
-#: waydroid_helper/controller/widgets/components/repeated_click.py:524
+#: waydroid_helper/controller/widgets/components/repeated_click.py:511
 msgctxt "Controller Widgets"
 msgid "Number of repeated clicks to perform in click after button mode"
 msgstr "按键后连击时执行的连击次数"
 
-#: waydroid_helper/controller/widgets/components/right_click_to_walk.py:50
-#: waydroid_helper/controller/widgets/components/right_click_to_walk.py:80
+#: waydroid_helper/controller/widgets/components/right_click_to_walk.py:40
+#: waydroid_helper/controller/widgets/components/right_click_to_walk.py:70
 msgctxt "Controller Widgets"
 msgid "Right Click to Walk"
 msgstr "右键行走"
 
-#: waydroid_helper/controller/widgets/components/right_click_to_walk.py:53
+#: waydroid_helper/controller/widgets/components/right_click_to_walk.py:43
 msgctxt "Controller Widgets"
 msgid ""
 "Add to the game's movement wheel: hold and drag to steer, single-click to "
@@ -480,72 +515,72 @@ msgstr ""
 "戏。"
 
 #. 组件元数据
-#: waydroid_helper/controller/widgets/components/single_click.py:44
-#: waydroid_helper/controller/widgets/components/single_click.py:84
+#: waydroid_helper/controller/widgets/components/single_click.py:32
+#: waydroid_helper/controller/widgets/components/single_click.py:72
 msgctxt "Controller Widgets"
 msgid "Single Click"
 msgstr "点击按键"
 
-#: waydroid_helper/controller/widgets/components/single_click.py:47
+#: waydroid_helper/controller/widgets/components/single_click.py:35
 msgctxt "Controller Widgets"
 msgid "Simulate a click operation at a specific position."
 msgstr "在指定位置模拟点击操作。"
 
 #. 组件元数据
-#: waydroid_helper/controller/widgets/components/skill_casting.py:88
-#: waydroid_helper/controller/widgets/components/skill_casting.py:146
+#: waydroid_helper/controller/widgets/components/skill_casting.py:77
+#: waydroid_helper/controller/widgets/components/skill_casting.py:135
 msgctxt "Controller Widgets"
 msgid "Skill Casting"
 msgstr "技能施法"
 
-#: waydroid_helper/controller/widgets/components/skill_casting.py:91
+#: waydroid_helper/controller/widgets/components/skill_casting.py:80
 msgctxt "Controller Widgets"
 msgid ""
 "Commonly used when using the characters' skills, click and cooperate with "
 "the mouse to release skills."
 msgstr "常用于使用角色技能时，点击并配合鼠标释放技能。"
 
-#: waydroid_helper/controller/widgets/components/skill_casting.py:101
+#: waydroid_helper/controller/widgets/components/skill_casting.py:90
 msgctxt "Controller Widgets"
 msgid "Enable Cancel Button"
 msgstr "取消施法"
 
-#: waydroid_helper/controller/widgets/components/skill_casting.py:105
+#: waydroid_helper/controller/widgets/components/skill_casting.py:94
 msgctxt "Controller Widgets"
 msgid "Enable a cancel casting button that can interrupt ongoing skill casting"
 msgstr "启用可中断正在进行的技能施法的取消按钮"
 
-#: waydroid_helper/controller/widgets/components/skill_casting.py:519
+#: waydroid_helper/controller/widgets/components/skill_casting.py:508
 msgctxt "Controller Widgets"
 msgid "Casting Radius"
 msgstr "施法半径"
 
-#: waydroid_helper/controller/widgets/components/skill_casting.py:526
+#: waydroid_helper/controller/widgets/components/skill_casting.py:515
 msgctxt "Controller Widgets"
 msgid "Fine-tune according to the casting range of different skills"
 msgstr "根据不同技能的施放范围进行微调"
 
-#: waydroid_helper/controller/widgets/components/skill_casting.py:533
+#: waydroid_helper/controller/widgets/components/skill_casting.py:522
 msgctxt "Controller Widgets"
 msgid "Cast Timing"
 msgstr "施法时机"
 
-#: waydroid_helper/controller/widgets/components/skill_casting.py:541
+#: waydroid_helper/controller/widgets/components/skill_casting.py:530
 msgctxt "Controller Widgets"
 msgid "On Release"
 msgstr "松开释放"
 
-#: waydroid_helper/controller/widgets/components/skill_casting.py:543
+#: waydroid_helper/controller/widgets/components/skill_casting.py:532
 msgctxt "Controller Widgets"
 msgid "Immediate"
 msgstr "立即释放"
 
-#: waydroid_helper/controller/widgets/components/skill_casting.py:544
+#: waydroid_helper/controller/widgets/components/skill_casting.py:533
 msgctxt "Controller Widgets"
 msgid "Manual"
 msgstr "手动释放"
 
-#: waydroid_helper/controller/widgets/components/skill_casting.py:549
+#: waydroid_helper/controller/widgets/components/skill_casting.py:538
 msgctxt "Controller Widgets"
 msgid ""
 "Determines when the skill casting ends: On Release (default), Immediate "
@@ -649,15 +684,3 @@ msgstr "显示快捷键"
 msgctxt "shortcut window"
 msgid "Quit"
 msgstr "退出"
-
-#~ msgctxt "Controller Widgets"
-#~ msgid "Enter clicks per second"
-#~ msgstr "输入每秒连击次数"
-
-#~ msgctxt "Controller Widgets"
-#~ msgid "Enter click count"
-#~ msgstr "点击控制"
-
-#~ msgctxt "Controller Widgets"
-#~ msgid "Movement Mode"
-#~ msgstr "移动模式"

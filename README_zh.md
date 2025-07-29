@@ -197,3 +197,7 @@ usr
     │       └── id.waydro.Mount.service
 
 ```
+
+## 致谢
+
+特别感谢 [scrcpy](https://github.com/Genymobile/scrcpy) 项目。本项目使用了 scrcpy 的服务器组件来实现对 Waydroid 中 Android 设备的无缝控制。scrcpy 提供的强大通信协议和设备交互能力为我们的按键映射奠定了基础。

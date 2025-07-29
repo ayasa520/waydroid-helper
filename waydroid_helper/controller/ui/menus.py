@@ -52,6 +52,7 @@ class ContextMenuManager:
 
         # 设置菜单位置
         rect = Gdk.Rectangle()
+        # https://gitlab.gnome.org/GNOME/gtk/-/issues/4563#note_1711746
         rect.x = int(x)
         rect.y = int(y)
         rect.width = 1
@@ -474,7 +475,6 @@ class ContextMenuManager:
 
             # 重新创建组件
             widgets_created = 0
-            cancel_widget = None
             for widget_data in layout_data["widgets"]:
                 try:
                     # 获取基本信息
@@ -540,8 +540,6 @@ class ContextMenuManager:
                                 f"Restored {widget_type} widget: original position ({original_x}, {original_y}) -> new position ({x}, {y}), original size ({original_width}x{original_height}) -> new size ({width}x{height})"
                             )
 
-                            if widget_type == "cancelcasting":
-                                cancel_widget = widget
                         else:
                             logger.error(
                                 "Failed to create widget, missing create_widget_at_position method"
@@ -554,12 +552,7 @@ class ContextMenuManager:
                     continue
 
             logger.info(f"Layout loaded, restored {widgets_created} widgets")
-            if cancel_widget:
-                from waydroid_helper.controller.widgets.components.skill_casting import \
-                    SkillCasting
-                # FIXME?
-                SkillCasting._cancel_button_widget["widget"] = cancel_widget
-                SkillCasting.cancel_button_config.value = True
+
 
         except Exception as e:
             logger.error(f"Failed to load layout: {e}")

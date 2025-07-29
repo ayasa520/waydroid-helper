@@ -721,7 +721,7 @@ class Macro(BaseWidget):
                 "- press <x,y> [x1,y1] ...: Press at coordinates (DOWN events only)\n"
                 "- release <x,y> [x1,y1] ...: Release at coordinates (UP events only)\n"
                 "- switch <x,y> [x1,y1] ...: Switch at coordinates (toggle between press/release)\n"
-                "- sleep <seconds>: Delay execution (supports decimals)\n"
+                "- sleep <milliseconds>: Delay execution\n"
                 "- release_all: Release all currently pressed keys\n"
                 "- enter_staring: Enter staring/aiming mode\n"
                 "- exit_staring: Exit staring/aiming mode\n"

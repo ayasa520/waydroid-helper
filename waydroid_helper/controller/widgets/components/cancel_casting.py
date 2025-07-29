@@ -83,6 +83,9 @@ class CancelCasting(BaseWidget):
             min_width=25,
             min_height=25,
         )
+        from waydroid_helper.controller.widgets.components.skill_casting import SkillCasting
+        SkillCasting.cancel_button_widget["widget"] = self
+        SkillCasting.cancel_button_config.value = True
 
     def draw_widget_content(self, cr: "Context[Surface]", width: int, height: int):
         """绘制圆形按钮的具体内容"""
@@ -358,4 +361,7 @@ class CancelCasting(BaseWidget):
             'widget_class': 'CancelCasting',
             'widget_id': id(self)
         }
-        event_bus.emit(Event(EventType.CANCEL_BUTTON_DESTROYED, self, event_data))
+        
+        from waydroid_helper.controller.widgets.components.skill_casting import SkillCasting
+        SkillCasting.cancel_button_widget["widget"] = None
+        SkillCasting.cancel_button_config.value = False

@@ -48,7 +48,6 @@ class EventType(str, Enum):
     MOUSE_MOTION = "mouse-motion"  # 鼠标移动事件
     CANCEL_CASTING = "cancel-casting"  # 取消施法事件
     MASK_CLICKED = "mask-clicked"  # 遮罩层点击事件，传递点击坐标
-    CANCEL_BUTTON_DESTROYED = "cancel-button-destroyed"  # 取消施法按钮销毁
     ENTER_STARING = "enter-staring"  # 进入瞄准模式
     EXIT_STARING = "exit-staring"  # 退出瞄准模式
     SWIPEHOLD_RADIUS = "swipehold-radius"  # 滑动半径设置
@@ -97,7 +96,6 @@ class GlobalEventEmitter(GObject.Object):
         EventType.MOUSE_MOTION: (GObject.SignalFlags.RUN_FIRST, None, (object, object)),
         EventType.CANCEL_CASTING: (GObject.SignalFlags.RUN_FIRST, None, (object, object)),
         EventType.MASK_CLICKED: (GObject.SignalFlags.RUN_FIRST, None, (object, object)),
-        EventType.CANCEL_BUTTON_DESTROYED: (GObject.SignalFlags.RUN_FIRST, None, (object, object)),
         EventType.ENTER_STARING: (GObject.SignalFlags.RUN_FIRST, None, (object, object)),
         EventType.EXIT_STARING: (GObject.SignalFlags.RUN_FIRST, None, (object, object)),
         EventType.SWIPEHOLD_RADIUS: (GObject.SignalFlags.RUN_FIRST, None, (object, object)),

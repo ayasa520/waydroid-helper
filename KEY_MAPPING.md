@@ -9,7 +9,7 @@ The key mapping feature in Waydroid Helper allows you to create custom keyboard 
 ### Opening the Key Mapping Interface
 
 1. Launch Waydroid Helper
-2. Navigate to the **General** tab
+2. Navigate to the **Home** tab
 3. In the **Key Mapper** section, click the **Open** button
 4. A transparent overlay window will appear over your screen
 

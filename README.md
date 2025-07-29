@@ -7,7 +7,7 @@ Waydroid Helper is a graphical user interface application written in Python usin
 ## Features
 
 - Configure Waydroid settings
-- **Key Mapping System**: Keyboard and mouse mapping for Android apps and games
+- **Key Mapper**: Keyboard and mouse mapping for Android apps and games
   - Multiple control widgets (buttons, directional pad, aim controls, macros)
   - Customizable key bindings and layouts
   - Support for complex gaming scenarios (FPS, MOBA)
@@ -198,5 +198,9 @@ usr
     │       └── id.waydro.Mount.service
 
 ```
+
+## Credits
+
+Special thanks to the [scrcpy](https://github.com/Genymobile/scrcpy) project. This project utilizes scrcpy's server component to enable seamless control of Android devices within Waydroid. The robust communication protocol and device interaction capabilities provided by scrcpy form the foundation of our key mapping features.
 
 
