@@ -1,4 +1,4 @@
-name: Create GitHub Release (Optimized)
+name: Create GitHub Release
 
 on:
   push:
@@ -17,7 +17,7 @@ env:
 jobs:
   build-linux:
     name: Build for Linux (${{ matrix.arch }})
-    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-22.04-arm64' || 'ubuntu-22.04' }}
+    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-24.04-arm64' || 'ubuntu-24.04' }}
     strategy:
       matrix:
         arch: [x86_64, aarch64]
@@ -42,7 +42,7 @@ jobs:
           path: |
             /var/cache/apt/archives
             /var/lib/apt/lists
-          key: ${{ env.CACHE_KEY_PREFIX }}-apt-${{ matrix.arch }}-${{ hashFiles('.github/workflows/release-optimized.yml') }}
+          key: ${{ env.CACHE_KEY_PREFIX }}-apt-${{ matrix.arch }}-${{ hashFiles('.github/workflows/release.yml') }}
           restore-keys: |
             ${{ env.CACHE_KEY_PREFIX }}-apt-${{ matrix.arch }}-
 
@@ -60,7 +60,13 @@ jobs:
             gettext ninja-build fakeroot attr \
             libcap-dev libdbus-1-dev \
             libtool autotools-dev autoconf automake build-essential \
-            python3-pip python3-venv
+            python3-pip python3-venv \
+            cmake golang-go perl \
+            libusb-1.0-0-dev libpcre3-dev libfmt-dev \
+            libprotobuf-dev protobuf-compiler \
+            libbrotli-dev liblz4-dev libzstd-dev \
+            libgtest-dev googletest \
+            wget xz-utils
 
       - name: Setup Python virtual environment
         run: |

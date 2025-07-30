@@ -27,6 +27,80 @@ cd "$project_root"
 meson setup -Dbuild_appimage=true --prefix /usr "$build_dir" || { log "Meson setup failed"; exit 1; }
 DESTDIR="$appdir" ninja install -C "$build_dir" || { log "Ninja install failed"; exit 1; }
 
+# Build and install adb from nmeum/android-tools
+log "Building ADB from nmeum/android-tools..."
+cd "$appdir"
+mkdir -p usr/bin
+
+# Detect architecture
+ARCH=$(uname -m)
+log "Detected architecture: $ARCH"
+
+# Create temporary build directory
+BUILD_DIR=$(mktemp -d)
+cd "$BUILD_DIR"
+
+# Download android-tools source tarball
+ANDROID_TOOLS_VERSION="34.0.5"
+TARBALL_URL="https://github.com/nmeum/android-tools/releases/download/${ANDROID_TOOLS_VERSION}/android-tools-${ANDROID_TOOLS_VERSION}.tar.xz"
+
+log "Downloading android-tools source tarball..."
+if ! wget -O "android-tools-${ANDROID_TOOLS_VERSION}.tar.xz" "$TARBALL_URL"; then
+    log "Failed to download android-tools source"
+    exit 1
+fi
+
+# Extract tarball
+log "Extracting android-tools source..."
+if ! tar -xf "android-tools-${ANDROID_TOOLS_VERSION}.tar.xz"; then
+    log "Failed to extract android-tools source"
+    exit 1
+fi
+
+cd "android-tools-${ANDROID_TOOLS_VERSION}"
+
+# Create build directory
+mkdir -p build
+cd build
+
+log "Configuring android-tools build..."
+# Configure build with CMake
+if ! cmake .. \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX="$appdir/usr"; then
+    log "Failed to configure android-tools build"
+    exit 1
+fi
+
+log "Building ADB..."
+# Build only adb (not all tools)
+if ! make -j$(nproc) adb; then
+    log "Failed to build ADB"
+    exit 1
+fi
+
+# Install adb binary
+log "Installing ADB binary..."
+# Find adb binary in build directory
+ADB_BINARY=$(find . -name "adb" -type f -executable | head -1)
+if [ -n "$ADB_BINARY" ]; then
+    log "Found ADB binary at: $ADB_BINARY"
+    cp "$ADB_BINARY" "$appdir/usr/bin/adb"
+    chmod +x "$appdir/usr/bin/adb"
+    log "ADB installed successfully"
+else
+    log "Error: ADB binary not found after build"
+    log "Contents of build directory:"
+    find . -name "*adb*" -type f
+    exit 1
+fi
+
+# Clean up
+cd "$appdir"
+rm -rf "$BUILD_DIR"
+
+log "ADB built and installed successfully"
+
 
 # Check if AppDir was created
 if [ ! -d "$appdir" ]; then

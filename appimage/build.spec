@@ -14,7 +14,8 @@ a = Analysis(
         ('usr/bin/fakeroot', 'bin'),
         ('usr/bin/faked', 'bin'),
         ('usr/lib/libfakeroot', 'lib/libfakeroot'),
-        ('usr/bin/waydroid-cli', 'bin')
+        ('usr/bin/waydroid-cli', 'bin'),
+        ('usr/bin/adb', 'bin')
     ],
     pathex=["usr/share/waydroid-helper"],
     datas=[
