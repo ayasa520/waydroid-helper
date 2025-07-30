@@ -10,8 +10,7 @@ from abc import ABC, abstractmethod
 from gettext import pgettext
 from typing import TYPE_CHECKING, NamedTuple, cast
 
-from waydroid_helper.controller.android import (AMotionEventAction,
-                                                AMotionEventButtons)
+from waydroid_helper.controller.android import AMotionEventAction, AMotionEventButtons
 from waydroid_helper.controller.core.control_msg import InjectTouchEventMsg
 from waydroid_helper.util.log import logger
 
@@ -20,10 +19,20 @@ if TYPE_CHECKING:
     from gi.repository import Gtk
     from waydroid_helper.controller.widgets.base.base_widget import EditableRegion
 
-from waydroid_helper.controller.core import (Event, EventType, event_bus,
-                                             key_system)
 from waydroid_helper.controller.core.handler.event_handlers import InputEvent
 from waydroid_helper.controller.core.utils import pointer_id_manager
+
+from cairo import FontSlant, FontWeight
+from waydroid_helper.controller.core import (
+    Event,
+    EventType,
+    KeyCombination,
+    event_bus,
+    key_system,
+)
+from waydroid_helper.controller.widgets.base.base_widget import BaseWidget
+from waydroid_helper.controller.widgets.config import create_textarea_config
+from waydroid_helper.controller.widgets.decorators import Editable
 
 
 class MacroCommand(NamedTuple):
@@ -91,8 +100,12 @@ class KeyReleaseCommand(Command):
         self.key_names = key_names
 
     async def execute(self, context: "Macro") -> None:
-        from waydroid_helper.controller.core import (Event, EventType,
-                                                     event_bus, key_system)
+        from waydroid_helper.controller.core import (
+            Event,
+            EventType,
+            event_bus,
+            key_system,
+        )
 
         for key_name in self.key_names:
             try:
@@ -412,9 +425,13 @@ class SleepCommand(Command):
 
 class ReleaseAllCommand(Command):
     """释放所有按键命令"""
+
     async def execute(self, context: "Macro") -> None:
-        event_bus.emit(Event(type=EventType.MACRO_RELEASE_ALL, source=context, data=None))
-    
+        event_bus.emit(
+            Event(type=EventType.MACRO_RELEASE_ALL, source=context, data=None)
+        )
+
+
 class EnterStaringCommand(Command):
     """进入瞄准模式命令"""
 
@@ -633,17 +650,6 @@ class CommandFactory:
             return None
 
 
-import cairo
-
-from waydroid_helper.controller.core import (Event, EventType, KeyCombination,
-                                             event_bus, key_system)
-from waydroid_helper.controller.core.handler.event_handlers import InputEvent
-from waydroid_helper.controller.widgets.base.base_widget import BaseWidget
-from waydroid_helper.controller.widgets.config import create_textarea_config
-from waydroid_helper.controller.widgets.decorators import Editable
-from waydroid_helper.util.log import logger
-
-
 @Editable
 class Macro(BaseWidget):
     """宏按钮组件 - 圆形半透明按钮"""
@@ -814,7 +820,7 @@ class Macro(BaseWidget):
             center_y = height / 2
 
             cr.set_source_rgba(1, 1, 1, 1)  # 白色文字
-            cr.select_font_face("Arial", cairo.FontSlant.NORMAL, cairo.FontWeight.BOLD)
+            cr.select_font_face("Arial", FontSlant.NORMAL, FontWeight.BOLD)
             cr.set_font_size(12)
             text_extents = cr.text_extents(self.text)
             x = center_x - text_extents.width / 2
@@ -931,7 +937,9 @@ class Macro(BaseWidget):
                 try:
                     await command.cancel(self)
                 except Exception as e:
-                    logger.warning(f"Failed to cancel command {type(command).__name__}: {e}")
+                    logger.warning(
+                        f"Failed to cancel command {type(command).__name__}: {e}"
+                    )
 
             logger.debug("Release all commands completed successfully")
 

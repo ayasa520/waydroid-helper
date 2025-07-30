@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import importlib
 import inspect
-from pathlib import Path
+import pkgutil
 from typing import TYPE_CHECKING, Any
 
 from waydroid_helper.util.log import logger
@@ -28,21 +28,22 @@ class WidgetFactory:
     
     def _discover_widgets(self):
         """动态发现组件目录中的所有widget类"""
-        components_dir = Path(__file__).parent / "components"
-        
-        if not components_dir.exists():
-            logger.warning(f"Warning: components directory does not exist: {components_dir}")
-            return
-        
-        logger.debug(f"Scanning components directory: {components_dir}")
-        
-        # 扫描所有.py文件
-        for py_file in components_dir.glob("*.py"):
-            if py_file.name.startswith("__"):
-                continue
-                
-            module_name = py_file.stem
-            self._load_widget_from_module(module_name)
+        try:
+            # 导入 components 包
+            import waydroid_helper.controller.widgets.components as components_package
+
+            logger.debug(f"Scanning components package: {components_package.__name__}")
+
+            # 使用 pkgutil 遍历包中的所有模块
+            for _, module_name, ispkg in pkgutil.iter_modules(components_package.__path__):
+                if not ispkg:  # 只处理模块，不处理子包
+                    logger.debug(f"Found component module: {module_name}")
+                    self._load_widget_from_module(module_name)
+
+        except ImportError as e:
+            logger.error(f"Failed to import components package: {e}")
+        except Exception as e:
+            logger.error(f"Error during widget discovery: {e}")
     
     def _load_widget_from_module(self, module_name: str):
         """从模块中加载widget类"""

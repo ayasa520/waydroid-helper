@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from gi.repository import Gtk
     from waydroid_helper.controller.widgets.base.base_widget import EditableRegion
 
-import cairo
+from cairo import FONT_SLANT_NORMAL, FONT_WEIGHT_BOLD
 
 from waydroid_helper.controller.android.input import (AMotionEventAction,
                                                       AMotionEventButtons)
@@ -731,7 +731,7 @@ class SkillCasting(BaseWidget):
 
             cr.set_source_rgba(1, 1, 1, 1)  # 白色文字
             cr.select_font_face(
-                "Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD
+                "Arial", FONT_SLANT_NORMAL, FONT_WEIGHT_BOLD
             )
             cr.set_font_size(12)
             text_extents = cr.text_extents(self.text)
@@ -887,7 +887,7 @@ class SkillCasting(BaseWidget):
             # 使用白色文字以在灰色背景上清晰显示
             cr.set_source_rgba(1, 1, 1, 1)  # 白色文字
             cr.select_font_face(
-                "Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD
+                "Arial", FONT_SLANT_NORMAL, FONT_WEIGHT_BOLD
             )
             cr.set_font_size(12)
             text_extents = cr.text_extents(self.text)

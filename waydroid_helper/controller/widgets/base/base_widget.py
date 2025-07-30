@@ -25,7 +25,9 @@ from waydroid_helper.controller.widgets.config import ConfigManager
 from waydroid_helper.util.log import logger
 
 if TYPE_CHECKING:
+    from cairo import Context, Surface
     from waydroid_helper.controller.widgets.config import ConfigItem
+from cairo import FontSlant, FontWeight
 
 class EditableRegion(TypedDict):
     """可编辑区域类型定义"""
@@ -241,7 +243,7 @@ class BaseWidget(Gtk.DrawingArea):
         elif hasattr(self, "title") and self.title and self.title != "组件":
             # 如果没有text但有标题，绘制标题
             cr.set_source_rgba(0, 0, 0, 1)
-            cr.select_font_face("Arial", cairo.FontSlant.NORMAL, cairo.FontWeight.BOLD)
+            cr.select_font_face("Arial", FontSlant.NORMAL, FontWeight.BOLD)
             cr.set_font_size(12)
             text_extents = cr.text_extents(self.title)
             x = (width - text_extents.width) / 2

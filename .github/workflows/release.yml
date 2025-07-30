@@ -13,31 +13,56 @@ on:
 jobs:
   build-linux:
     name: Build for Linux
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-latest-arm64' || 'ubuntu-latest' }}
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: Install dependencies
+      - name: Install dependencies (x86_64)
+        if: matrix.arch == 'x86_64'
         run: |
           sudo apt-get update
           sudo apt-get upgrade -y
           sudo apt-get install desktop-file-utils software-properties-common -y
           sudo apt-get install libgtk-4-1 libgtk-4-dev libadwaita-1-dev libadwaita-1-0 libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-4.0 gir1.2-adw-1 -y
           sudo apt-get install gettext ninja-build fakeroot attr libcap-dev libdbus-1-dev -y
-          python3 -m pip install meson
-          python3 -m pip install pycairo
-          python3 -m pip install "PyGObject==3.50.0"
-      - name: Build package
+          sudo apt-get install libtool autotools-dev autoconf automake build-essential -y
+          sudo apt-get install python3-pip python3-venv -y
+          python3 -m pip install --break-system-packages meson
+          python3 -m pip install --break-system-packages pycairo
+          python3 -m pip install --break-system-packages "PyGObject==3.50.0"
+      - name: Install dependencies (aarch64)
+        if: matrix.arch == 'aarch64'
+        run: |
+          sudo apt-get update
+          sudo apt-get upgrade -y
+          sudo apt-get install desktop-file-utils software-properties-common -y
+          sudo apt-get install libgtk-4-1 libgtk-4-dev libadwaita-1-dev libadwaita-1-0 libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-4.0 gir1.2-adw-1 -y
+          sudo apt-get install gettext ninja-build fakeroot attr libcap-dev libdbus-1-dev -y
+          sudo apt-get install libtool autotools-dev autoconf automake build-essential -y
+          sudo apt-get install python3-pip python3-venv -y
+          python3 -m pip install --break-system-packages meson
+          python3 -m pip install --break-system-packages pycairo
+          python3 -m pip install --break-system-packages "PyGObject==3.50.0"
+      - name: Build package (x86_64)
+        if: matrix.arch == 'x86_64'
+        run: |
+          appimage/build.sh
+      - name: Build package (aarch64)
+        if: matrix.arch == 'aarch64'
         run: |
           appimage/build.sh
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
         with:
-          name: linux-dist
+          name: linux-dist-${{ matrix.arch }}
           path: AppDir/dist/
 
   github-release:
@@ -48,11 +73,16 @@ jobs:
       contents: write
       id-token: write
     steps:
-      - name: Download Linux dist
+      - name: Download Linux dist (x86_64)
         uses: actions/download-artifact@v4
         with:
-          name: linux-dist
-          path: AppDir/dist/
+          name: linux-dist-x86_64
+          path: AppDir/dist/x86_64/
+      - name: Download Linux dist (aarch64)
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-dist-aarch64
+          path: AppDir/dist/aarch64/
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -66,5 +96,5 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: >-
           gh release upload
-          '${{ github.ref_name }}' AppDir/dist/**
+          '${{ github.ref_name }}' AppDir/dist/**/*
           --repo '${{ github.repository }}'
