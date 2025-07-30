@@ -30,7 +30,7 @@ jobs:
           sudo apt-get install gettext ninja-build fakeroot attr libcap-dev libdbus-1-dev -y
           python3 -m pip install meson
           python3 -m pip install pycairo
-          python3 -m pip install "PyGObject>=3.50.0"
+          python3 -m pip install "PyGObject==3.50.0"
       - name: Build package
         run: |
           appimage/build.sh
