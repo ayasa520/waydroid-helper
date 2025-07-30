@@ -1,4 +1,4 @@
-name: Create GitHub Release
+name: Create GitHub Release (Optimized)
 
 on:
   push:
@@ -10,91 +10,225 @@ on:
         description: 'Release tag name'
         required: true
 
+env:
+  PYTHON_VERSION: '3.12'
+  CACHE_KEY_PREFIX: 'waydroid-helper'
+
 jobs:
   build-linux:
-    name: Build for Linux
-    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-latest-arm64' || 'ubuntu-latest' }}
+    name: Build for Linux (${{ matrix.arch }})
+    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-22.04-arm64' || 'ubuntu-22.04' }}
     strategy:
       matrix:
         arch: [x86_64, aarch64]
+      fail-fast: false
+      max-parallel: 2
+    
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
-      - name: Install dependencies (x86_64)
-        if: matrix.arch == 'x86_64'
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Cache system packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/apt/archives
+            /var/lib/apt/lists
+          key: ${{ env.CACHE_KEY_PREFIX }}-apt-${{ matrix.arch }}-${{ hashFiles('.github/workflows/release-optimized.yml') }}
+          restore-keys: |
+            ${{ env.CACHE_KEY_PREFIX }}-apt-${{ matrix.arch }}-
+
+      - name: Install system dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get upgrade -y
-          sudo apt-get install desktop-file-utils software-properties-common -y
-          sudo apt-get install libgtk-4-1 libgtk-4-dev libadwaita-1-dev libadwaita-1-0 libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-4.0 gir1.2-adw-1 -y
-          sudo apt-get install gettext ninja-build fakeroot attr libcap-dev libdbus-1-dev -y
-          sudo apt-get install libtool autotools-dev autoconf automake build-essential -y
-          sudo apt-get install python3-pip python3-venv -y
-          python3 -m pip install --break-system-packages meson
-          python3 -m pip install --break-system-packages pycairo
-          python3 -m pip install --break-system-packages "PyGObject==3.50.0"
-      - name: Install dependencies (aarch64)
-        if: matrix.arch == 'aarch64'
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            desktop-file-utils \
+            software-properties-common \
+            libgtk-4-1 libgtk-4-dev \
+            libadwaita-1-dev libadwaita-1-0 \
+            libgirepository1.0-dev \
+            gcc libcairo2-dev pkg-config python3-dev \
+            gir1.2-gtk-4.0 gir1.2-adw-1 \
+            gettext ninja-build fakeroot attr \
+            libcap-dev libdbus-1-dev \
+            libtool autotools-dev autoconf automake build-essential \
+            python3-pip python3-venv
+
+      - name: Setup Python virtual environment
         run: |
-          sudo apt-get update
-          sudo apt-get upgrade -y
-          sudo apt-get install desktop-file-utils software-properties-common -y
-          sudo apt-get install libgtk-4-1 libgtk-4-dev libadwaita-1-dev libadwaita-1-0 libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-4.0 gir1.2-adw-1 -y
-          sudo apt-get install gettext ninja-build fakeroot attr libcap-dev libdbus-1-dev -y
-          sudo apt-get install libtool autotools-dev autoconf automake build-essential -y
-          sudo apt-get install python3-pip python3-venv -y
-          python3 -m pip install --break-system-packages meson
-          python3 -m pip install --break-system-packages pycairo
-          python3 -m pip install --break-system-packages "PyGObject==3.50.0"
-      - name: Build package (x86_64)
-        if: matrix.arch == 'x86_64'
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip setuptools wheel
+          pip install meson pycairo "PyGObject==3.50.0"
+
+      - name: Cache build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/
+            AppDir/
+          key: ${{ env.CACHE_KEY_PREFIX }}-build-${{ matrix.arch }}-${{ github.sha }}
+          restore-keys: |
+            ${{ env.CACHE_KEY_PREFIX }}-build-${{ matrix.arch }}-
+
+      - name: Build package
         run: |
+          source venv/bin/activate
+          chmod +x appimage/build.sh
           appimage/build.sh
-      - name: Build package (aarch64)
-        if: matrix.arch == 'aarch64'
+
+      - name: Verify build artifacts
         run: |
-          appimage/build.sh
-      - name: Store the distribution packages
+          if [ ! -d "AppDir/dist/" ]; then
+            echo "❌ Build artifacts not found"
+            exit 1
+          fi
+          
+          echo "✅ Build artifacts found:"
+          ls -la AppDir/dist/
+          
+          # 检查文件大小是否合理
+          MIN_SIZE=1024000  # 1MB
+          for file in AppDir/dist/*; do
+            if [ -f "$file" ]; then
+              size=$(stat -c%s "$file")
+              if [ $size -lt $MIN_SIZE ]; then
+                echo "⚠️  Warning: $file is unusually small (${size} bytes)"
+              else
+                echo "✅ $file: $(numfmt --to=iec $size)"
+              fi
+            fi
+          done
+
+      - name: Store distribution packages
         uses: actions/upload-artifact@v4
         with:
           name: linux-dist-${{ matrix.arch }}
           path: AppDir/dist/
+          retention-days: 30
+          compression-level: 6
 
   github-release:
-    name: GitHub Release
+    name: Create GitHub Release
     needs: [build-linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write
       id-token: write
+    timeout-minutes: 30
+    
     steps:
-      - name: Download Linux dist (x86_64)
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          name: linux-dist-x86_64
-          path: AppDir/dist/x86_64/
-      - name: Download Linux dist (aarch64)
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-dist-aarch64
-          path: AppDir/dist/aarch64/
+          path: artifacts/
+          merge-multiple: false
+
+      - name: Verify artifacts
+        run: |
+          echo "📦 Verifying downloaded artifacts..."
+          
+          for arch in x86_64 aarch64; do
+            artifact_path="artifacts/linux-dist-${arch}"
+            if [ -d "$artifact_path" ]; then
+              echo "✅ Found artifacts for ${arch}:"
+              ls -la "$artifact_path"
+            else
+              echo "❌ Missing artifacts for ${arch}"
+              exit 1
+            fi
+          done
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG_NAME="${{ github.event.inputs.tag_name }}"
+          else
+            TAG_NAME="${{ github.ref_name }}"
+          fi
+          
+          # 生成变更日志
+          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+          echo "## What's Changed" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          
+          # 获取最近的标签
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            echo "Changes since $PREV_TAG:" >> $GITHUB_ENV
+            git log --pretty=format:"- %s (%h)" "$PREV_TAG"..HEAD >> $GITHUB_ENV
+          else
+            echo "Initial release" >> $GITHUB_ENV
+          fi
+          
+          echo "" >> $GITHUB_ENV
+          echo "## Downloads" >> $GITHUB_ENV
+          echo "- Linux x86_64: waydroid-helper-linux-x86_64.AppImage" >> $GITHUB_ENV
+          echo "- Linux ARM64: waydroid-helper-linux-aarch64.AppImage" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: >-
-          gh release create
-          '${{ github.ref_name }}'
-          --repo '${{ github.repository }}'
-          --notes ""
-      - name: Upload dists to GitHub Release
+        run: |
+          TAG_NAME="${{ steps.release_notes.outputs.tag_name }}"
+          
+          # 检查发布是否已存在
+          if gh release view "$TAG_NAME" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "⚠️ Release $TAG_NAME already exists, uploading assets..."
+          else
+            echo "🚀 Creating new release $TAG_NAME..."
+            gh release create "$TAG_NAME" \
+              --repo "${{ github.repository }}" \
+              --title "Release $TAG_NAME" \
+              --notes "${{ env.CHANGELOG }}" \
+              --generate-notes
+          fi
+
+      - name: Upload assets to release
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: >-
-          gh release upload
-          '${{ github.ref_name }}' AppDir/dist/**/*
-          --repo '${{ github.repository }}'
+        run: |
+          TAG_NAME="${{ steps.release_notes.outputs.tag_name }}"
+          
+          # 重命名并上传文件
+          for arch in x86_64 aarch64; do
+            src_file="artifacts/linux-dist-${arch}"/*
+            if [ -f "$src_file" ]; then
+              dst_name="waydroid-helper-linux-${arch}.AppImage"
+              echo "📤 Uploading $dst_name..."
+              
+              # 检查文件是否已存在
+              if gh release view "$TAG_NAME" --repo "${{ github.repository }}" --json assets | jq -r '.assets[].name' | grep -q "^${dst_name}$"; then
+                echo "⚠️ $dst_name already exists, skipping..."
+              else
+                gh release upload "$TAG_NAME" "$src_file" \
+                  --repo "${{ github.repository }}" \
+                  --name "$dst_name" \
+                  --clobber
+              fi
+            fi
+          done
+
+      - name: Cleanup old artifacts
+        if: always()
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: linux-dist-*
+          failOnError: false
