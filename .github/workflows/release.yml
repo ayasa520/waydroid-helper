@@ -84,6 +84,7 @@ jobs:
           key: ${{ env.CACHE_KEY_PREFIX }}-build-${{ matrix.arch }}-${{ github.sha }}
           restore-keys: |
             ${{ env.CACHE_KEY_PREFIX }}-build-${{ matrix.arch }}-
+          save-always: true
 
       - name: Build package
         run: |
@@ -94,23 +95,32 @@ jobs:
       - name: Verify build artifacts
         run: |
           if [ ! -d "AppDir/dist/" ]; then
-            echo "❌ Build artifacts not found"
+            echo "❌ Build artifacts directory not found"
             exit 1
           fi
-          
-          echo "✅ Build artifacts found:"
+
+          echo "✅ Build artifacts directory found:"
           ls -la AppDir/dist/
-          
+
+          # 检查是否有 AppImage 文件
+          appimage_files=$(find AppDir/dist/ -name "*.AppImage" -type f)
+          if [ -z "$appimage_files" ]; then
+            echo "❌ No AppImage files found in AppDir/dist/"
+            echo "📁 Contents of AppDir/dist/:"
+            find AppDir/dist/ -type f -exec ls -lh {} \; || echo "No files found"
+            exit 1
+          fi
+
+          echo "✅ Found AppImage files:"
           # 检查文件大小是否合理
           MIN_SIZE=1024000  # 1MB
-          for file in AppDir/dist/*; do
-            if [ -f "$file" ]; then
-              size=$(stat -c%s "$file")
-              if [ $size -lt $MIN_SIZE ]; then
-                echo "⚠️  Warning: $file is unusually small (${size} bytes)"
-              else
-                echo "✅ $file: $(numfmt --to=iec $size)"
-              fi
+          for file in $appimage_files; do
+            size=$(stat -c%s "$file")
+            if [ $size -lt $MIN_SIZE ]; then
+              echo "❌ Error: $file is too small (${size} bytes, minimum: ${MIN_SIZE})"
+              exit 1
+            else
+              echo "✅ $file: $(numfmt --to=iec $size)"
             fi
           done
 
@@ -118,9 +128,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: linux-dist-${{ matrix.arch }}
-          path: AppDir/dist/
+          path: AppDir/dist/*.AppImage
           retention-days: 30
           compression-level: 6
+          if-no-files-found: error
 
   github-release:
     name: Create GitHub Release
@@ -146,14 +157,33 @@ jobs:
       - name: Verify artifacts
         run: |
           echo "📦 Verifying downloaded artifacts..."
-          
+
+          # 显示所有下载的工件
+          echo "📁 All downloaded artifacts:"
+          find artifacts/ -type f -name "*.AppImage" -exec ls -lh {} \; || echo "No AppImage files found"
+
+          # 验证每个架构的工件
           for arch in x86_64 aarch64; do
             artifact_path="artifacts/linux-dist-${arch}"
             if [ -d "$artifact_path" ]; then
-              echo "✅ Found artifacts for ${arch}:"
+              echo "✅ Found artifact directory for ${arch}:"
               ls -la "$artifact_path"
+
+              # 检查是否有 AppImage 文件
+              appimage_count=$(find "$artifact_path" -name "*.AppImage" -type f | wc -l)
+              if [ $appimage_count -eq 0 ]; then
+                echo "❌ No AppImage files found for ${arch}"
+                echo "📁 Contents of $artifact_path:"
+                find "$artifact_path" -type f -exec ls -lh {} \;
+                exit 1
+              else
+                echo "✅ Found $appimage_count AppImage file(s) for ${arch}"
+                find "$artifact_path" -name "*.AppImage" -type f -exec ls -lh {} \;
+              fi
             else
-              echo "❌ Missing artifacts for ${arch}"
+              echo "❌ Missing artifact directory for ${arch}"
+              echo "📁 Available artifacts:"
+              ls -la artifacts/ || echo "No artifacts directory found"
               exit 1
             fi
           done
@@ -212,23 +242,39 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           TAG_NAME="${{ steps.release_notes.outputs.tag_name }}"
-          
+
           # 重命名并上传文件
           for arch in x86_64 aarch64; do
-            src_file="artifacts/linux-dist-${arch}"/*
-            if [ -f "$src_file" ]; then
-              dst_name="waydroid-helper-linux-${arch}.AppImage"
-              echo "📤 Uploading $dst_name..."
-              
-              # 检查文件是否已存在
-              if gh release view "$TAG_NAME" --repo "${{ github.repository }}" --json assets | jq -r '.assets[].name' | grep -q "^${dst_name}$"; then
-                echo "⚠️ $dst_name already exists, skipping..."
-              else
+            artifact_dir="artifacts/linux-dist-${arch}"
+            if [ -d "$artifact_dir" ]; then
+              # 查找 AppImage 文件
+              src_file=$(find "$artifact_dir" -name "*.AppImage" -type f | head -1)
+              if [ -n "$src_file" ] && [ -f "$src_file" ]; then
+                dst_name="waydroid-helper-linux-${arch}.AppImage"
+                echo "📤 Uploading $dst_name from $src_file..."
+
+                # 检查文件大小
+                file_size=$(stat -c%s "$src_file")
+                echo "📊 File size: $(numfmt --to=iec $file_size)"
+
+                # 检查文件是否已存在
+                if gh release view "$TAG_NAME" --repo "${{ github.repository }}" --json assets | jq -r '.assets[].name' | grep -q "^${dst_name}$"; then
+                  echo "⚠️ $dst_name already exists, deleting and re-uploading..."
+                  gh release delete-asset "$TAG_NAME" "$dst_name" --repo "${{ github.repository }}" --yes || true
+                fi
+
+                # 上传文件
                 gh release upload "$TAG_NAME" "$src_file" \
                   --repo "${{ github.repository }}" \
                   --name "$dst_name" \
                   --clobber
+                echo "✅ Successfully uploaded $dst_name"
+              else
+                echo "❌ No AppImage file found in $artifact_dir"
+                ls -la "$artifact_dir" || echo "Directory does not exist"
               fi
+            else
+              echo "❌ Artifact directory $artifact_dir not found"
             fi
           done
 
