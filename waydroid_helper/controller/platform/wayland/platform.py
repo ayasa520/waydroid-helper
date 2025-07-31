@@ -20,8 +20,8 @@ from ..base import PlatformBase
 
 logger = logging.getLogger(__name__)
 
-# 加载libgtk-4.so
-libgtk = ctypes.CDLL("libgtk-4.so")
+# 加载libgtk-4.so.1
+libgtk = ctypes.CDLL("libgtk-4.so.1")
 
 # 定义函数原型
 libgtk.gdk_wayland_surface_get_wl_surface.restype = ctypes.c_void_p
