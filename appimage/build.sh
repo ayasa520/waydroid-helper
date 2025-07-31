@@ -130,6 +130,8 @@ ln -sf "$script_dir/build.py" .
 ln -sf "$script_dir/build.spec" .
 ln -sf "$project_root/requirements.txt" .
 ln -sf "$project_root/COPYING" LICENSE
+# Copy hooks directory for PyInstaller
+cp -r "$script_dir/hooks" . || { log "Failed to copy hooks directory"; exit 1; }
 mv usr/bin/waydroid-helper . || { log "Failed to move waydroid-helper"; exit 1; }
 
 # Run the Python build script

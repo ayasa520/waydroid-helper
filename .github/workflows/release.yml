@@ -11,54 +11,38 @@ on:
         required: true
 
 env:
-  PYTHON_VERSION: '3.12'
+  PYTHON_VERSION: '3.x'
   CACHE_KEY_PREFIX: 'waydroid-helper'
 
 jobs:
   build-linux:
     name: Build for Linux (${{ matrix.arch }})
-    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
-        arch: [x86_64, aarch64]
-      fail-fast: false
-      max-parallel: 2
-    
+        include:
+          - arch: x64
+            runner: ubuntu-latest
+            artifact-name: linux-x64-dist
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            artifact-name: linux-arm64-dist
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
 
-      - name: Cache system packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            /var/cache/apt/archives
-            /var/lib/apt/lists
-          key: ${{ env.CACHE_KEY_PREFIX }}-apt-${{ matrix.arch }}-${{ hashFiles('.github/workflows/release.yml') }}
-          restore-keys: |
-            ${{ env.CACHE_KEY_PREFIX }}-apt-${{ matrix.arch }}-
-
-      - name: Install system dependencies
+      - name: Install dependencies
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends \
-            desktop-file-utils \
-            software-properties-common \
-            libgtk-4-1 libgtk-4-dev \
-            libadwaita-1-dev libadwaita-1-0 \
-            libgirepository1.0-dev \
-            gcc libcairo2-dev pkg-config python3-dev \
-            gir1.2-gtk-4.0 gir1.2-adw-1 \
-            gettext ninja-build fakeroot attr \
-            libcap-dev libdbus-1-dev \
+          sudo apt-get update
+          sudo apt-get upgrade -y
+          sudo apt-get install desktop-file-utils software-properties-common -y
+          sudo apt-get install libgtk-4-1 libgtk-4-dev libadwaita-1-dev libadwaita-1-0 libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-4.0 gir1.2-adw-1 -y
+          sudo apt-get install gettext ninja-build fakeroot attr libcap-dev libdbus-1-dev \
             libtool autotools-dev autoconf automake build-essential \
             python3-pip python3-venv \
             cmake golang-go perl \
@@ -66,221 +50,50 @@ jobs:
             libprotobuf-dev protobuf-compiler \
             libbrotli-dev liblz4-dev libzstd-dev \
             libgtest-dev googletest \
-            wget xz-utils
+            wget xz-utils -y
 
-      - name: Setup Python virtual environment
+      - name: Set up Python virtual environment
         run: |
           python3 -m venv venv
           source venv/bin/activate
-          pip install --upgrade pip setuptools wheel
-          pip install meson pycairo "PyGObject==3.50.0"
-
-      - name: Cache build artifacts
-        uses: actions/cache@v4
-        with:
-          path: |
-            build/
-            AppDir/
-          key: ${{ env.CACHE_KEY_PREFIX }}-build-${{ matrix.arch }}-${{ github.sha }}
-          restore-keys: |
-            ${{ env.CACHE_KEY_PREFIX }}-build-${{ matrix.arch }}-
-          save-always: true
+          pip install --upgrade pip
+          pip install meson pycairo "PyGObject==3.50.0" pywayland
 
       - name: Build package
         run: |
           source venv/bin/activate
-          chmod +x appimage/build.sh
           appimage/build.sh
 
-      - name: Verify build artifacts
-        run: |
-          if [ ! -d "AppDir/dist/" ]; then
-            echo "❌ Build artifacts directory not found"
-            exit 1
-          fi
-
-          echo "✅ Build artifacts directory found:"
-          ls -la AppDir/dist/
-
-          # 检查是否有 AppImage 文件
-          appimage_files=$(find AppDir/dist/ -name "*.AppImage" -type f)
-          if [ -z "$appimage_files" ]; then
-            echo "❌ No AppImage files found in AppDir/dist/"
-            echo "📁 Contents of AppDir/dist/:"
-            find AppDir/dist/ -type f -exec ls -lh {} \; || echo "No files found"
-            exit 1
-          fi
-
-          echo "✅ Found AppImage files:"
-          # 检查文件大小是否合理
-          MIN_SIZE=1024000  # 1MB
-          for file in $appimage_files; do
-            size=$(stat -c%s "$file")
-            if [ $size -lt $MIN_SIZE ]; then
-              echo "❌ Error: $file is too small (${size} bytes, minimum: ${MIN_SIZE})"
-              exit 1
-            else
-              echo "✅ $file: $(numfmt --to=iec $size)"
-            fi
-          done
-
-      - name: Store distribution packages
+      - name: Store the distribution packages
         uses: actions/upload-artifact@v4
         with:
-          name: linux-dist-${{ matrix.arch }}
-          path: AppDir/dist/*.AppImage
-          retention-days: 30
-          compression-level: 6
-          if-no-files-found: error
+          name: ${{ matrix.artifact-name }}
+          path: AppDir/dist/
 
   github-release:
-    name: Create GitHub Release
+    name: GitHub Release
     needs: [build-linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write
       id-token: write
-    timeout-minutes: 30
-    
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RELEASE_TAG: ${{ github.event.inputs.tag_name || github.ref_name }}
 
+    steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts/
-          merge-multiple: false
-
-      - name: Verify artifacts
-        run: |
-          echo "📦 Verifying downloaded artifacts..."
-
-          # 显示所有下载的工件
-          echo "📁 All downloaded artifacts:"
-          find artifacts/ -type f -name "*.AppImage" -exec ls -lh {} \; || echo "No AppImage files found"
-
-          # 验证每个架构的工件
-          for arch in x86_64 aarch64; do
-            artifact_path="artifacts/linux-dist-${arch}"
-            if [ -d "$artifact_path" ]; then
-              echo "✅ Found artifact directory for ${arch}:"
-              ls -la "$artifact_path"
-
-              # 检查是否有 AppImage 文件
-              appimage_count=$(find "$artifact_path" -name "*.AppImage" -type f | wc -l)
-              if [ $appimage_count -eq 0 ]; then
-                echo "❌ No AppImage files found for ${arch}"
-                echo "📁 Contents of $artifact_path:"
-                find "$artifact_path" -type f -exec ls -lh {} \;
-                exit 1
-              else
-                echo "✅ Found $appimage_count AppImage file(s) for ${arch}"
-                find "$artifact_path" -name "*.AppImage" -type f -exec ls -lh {} \;
-              fi
-            else
-              echo "❌ Missing artifact directory for ${arch}"
-              echo "📁 Available artifacts:"
-              ls -la artifacts/ || echo "No artifacts directory found"
-              exit 1
-            fi
-          done
-
-      - name: Generate release notes
-        id: release_notes
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG_NAME="${{ github.event.inputs.tag_name }}"
-          else
-            TAG_NAME="${{ github.ref_name }}"
-          fi
-          
-          # 生成变更日志
-          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
-          echo "## What's Changed" >> $GITHUB_ENV
-          echo "" >> $GITHUB_ENV
-          
-          # 获取最近的标签
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          if [ -n "$PREV_TAG" ]; then
-            echo "Changes since $PREV_TAG:" >> $GITHUB_ENV
-            git log --pretty=format:"- %s (%h)" "$PREV_TAG"..HEAD >> $GITHUB_ENV
-          else
-            echo "Initial release" >> $GITHUB_ENV
-          fi
-          
-          echo "" >> $GITHUB_ENV
-          echo "## Downloads" >> $GITHUB_ENV
-          echo "- Linux x86_64: waydroid-helper-linux-x86_64.AppImage" >> $GITHUB_ENV
-          echo "- Linux ARM64: waydroid-helper-linux-aarch64.AppImage" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-          
-          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          path: AppDir/dist/
 
       - name: Create GitHub Release
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          TAG_NAME="${{ steps.release_notes.outputs.tag_name }}"
-          
-          # 检查发布是否已存在
-          if gh release view "$TAG_NAME" --repo "${{ github.repository }}" >/dev/null 2>&1; then
-            echo "⚠️ Release $TAG_NAME already exists, uploading assets..."
-          else
-            echo "🚀 Creating new release $TAG_NAME..."
-            gh release create "$TAG_NAME" \
-              --repo "${{ github.repository }}" \
-              --title "Release $TAG_NAME" \
-              --notes "${{ env.CHANGELOG }}" \
-              --generate-notes
-          fi
+          gh release create "$RELEASE_TAG" \
+            --repo "${{ github.repository }}" \
+            --notes ""
 
-      - name: Upload assets to release
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+      - name: Upload dists to GitHub Release
         run: |
-          TAG_NAME="${{ steps.release_notes.outputs.tag_name }}"
-
-          # 重命名并上传文件
-          for arch in x86_64 aarch64; do
-            artifact_dir="artifacts/linux-dist-${arch}"
-            if [ -d "$artifact_dir" ]; then
-              # 查找 AppImage 文件
-              src_file=$(find "$artifact_dir" -name "*.AppImage" -type f | head -1)
-              if [ -n "$src_file" ] && [ -f "$src_file" ]; then
-                dst_name="waydroid-helper-linux-${arch}.AppImage"
-                echo "📤 Uploading $dst_name from $src_file..."
-
-                # 检查文件大小
-                file_size=$(stat -c%s "$src_file")
-                echo "📊 File size: $(numfmt --to=iec $file_size)"
-
-                # 检查文件是否已存在
-                if gh release view "$TAG_NAME" --repo "${{ github.repository }}" --json assets | jq -r '.assets[].name' | grep -q "^${dst_name}$"; then
-                  echo "⚠️ $dst_name already exists, deleting and re-uploading..."
-                  gh release delete-asset "$TAG_NAME" "$dst_name" --repo "${{ github.repository }}" --yes || true
-                fi
-
-                # 上传文件
-                gh release upload "$TAG_NAME" "$src_file" \
-                  --repo "${{ github.repository }}" \
-                  --name "$dst_name" \
-                  --clobber
-                echo "✅ Successfully uploaded $dst_name"
-              else
-                echo "❌ No AppImage file found in $artifact_dir"
-                ls -la "$artifact_dir" || echo "Directory does not exist"
-              fi
-            else
-              echo "❌ Artifact directory $artifact_dir not found"
-            fi
-          done
-
-      - name: Cleanup old artifacts
-        if: always()
-        uses: geekyeggo/delete-artifact@v5
-        with:
-          name: linux-dist-*
-          failOnError: false
+          gh release upload "$RELEASE_TAG" AppDir/dist/**/* \
+            --repo "${{ github.repository }}"

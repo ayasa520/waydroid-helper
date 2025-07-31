@@ -19,7 +19,7 @@ a = Analysis(
     ],
     pathex=["usr/share/waydroid-helper"],
     datas=[
-        ("LICENSE", "."), 
+        ("LICENSE", "."),
         ("usr/share/glib-2.0", "share/glib-2.0"),
         ("usr/share/icons", "share/icons"),
         ("usr/share/locale", "share/locale"),
@@ -28,9 +28,10 @@ a = Analysis(
         ("usr/lib/systemd", "lib/systemd"),
         ("usr/share/waydroid-helper/data", "share/waydroid-helper/data"),
         ("usr/share/waydroid-helper/waydroid-helper.gresource", "share/waydroid-helper/"),
+        ("usr/share/waydroid-helper/waydroid_helper/controller/third_party/scrcpy-server", "share/waydroid-helper/waydroid_helper/controller/third_party/"),
     ],
-    hiddenimports=['gi', 'glib'],
-    hookspath=[],
+    hiddenimports=[ 'gi' ],
+    hookspath=['hooks'],
     hooksconfig={
         "gi": {
             "icons": ["Adwaita"],
