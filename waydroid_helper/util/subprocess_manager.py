@@ -46,14 +46,14 @@ class SubprocessManager:
         env = env or {}  # Initialize empty dict if env is None
 
         async with self._semaphore:
-            command_list = command.split(" ")
-            if self.is_running_in_flatpak():
-                if (
-                    "pkexec" == command_list[0]
-                    or "waydroid" == command_list[0]
-                    or "waydroid" == command_list[1]
-                ):
-                    command = f'flatpak-spawn --host bash -c "{command}"'
+            # command_list = command.split(" ")
+            # if self.is_running_in_flatpak():
+            #     if (
+            #         "pkexec" == command_list[0]
+            #         or "waydroid" == command_list[0]
+            #         or "waydroid" == command_list[1]
+            #     ):
+            #         command = f'flatpak-spawn --host bash -c "{command}"'
 
             process = await asyncio.create_subprocess_shell(
                 command,
