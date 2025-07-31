@@ -70,6 +70,7 @@ The key mapping interface has two modes:
 - **Purpose**: Execute complex command sequences
 - **Use Case**: Combo moves, complex interactions
 - **Supported Commands**:
+  - `release_actions`: If certain instructions need to be triggered on release, use the release_actions command before those instructions.
   - `key_press <key1,key2,...>`: Press specific keys
   - `key_release <key1,key2,...>`: Release specific keys
   - `key_switch <key1,key2,...>`: Toggle key states
