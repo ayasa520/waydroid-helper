@@ -29,7 +29,6 @@ Requires:       waydroid
 Requires:       fakeroot
 Requires:       attr
 Requires:       python3-aiofiles
-Requires:       python3-bidict
 Requires:       python3-httpx
 Requires:       python3-cairo
 Requires:       python3-gobject >= 3.50
