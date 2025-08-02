@@ -322,7 +322,7 @@ class TransparentWindow(Adw.Window):
         popover.set_child(main_box)
 
         title_label = Gtk.Label()
-        title_label.set_markup(f"<b>{widget.WIDGET_NAME}{_('Settings')}</b>")
+        title_label.set_markup(f"<b>{widget.WIDGET_NAME} {_('Settings')}</b>")
         title_label.set_halign(Gtk.Align.CENTER)
         main_box.append(title_label)
 
