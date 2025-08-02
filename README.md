@@ -180,6 +180,7 @@ For manual installation, you'll need to install the dependencies and build the p
 Enable systemd service
 ```
 systemctl --user enable waydroid-monitor.service --now
+sudo systemctl enable waydroid-mount.service --now
 ```
 
 For AppImage users, you need to manually copy the D-Bus configuration files and systemd unit files to their respective system locations to enable proper functionality. Here's the suggested file structure:

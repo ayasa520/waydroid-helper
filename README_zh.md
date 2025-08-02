@@ -179,6 +179,7 @@ sudo apt install waydroid-helper
 启用 systemd 服务
 ```
 systemctl --user enable waydroid-monitor.service --now
+sudo systemctl enable waydroid-mount.service --now
 ```
 
 对于 AppImage 用户，您需要手动将 D-Bus 配置文件和 systemd 单元文件复制到各自的系统位置以启用正确的功能。建议的文件结构如下：
