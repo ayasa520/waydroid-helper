@@ -506,27 +506,27 @@ class EditableDecorator(WidgetDecorator):
         
         logger.debug(f"Key capture mode key: {keyval} (keycode: {keycode})")
         
-        if keyval == Gdk.KEY_Escape:
-            # ESC取消编辑
-            logger.debug(f"ESC cancel editing")
-            self.finish_editing(False)
-            return True
-        elif keyval == Gdk.KEY_Delete:
-            # Delete删除最后一个最终捕获的按键
-            logger.debug(f"Delete last final captured key")
-            if self._remove_last_final_key():
-                self._wrapped_widget.queue_draw()
-            return True
-        else:
-            # 获取按键（不包含修饰键状态，确保物理按键唯一性）
-            key = self._get_key_name(keyval, keycode, 0)  # state=0，不包含修饰键状态
-            if key:
-                logger.debug(f"Key pressed: {key} (original keyval: {Gdk.keyval_name(keyval)})")
-                self._add_key_to_realtime(key)
-                self._wrapped_widget.queue_draw()
-            return True
+        # if keyval == Gdk.KEY_Escape:
+        #     # ESC取消编辑
+        #     logger.debug(f"ESC cancel editing")
+        #     self.finish_editing(False)
+        #     return True
+        # elif keyval == Gdk.KEY_Delete:
+        #     # Delete删除最后一个最终捕获的按键
+        #     logger.debug(f"Delete last final captured key")
+        #     if self._remove_last_final_key():
+        #         self._wrapped_widget.queue_draw()
+        #     return True
+        # else:
+        # 获取按键（不包含修饰键状态，确保物理按键唯一性）
+        key = self._get_key_name(keyval, keycode, 0)  # state=0，不包含修饰键状态
+        if key:
+            logger.debug(f"Key pressed: {key} (original keyval: {Gdk.keyval_name(keyval)})")
+            self._add_key_to_realtime(key)
+            self._wrapped_widget.queue_draw()
+        return True
         
-        return False
+        # return False
     
     def finish_editing(self, apply_changes=True):
         """结束按键捕获"""
