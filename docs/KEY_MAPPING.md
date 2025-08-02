@@ -26,7 +26,7 @@ The key mapping interface operates in two distinct modes:
 
 ### Adding Widgets
 
-<img src="/home/rikka/Projects/waydroid-helper/assets/img/KEY_MAPPING/image-20250802234629279.png" alt="image-20250802234629279" style="zoom:67%;" />
+<img src="../assets/img/KEY_MAPPING/image-20250802234629279.png" alt="image-20250802234629279" style="zoom:67%;" />
 
 1. **Ensure you're in Edit Mode** (this is the default when opening)
 2. **Right-click** on an empty area to open the widget selection panel
@@ -73,7 +73,7 @@ Many widgets offer additional configurations through their setting panel:
 
 ### 1. Single Click
 
-![image-20250802223254952](/home/rikka/Projects/waydroid-helper/assets/img/KEY_MAPPING/image-20250802223254952.png)
+![image-20250802223254952](../assets/img/KEY_MAPPING/image-20250802223254952.png)
 
 Maps a key/mouse button to a single tap at a specific screen location. Triggered when the physical button is pressed, release when it is released
 
@@ -82,7 +82,7 @@ Maps a key/mouse button to a single tap at a specific screen location. Triggered
 
 ### 2. Repeated Click
 
-![image-20250802225228249](/home/rikka/Projects/waydroid-helper/assets/img/KEY_MAPPING/image-20250802225228249.png)
+![image-20250802225228249](../assets/img/KEY_MAPPING/image-20250802225228249.png)
 
 Automated rapid clicking
 
@@ -94,7 +94,7 @@ Automated rapid clicking
 
 ### 3. Aim
 
-![image-20250802225148255](/home/rikka/Projects/waydroid-helper/assets/img/KEY_MAPPING/image-20250802225148255.png)
+![image-20250802225148255](../assets/img/KEY_MAPPING/image-20250802225148255.png)
 
 It is commonly used in FPS games. Adding it to the game can drag the position of the viewing angle, and cooperate with the fire button to realize the use of the mouse to move the viewing angle and aim and shoot. After adding, please drag the rectangular box to adjust the effective range of the viewing angle rotation, which needs to correspond to the effective range that can trigger the operation viewing angle rotation in the game.
 
@@ -105,7 +105,7 @@ It is commonly used in FPS games. Adding it to the game can drag the position of
 
 ### 4. **Attack/fire**
 
-![image-20250802224603813](/home/rikka/Projects/waydroid-helper/assets/img/KEY_MAPPING/image-20250802224603813.png)
+![image-20250802224603813](../assets/img/KEY_MAPPING/image-20250802224603813.png)
 
 Commonly used in FPS games, add a button to the position of the attack/fire button, and use the left button of the mouse to click, and it needs to be used with the aim button.
 
@@ -117,7 +117,7 @@ Commonly used in FPS games, add a button to the position of the attack/fire butt
 
 ### 5. Directional Pad (D-Pad)
 
-![image-20250802225040921](/home/rikka/Projects/waydroid-helper/assets/img/KEY_MAPPING/image-20250802225040921.png)
+![image-20250802225040921](../assets/img/KEY_MAPPING/image-20250802225040921.png)
 
 Drag and position it on the virtual d-pad to control movement direction. After adding the button, drag the dotted border to resize it. Make sure the blue frame of the d-pad button matches the size of the in-game  virtual d-pad.
 
@@ -132,7 +132,7 @@ Drag and position it on the virtual d-pad to control movement direction. After a
 
 ### 6. Skill Casting
 
-![image-20250802225814744](/home/rikka/Projects/waydroid-helper/assets/img/KEY_MAPPING/image-20250802225814744.png)
+![image-20250802225814744](../assets/img/KEY_MAPPING/image-20250802225814744.png)
 
 Commonly used when using the characters' skills, click and cooperate with the mouse to release skills. Drag the dotted frame to resize the Skill Casting button to match the virtual skill button range.
 
@@ -152,7 +152,7 @@ Commonly used when using the characters' skills, click and cooperate with the mo
 
 ### 7. Right Click to Walk
 
-![image-20250802231156125](/home/rikka/Projects/waydroid-helper/assets/img/KEY_MAPPING/image-20250802231156125.png)
+![image-20250802231156125](../assets/img/KEY_MAPPING/image-20250802231156125.png)
 
 Move it to the game's virtual joystick, use the mouse to control movement direction, and right-click on the screen to move to the specified location.
 

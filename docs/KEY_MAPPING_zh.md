@@ -26,7 +26,7 @@ Waydroid Helper 的按键映射功能允许您为在 Waydroid 中运行的 Andro
 
 ### 添加组件
 
-![image-20250802235726989](/home/rikka/Projects/waydroid-helper/assets/img/KEY_MAPPING_zh/image-20250802235726989.png)
+![image-20250802235726989](../assets/img/KEY_MAPPING_zh/image-20250802235726989.png)
 
 1. 确保处于编辑模式（打开时的默认模式）
 2. 在空白区域右键点击，打开组件选择面板
@@ -73,7 +73,7 @@ Waydroid Helper 的按键映射功能允许您为在 Waydroid 中运行的 Andro
 
 ### 1. 单击
 
-![image-20250802223254952](/home/rikka/Projects/waydroid-helper/assets/img/KEY_MAPPING/image-20250802223254952.png)
+![image-20250802223254952](../assets/img/KEY_MAPPING/image-20250802223254952.png)
 
 将按键/鼠标按钮映射到特定屏幕位置的单击。物理按钮按下时触发，释放时释放
 
@@ -82,7 +82,7 @@ Waydroid Helper 的按键映射功能允许您为在 Waydroid 中运行的 Andro
 
 ### 2. 连续点击
 
-![image-20250802225228249](/home/rikka/Projects/waydroid-helper/assets/img/KEY_MAPPING/image-20250802225228249.png)
+![image-20250802225228249](../assets/img/KEY_MAPPING/image-20250802225228249.png)
 
 自动快速点击
 
@@ -94,7 +94,7 @@ Waydroid Helper 的按键映射功能允许您为在 Waydroid 中运行的 Andro
 
 ### 3. 瞄准
 
-![image-20250802225148255](/home/rikka/Projects/waydroid-helper/assets/img/KEY_MAPPING/image-20250802225148255.png)
+![image-20250802225148255](../assets/img/KEY_MAPPING/image-20250802225148255.png)
 
 常用于 FPS 游戏。添加后可用于拖动视角位置，配合开火按钮实现使用鼠标移动视角、瞄准和射击。添加后请拖动矩形框调整视角旋转的有效范围，需要对应游戏中可触发操作视角旋转的有效范围。
 
@@ -105,7 +105,7 @@ Waydroid Helper 的按键映射功能允许您为在 Waydroid 中运行的 Andro
 
 ### 4. **攻击/开火**
 
-![image-20250802224603813](/home/rikka/Projects/waydroid-helper/assets/img/KEY_MAPPING/image-20250802224603813.png)
+![image-20250802224603813](../assets/img/KEY_MAPPING/image-20250802224603813.png)
 
 常用于 FPS 游戏，在攻击/开火按钮位置添加按钮，使用鼠标左键点击，需要与瞄准按钮配合使用。
 
@@ -117,7 +117,7 @@ Waydroid Helper 的按键映射功能允许您为在 Waydroid 中运行的 Andro
 
 ### 5. 方向键（D-Pad）
 
-![image-20250802225040921](/home/rikka/Projects/waydroid-helper/assets/img/KEY_MAPPING/image-20250802225040921.png)
+![image-20250802225040921](../assets/img/KEY_MAPPING/image-20250802225040921.png)
 
 拖动并定位在虚拟方向键上以控制移动方向。添加按钮后，拖动虚线边框调整大小。确保方向键按钮的蓝色框架与游戏中虚拟方向键的大小匹配。
 
@@ -130,7 +130,7 @@ Waydroid Helper 的按键映射功能允许您为在 Waydroid 中运行的 Andro
 
 ### 6. 技能释放
 
-![image-20250802225814744](/home/rikka/Projects/waydroid-helper/assets/img/KEY_MAPPING/image-20250802225814744.png)
+![image-20250802225814744](../assets/img/KEY_MAPPING/image-20250802225814744.png)
 
 常用于使用角色技能时，点击并与鼠标配合释放技能。拖动虚线框架调整技能释放按钮大小以匹配虚拟技能按钮范围。
 
@@ -147,7 +147,7 @@ Waydroid Helper 的按键映射功能允许您为在 Waydroid 中运行的 Andro
 
 ### 7. 右键行走
 
-![image-20250802231156125](/home/rikka/Projects/waydroid-helper/assets/img/KEY_MAPPING/image-20250802231156125.png)
+![image-20250802231156125](../assets/img/KEY_MAPPING/image-20250802231156125.png)
 
 将右键行走按钮移动到游戏的虚拟摇杆上，使用鼠标控制移动方向，右键点击屏幕移动到指定位置。
 
