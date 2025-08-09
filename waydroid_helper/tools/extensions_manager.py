@@ -41,14 +41,19 @@ class PackageInfo(TypedDict):
     conflicts: list[str]
     source: list[str]
     md5sums: list[str]
+    sha256sums: list[str]
     source_x86: list[str]
     md5sums_x86: list[str]
+    sha256sums_x86: list[str]
     source_x86_64: list[str]
     md5sums_x86_64: list[str]
+    sha256sums_x86_64: list[str]
     source_arm: list[str]
     md5sums_arm: list[str]
+    sha256sums_arm: list[str]
     source_arm64: list[str]
     md5sums_arm64: list[str]
+    sha256sums_arm64: list[str]
     installed_files: list[str]
     props: list[str]
     install: str
@@ -284,6 +289,7 @@ class PackageManager(GObject.Object):
         client: httpx.AsyncClient,
         url: str,
         dest_path: str,
+        sha256: str | None = None,
         md5: str | None = None,
         retries: int = 3,
         delay: int = 2,
@@ -300,7 +306,15 @@ class PackageManager(GObject.Object):
                 async with aiofiles.open(dest_path, mode="wb") as f:
                     await f.write(response.content)
 
-                if md5 is not None:
+                # Prefer SHA-256 validation; fall back to MD5 if SHA-256 not provided
+                if sha256 is not None:
+                    result = await self._subprocess.run(f'sha256sum "{dest_path}"')
+                    actual_sha256 = result["stdout"].split()[0]
+                    if actual_sha256 != sha256:
+                        raise ValueError(
+                            f"SHA256 mismatch: expected {sha256}, got {actual_sha256}"
+                        )
+                elif md5 is not None:
                     result = await self._subprocess.run(f'md5sum "{dest_path}"')
                     actual_md5 = result["stdout"].split()[0]
                     if actual_md5 != md5:
@@ -341,22 +355,36 @@ class PackageManager(GObject.Object):
                 dest = f'{self.cache_dir}/extensions/{package_info["name"]}/{file}'
                 tasks.append(self.download_file(client, url, dest))
 
+            # Determine source and checksum lists, preferring SHA-256 over MD5
             if f"source_{self.arch}" in package_info.keys():
                 _source = f"source_{self.arch}"
+                _sha256sums = f"sha256sums_{self.arch}"
                 _md5sums = f"md5sums_{self.arch}"
             else:
                 _source = "source"
-                _md5sums = f"md5sums"
+                _sha256sums = "sha256sums"
+                _md5sums = "md5sums"
 
-            if _source not in package_info or _md5sums not in package_info:
+            if _source not in package_info:
                 logger.warning(
-                    f"Package {package_info['name']} missing {_source} or {_md5sums}"
+                    f"Package {package_info['name']} missing {_source}"
                 )
                 return
 
-            for source, md5 in zip(
+            has_sha256 = _sha256sums in package_info and bool(package_info[_sha256sums])
+            has_md5 = _md5sums in package_info and bool(package_info[_md5sums])
+            if not has_sha256 and not has_md5:
+                logger.warning(
+                    f"Package {package_info['name']} missing both {_sha256sums} and {_md5sums}"
+                )
+                return
+
+            use_sha256 = has_sha256
+            sums_key = _sha256sums if use_sha256 else _md5sums
+
+            for source, expected in zip(
                 package_info[_source],
-                package_info[_md5sums],
+                package_info[sums_key],
             ):
                 file_name: str = source.split("::")[0]
                 url: str = source.split("::")[1]
@@ -364,14 +392,25 @@ class PackageManager(GObject.Object):
                     self.cache_dir, "extensions", package_info["name"], file_name
                 )
                 if os.path.exists(file_path):
-                    result = await self._subprocess.run(f'md5sum "{file_path}"')
-                    actual_md5 = result["stdout"].split()[0]
-                    if actual_md5 == md5:
+                    if use_sha256:
+                        result = await self._subprocess.run(f'sha256sum "{file_path}"')
+                        actual = result["stdout"].split()[0]
+                    else:
+                        result = await self._subprocess.run(f'md5sum "{file_path}"')
+                        actual = result["stdout"].split()[0]
+
+                    if actual == expected:
                         continue
                     else:
-                        tasks.append(self.download_file(client, url, file_path))
+                        if use_sha256:
+                            tasks.append(self.download_file(client, url, file_path, sha256=expected))
+                        else:
+                            tasks.append(self.download_file(client, url, file_path, md5=expected))
                 else:
-                    tasks.append(self.download_file(client, url, file_path))
+                    if use_sha256:
+                        tasks.append(self.download_file(client, url, file_path, sha256=expected))
+                    else:
+                        tasks.append(self.download_file(client, url, file_path, md5=expected))
 
             await asyncio.gather(*tasks)
 
