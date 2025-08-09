@@ -170,6 +170,7 @@ class ExtensionsPage(Gtk.Box):
 
     async def refresh(self):
         await self.extension_manager.update_extension_json()
+        self.extension_manager.grab_meta()
 
         self.stack.remove(self.extensions_page)
 
