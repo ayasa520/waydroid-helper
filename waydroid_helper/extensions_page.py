@@ -116,6 +116,8 @@ class ExtensionsPage(Gtk.Box):
         row.set_manager(self.extension_manager)
 
         row.button.connect("clicked", on_button_clicked)
+        if self._navigation_view.find_page(title) is not None:
+            self._navigation_view.remove(self._navigation_view.find_page(title))
         return row
 
     # TODO 换成 TreeListModel? 我找不到可用的资料或者样例
