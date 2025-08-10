@@ -215,6 +215,11 @@ class AvailableVersionPage(NavigationPage):
         )
         dialog.add_response(Gtk.ResponseType.OK, _("OK"))
         dialog.present()
+    
+    def on_uninstallation_started(
+        self, obj: GObject.Object, name: str, version: str
+    ) -> None:
+        pass
 
     def on_uninstallation_completed(
         self, obj: GObject.Object, name: str, version: str
@@ -302,12 +307,17 @@ class AvailableVersionPage(NavigationPage):
                 )
 
     async def __uninstall(self, name:str, version:str):
+        uninstall_successful = False
         try:
+            self.rows[f"{name}-{version}"].set_installation_state(
+                AvailableRow.State.INSTALLING
+            )
             if await self.show_dialog(
                 _("Uninstall Confirmation"),
                 _("Do you want to uninstall") + " " + name,
             ):
                 await self.extension_manager.remove_package(name)
+                uninstall_successful = True
         except Exception as e:
             self.rows[f"{name}-{version}"].set_installation_state(
                 AvailableRow.State.INSTALLED
@@ -318,6 +328,11 @@ class AvailableVersionPage(NavigationPage):
             )
             dialog.add_response(Gtk.ResponseType.OK, _("OK"))
             dialog.present()
+        finally:
+            if not uninstall_successful:
+                self.rows[f"{name}-{version}"].set_installation_state(
+                    AvailableRow.State.INSTALLED
+                )
 
     def on_install_button_clicked(self, button: Gtk.Button, name:str, version:str):
         self._task.create_task(self.__install(name, version))

@@ -51,7 +51,7 @@ class ExtensionsPage(Gtk.Box):
         self.stack.set_vexpand(True)
         self.stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
 
-        # 创建一个��中的容器用于 spinner
+        # 创建一个居中的容器用于 spinner
         spinner_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         spinner_box.set_halign(Gtk.Align.CENTER)
         spinner_box.set_valign(Gtk.Align.CENTER)
@@ -76,6 +76,9 @@ class ExtensionsPage(Gtk.Box):
             "installation-completed", self.on_installation_completed
         )
         self.extension_manager.connect(
+            "uninstallation-started", self.on_uninstallation_started
+        )
+        self.extension_manager.connect(
             "uninstallation-completed", self.on_uninstallation_completed
         )
         self.append(self.stack)
@@ -91,6 +94,12 @@ class ExtensionsPage(Gtk.Box):
         if isinstance(nav_page, AvailableVersionPage):
             page = cast(AvailableVersionPage, nav_page)
             page.on_installation_completed(obj, name, version)
+
+    def on_uninstallation_started(self, obj: GObject.Object, name: str, version: str):
+        nav_page: AvailableVersionPage = self._navigation_view.find_page(name)
+        if isinstance(nav_page, AvailableVersionPage):
+            page = cast(AvailableVersionPage, nav_page)
+            page.on_uninstallation_started(obj, name, version)
 
     def on_uninstallation_completed(self, obj: GObject.Object, name: str, version: str):
         nav_page: AvailableVersionPage = self._navigation_view.find_page(name)

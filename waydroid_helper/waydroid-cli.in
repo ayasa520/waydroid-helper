@@ -105,6 +105,13 @@ function cp_to_data() {
     
 }
 
+function rm_apk() {
+    local apks=("$@")
+    for apk in "${apks[@]}"; do
+        waydroid shell -- sh -c "pm uninstall $apk"
+    done
+}
+
 function rm_data(){
     local files=("$@")
     for file in "${files[@]}"; do
@@ -163,6 +170,13 @@ case "$action" in
             exit 1
         fi
         rm_overlay_rw "$@"
+    ;;
+    rm_apk)
+        if [ $# -lt 1 ]; then
+            echo "Usage: $0 rm_apk <apks>"
+            exit 1
+        fi
+        rm_apk "$@"
     ;;
     rm_data)
         if [ $# -lt 1 ]; then

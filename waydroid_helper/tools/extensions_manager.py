@@ -22,7 +22,7 @@ from waydroid_helper.util.arch import host
 from waydroid_helper.util.log import logger
 from waydroid_helper.util.subprocess_manager import SubprocessManager
 from waydroid_helper.util.task import Task
-from waydroid_helper.waydroid import Waydroid
+from waydroid_helper.waydroid import Waydroid, WaydroidState
 
 
 class ExtensionManagerState(IntEnum):
@@ -88,6 +88,7 @@ class PackageManager(GObject.Object):
         "installation-started": (GObject.SignalFlags.RUN_FIRST, None, (str, str)),
         # 'installation-progress': (GObject.SignalFlags.RUN_FIRST, None, (str, float)),
         "installation-completed": (GObject.SignalFlags.RUN_FIRST, None, (str, str)),
+        "uninstallation-started": (GObject.SignalFlags.RUN_FIRST, None, (str, str)),
         "uninstallation-completed": (GObject.SignalFlags.RUN_FIRST, None, (str, str)),
     }
     state = GObject.Property(type=object)
@@ -534,7 +535,7 @@ class PackageManager(GObject.Object):
                 command = await self.generate_command(func_name, args)
                 if command:
                     # commands.append(command)
-                    await self._subprocess.run(
+                    resp = await self._subprocess.run(
                         command,
                         env={
                             "pkgdir": os.path.join(
@@ -542,6 +543,7 @@ class PackageManager(GObject.Object):
                             )
                         },
                     )
+                    logger.info(resp)
                 else:
                     logger.error(
                         f"Unsupported function or invalid arguments: {func_name}"
@@ -587,7 +589,7 @@ class PackageManager(GObject.Object):
             "rm_overlay_rw": "pkexec {cli_path} rm_overlay_rw {paths}",
             "rm_data": "pkexec {cli_path} rm_data {paths}",
             "cp_to_data": 'pkexec {cli_path} cp_to_data "{src}" "{dest}"',
-            "rm_apk": "pkexec {cli_path} rm_data {paths}",
+            "rm_apk": "pkexec {cli_path} rm_apk {apks}",
         }
 
         if func_name in command_map:
@@ -599,11 +601,21 @@ class PackageManager(GObject.Object):
                         cli_path=os.environ["WAYDROID_CLI_PATH"], src=src, dest=dest
                     )
             elif func_name == "rm_apk":
-                paths = await self.get_apk_path(args)
-                if paths.strip() == "":
-                    return None
+                apks = " ".join(['"' + apk + '"' for apk in args])
+                # 等待直到 self.waydroid.state == WaydroidState.RUNNING, 超时 raise
+                async def wait_for_running(timeout: float = 30.0):
+                    start_time = asyncio.get_event_loop().time()
+                    while True:
+                        if self.waydroid.state == WaydroidState.RUNNING:
+                            return
+                        if asyncio.get_event_loop().time() - start_time > timeout:
+                            raise asyncio.TimeoutError(f"Failed to start waydroid session")
+                        await asyncio.sleep(0.5)
+                if self.waydroid.state == WaydroidState.STOPPED:
+                    self._task.create_task(self.waydroid.start_session())
+                await wait_for_running()
                 return command_map[func_name].format(
-                    cli_path=os.environ["WAYDROID_CLI_PATH"], paths=paths
+                    cli_path=os.environ["WAYDROID_CLI_PATH"], apks=apks
                 )
             else:
                 paths = " ".join(['"' + path + '"' for path in args])
@@ -626,6 +638,8 @@ class PackageManager(GObject.Object):
         """移除包"""
         async with self._package_lock:
             if package_name in self.installed_packages:
+                version = self.installed_packages[package_name]["version"]
+                self.emit("uninstallation-started", package_name, version)
                 await self._subprocess.run(
                     f'pkexec {os.environ["WAYDROID_CLI_PATH"]} rm_overlay {" ".join(self.installed_packages[package_name]["installed_files"])}'
                 )
@@ -643,7 +657,6 @@ class PackageManager(GObject.Object):
                 )
                 # await asyncio.gather(coro1, coro2, coro3)
 
-                version = self.installed_packages[package_name]["version"]
                 del self.installed_packages[package_name]
                 logger.info(f"Package {package_name} removed successfully.")
                 self.emit("uninstallation-completed", package_name, version)
