@@ -26,8 +26,8 @@ class MountService(dbus.service.Object):
         )  
         dbus.service.Object.__init__(self, bus_name, "/org/waydro/Mount")
 
-    @dbus.service.method("id.waydro.Mount", in_signature="ss", out_signature="a{sv}")
-    def BindMount(self, source, target):
+    @dbus.service.method("id.waydro.Mount", in_signature="ssuu", out_signature="a{sv}")
+    def BindMount(self, source, target, uid, gid):
         source_str = str(source)
         target_str = str(target)
         try:
@@ -39,19 +39,24 @@ class MountService(dbus.service.Object):
             )
             fuse_version = fuse_version_result.stdout.splitlines()[0].split()[4]
 
+            src_uid_i = int(uid)
+            src_gid_i = int(gid)
+
             command = [
                 "bindfs",
                 "-u",
                 str(stat_info.st_uid),
                 "-g",
                 str(stat_info.st_gid),
+                f"--create-for-user={src_uid_i}",
+                f"--create-for-group={src_gid_i}",
                 source_str,
                 target_str,
             ]
             if int(fuse_version.split('.')[0]) < 3:
                 command[1:1] = [
                     "-o",
-                    "nonempty"
+                    "nonempty",
                 ]
 
             result = subprocess.run(

@@ -35,15 +35,22 @@ def send_dbus_signal():
     system_bus = dbus.SystemBus()
     mount_object = system_bus.get_object( # pyright: ignore[reportUnknownMemberType]
         "id.waydro.Mount", "/org/waydro/Mount"
-    )  
+    )
     mount_interface = dbus.Interface(mount_object, "id.waydro.Mount")
     try:
         sources = os.environ.get("SOURCE", "").split(":")
         targets = os.environ.get("TARGET", "").split(":")
+        uid = os.getuid()
+        gid = os.getgid()
         for source, target in zip(sources, targets):
             if source != "" and target != "":
-                mount_interface.Unmount( target)  # pyright: ignore[reportUnknownMemberType]
-                result = mount_interface.BindMount(source, target) # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]
+                mount_interface.Unmount(target)  # pyright: ignore[reportUnknownMemberType]
+                result = mount_interface.BindMount(
+                    source,
+                    target,
+                    dbus.UInt32(uid),
+                    dbus.UInt32(gid),
+                ) # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]
                 if int(result["returncode"]) == 0: # pyright: ignore[reportUnknownArgumentType]
                     logging.info(f"mount {source} to {target} succeeded")
                 else:
