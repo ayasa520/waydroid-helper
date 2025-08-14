@@ -32,12 +32,9 @@ class WidgetFactory:
             # 导入 components 包
             import waydroid_helper.controller.widgets.components as components_package
 
-            logger.debug(f"Scanning components package: {components_package.__name__}")
-
             # 使用 pkgutil 遍历包中的所有模块
             for _, module_name, ispkg in pkgutil.iter_modules(components_package.__path__):
                 if not ispkg:  # 只处理模块，不处理子包
-                    logger.debug(f"Found component module: {module_name}")
                     self._load_widget_from_module(module_name)
 
         except ImportError as e:
@@ -58,7 +55,6 @@ class WidgetFactory:
                     widget_type = self._extract_widget_type(name)
                     self.widget_classes[widget_type] = obj
                     self.widget_metadata[widget_type] = self._extract_metadata(obj)
-                    logger.debug(f"Found widget: {widget_type} -> {obj.__name__}")
                     
         except Exception as e:
             logger.error(f"Failed to load module {module_name}: {e}")
@@ -131,7 +127,6 @@ class WidgetFactory:
         """手动注册新的组件类型"""
         self.widget_classes[name] = widget_class
         self.widget_metadata[name] = self._extract_metadata(widget_class)
-        logger.debug(f"Manually register widget: {name} -> {widget_class.__name__}")
     
     def unregister_widget_type(self, name: str):
         """注销组件类型"""

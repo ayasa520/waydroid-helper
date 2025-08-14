@@ -10,7 +10,6 @@ from waydroid_helper.controller.core.event_bus import (Event, EventType,
                                                        event_bus)
 from waydroid_helper.controller.core.handler.event_handlers import InputEvent
 from waydroid_helper.controller.core.key_system import Key, KeyCombination
-from waydroid_helper.util.log import logger
 
 if TYPE_CHECKING:
     from gi.repository import Gtk
@@ -58,7 +57,6 @@ class KeyMappingManager:
 
         # 为了检查依赖状态，需要一个对widget状态的引用，暂时留空
         self._widget_states: dict[int, dict[str, Any]] = {}
-        logger.info("KeyMappingManager initialized")
 
         event_bus.subscribe(EventType.MACRO_KEY_PRESSED, self._on_macro_key_pressed)
         event_bus.subscribe(EventType.MACRO_KEY_RELEASED, self._on_macro_key_released)
@@ -93,9 +91,6 @@ class KeyMappingManager:
             self._key_subscriptions[key_combination] = []
         self._key_subscriptions[key_combination].append(subscription)
 
-        logger.debug(
-            f"注册按键映射: {key_combination} -> {type(widget).__name__}(id={id(widget)}) reentrant={reentrant}"
-        )
         return True
 
     def unsubscribe(self, widget: "Gtk.Widget") -> bool:
@@ -115,7 +110,6 @@ class KeyMappingManager:
             if not self._key_subscriptions[key_combination]:
                 del self._key_subscriptions[key_combination]
 
-        logger.debug(f"已取消 widget(id={widget_id}) 的所有按键订阅")
         return True
 
     def unsubscribe_key(
@@ -265,10 +259,8 @@ class KeyMappingManager:
                             del self._triggered_mappings[key_combination]
                     except Exception as e:
                         # 如果回调函数执行过程中出现异常，确保清理预记录的映射
-                        logger.error(f"callback error: {e}")
                         if not already_triggered and key_combination in self._triggered_mappings:
                             del self._triggered_mappings[key_combination]
-                            logger.debug(f"exception clear triggered mapping: {key_combination}")
                         raise
 
         return triggered_any
@@ -289,19 +281,15 @@ class KeyMappingManager:
                                 released_any = True
 
                 del self._triggered_mappings[mapping_key]
-                logger.debug(f"释放映射: {mapping_key} 因为 {released_key} 被释放")
         return released_any
 
     def print_mappings(self):
         """Print current key mappings (for debugging)"""
-        logger.debug("\n=== KeyMappingManager: Current key mapping status ===")
-        logger.debug(f"Total mappings: {len(self._key_subscriptions)} key combinations")
 
         if not self._key_subscriptions:
-            logger.debug("No registered key mappings")
+            pass
         else:
             for key_combo, subscriptions in self._key_subscriptions.items():
-                logger.debug(f"  {key_combo} -> {len(subscriptions)} subscriptions:")
                 for sub in subscriptions:
                     widget_name = type(sub.widget).__name__
                     widget_id = id(sub.widget)
@@ -313,18 +301,12 @@ class KeyMappingManager:
                     if sub.reentrant:
                         conditions.append("reentrant")
                     conditions_str = f" ({', '.join(conditions)})" if conditions else ""
-                    logger.debug(f"    - {widget_name}(id={widget_id}){conditions_str}")
-        logger.debug(f"Currently pressed keys: {[str(k) for k in self._pressed_keys]}")
-        logger.debug(
-            f"Currently triggered mappings: {[str(k) for k in self._triggered_mappings.keys()]}")
-        logger.debug("=" * 30)
 
     def clear(self) -> None:
         """清空所有订阅和状态"""
         self._key_subscriptions.clear()
         self._pressed_keys.clear()
         self._triggered_mappings.clear()
-        logger.info("KeyMappingManager cleared.")
 
 
 # 全局实例

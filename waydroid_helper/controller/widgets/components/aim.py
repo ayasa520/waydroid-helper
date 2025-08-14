@@ -17,7 +17,6 @@ from waydroid_helper.controller.widgets import BaseWidget
 from waydroid_helper.controller.widgets.config import create_slider_config
 from waydroid_helper.controller.widgets.decorators import (Editable, Resizable,
                                                            ResizableDecorator)
-from waydroid_helper.util.log import logger
 
 if TYPE_CHECKING:
     from cairo import Context, Surface
@@ -120,11 +119,7 @@ class Aim(BaseWidget):
 
     def _on_sensitivity_changed(self, key: str, value: int, restoring:bool) -> None:
         """处理灵敏度配置变更"""
-        try:
-            # self.sensitivity = int(value)
-            logger.debug(f"Aim sensitivity changed to: {value}")
-        except (ValueError, TypeError):
-            logger.error(f"Invalid sensitivity value: {value}")
+        pass
 
     async def _set_state(self, new_state: AimState) -> None:
         """安全地设置状态"""
@@ -132,7 +127,6 @@ class Aim(BaseWidget):
             if self._state != new_state:
                 old_state = self._state
                 self._state = new_state
-                logger.debug(f"Aim state changed: {old_state.value} -> {new_state.value}")
 
     async def _get_state(self) -> AimState:
         """安全地获取状态"""
@@ -203,10 +197,8 @@ class Aim(BaseWidget):
                 # 标记任务完成
                 self._motion_queue.task_done()
 
-        except asyncio.CancelledError:
-            logger.debug("Motion processor cancelled")
-        except Exception as e:
-            logger.error(f"Error in motion processor: {e}")
+        except Exception:
+            pass
         finally:
             self._motion_processor_running = False
 
@@ -215,10 +207,6 @@ class Aim(BaseWidget):
     ) -> None:
         """处理单个鼠标移动事件"""
         try:
-            logger.debug(
-                f"[RELATIVE_MOTION] Aim motion {dx}, {dy} at {self.center_x}, {self.center_y}"
-            )
-
             # 计算移动增量
             sensitivity = self.get_config_value("sensitivity")
             _dx = dx_unaccel * sensitivity / 50
@@ -234,8 +222,8 @@ class Aim(BaseWidget):
             # 处理位置更新
             await self._update_aim_position(_dx, _dy, w, h)
 
-        except Exception as e:
-            logger.error(f"Error in single motion handling: {e}")
+        except Exception:
+            pass
 
     async def _update_aim_position(self, dx: float, dy: float, w: int, h: int) -> None:
         """更新瞄准位置"""
@@ -271,7 +259,6 @@ class Aim(BaseWidget):
 
         pointer_id = pointer_id_manager.allocate(self)
         if pointer_id is None:
-            logger.warning("Failed to allocate pointer_id for Aim button")
             return
 
         msg = InjectTouchEventMsg(
@@ -291,7 +278,6 @@ class Aim(BaseWidget):
 
         pointer_id = pointer_id_manager.get_allocated_id(self)
         if pointer_id is None:
-            logger.error("Invalid pointer_id for Aim button")
             return
 
         msg = InjectTouchEventMsg(
@@ -312,7 +298,6 @@ class Aim(BaseWidget):
 
         pointer_id = pointer_id_manager.get_allocated_id(self)
         if pointer_id is None:
-            logger.warning("Failed to allocate pointer_id for Aim button UP event")
             return
 
         msg = InjectTouchEventMsg(
@@ -443,7 +428,6 @@ class Aim(BaseWidget):
                 self.platform = get_platform(self.get_root())
 
             if not self.platform:
-                logger.error("Failed to get platform")
                 await self._set_state(AimState.IDLE)
                 return
 
@@ -460,10 +444,7 @@ class Aim(BaseWidget):
             # 发送瞄准触发事件
             event_bus.emit(Event(type=EventType.AIM_TRIGGERED, source=self, data=None))
 
-            logger.debug("Entered aiming state")
-
         except Exception as e:
-            logger.error(f"Error entering aiming state: {e}")
             await self._set_state(AimState.IDLE)
 
     async def _exit_aiming_state(self) -> None:
@@ -514,10 +495,9 @@ class Aim(BaseWidget):
             # 发送瞄准释放事件
             event_bus.emit(Event(type=EventType.AIM_RELEASED, source=self, data=None))
 
-            logger.debug("Exited aiming state")
 
-        except Exception as e:
-            logger.error(f"Error exiting aiming state: {e}")
+        except Exception:
+            pass
 
     def on_key_triggered(
         self,
@@ -544,17 +524,11 @@ class Aim(BaseWidget):
             if current_state == AimState.IDLE:
                 # 进入瞄准状态
                 await self._enter_aiming_state()
-                logger.debug(
-                    f"Aim button triggered by key {used_key} at {self.center_x}, {self.center_y}"
-                )
             else:
                 # 退出瞄准状态
                 await self._exit_aiming_state()
-                logger.debug(
-                    f"Aim button released by key {used_key} at {self.center_x}, {self.center_y}"
-                )
-        except Exception as e:
-            logger.error(f"Error handling key triggered: {e}")
+        except Exception:
+            pass
 
     def on_key_released(
         self,
@@ -578,15 +552,15 @@ class Aim(BaseWidget):
             current_state = await self._get_state()
             if current_state != AimState.IDLE:
                 await self._exit_aiming_state()
-        except Exception as e:
-            logger.error(f"Error during cleanup: {e}")
+        except Exception:
+            pass
 
     def __del__(self) -> None:
         """析构函数 - 确保资源被清理"""
         try:
             self.cleanup()
-        except Exception as e:
-            logger.error(f"Error in destructor: {e}")
+        except Exception:
+            pass
 
     def get_delete_button_bounds(self) -> tuple[int, int, int, int]:
         """获取删除按钮的边界 (x, y, w, h) - 将按钮定位在中心圆的右上角边缘"""

@@ -122,7 +122,6 @@ class GlobalEventEmitter(GObject.Object):
             self._handler_info: Dict[EventType, List[HandlerInfo]] = {}
 
             GlobalEventEmitter._initialized = True
-            logger.info("GlobalEventEmitter singleton initialized")
 
     def emit_event(self, event_type: EventType, source: Any, data: Any):
         """发射事件信号"""
@@ -134,7 +133,6 @@ class GlobalEventEmitter(GObject.Object):
         with cls._lock:
             cls._instance = None
             cls._initialized = False
-            logger.info("GlobalEventEmitter singleton reset")
 
 
 @dataclass
@@ -181,7 +179,6 @@ class EventBus:
             self._next_handler_id = 1
 
             EventBus._initialized = True
-            logger.info("EventBus singleton initialized with GTK signals")
 
     def subscribe(
         self,
@@ -212,7 +209,7 @@ class EventBus:
             try:
                 handler(event)
             except Exception as e:
-                logger.error(f"处理事件 {event_type.value} 出错: {e}")
+                logger.error(f"Failed to handle event {event_type.value}: {e}")
 
         # 连接GTK信号
         connection_id = self._emitter.connect(event_type.value, wrapped_handler)
@@ -232,7 +229,6 @@ class EventBus:
         # 按优先级重新排序连接（需要断开重连来保证顺序）
         self._reorder_handlers(event_type)
 
-        logger.debug(f"订阅事件: {event_type.value}, 优先级={priority}, 订阅者={type(subscriber).__name__ if subscriber else 'None'}")
 
     def _reorder_handlers(self, event_type: EventType) -> None:
         """按优先级重新排序处理器"""
@@ -251,7 +247,6 @@ class EventBus:
         """取消事件订阅"""
         # 注意：由于我们使用了包装处理器，直接按handler取消订阅比较困难
         # 这个方法主要为了兼容性，实际使用中建议使用unsubscribe_by_subscriber
-        logger.warning("unsubscribe by handler is deprecated, use unsubscribe_by_subscriber instead")
         return False
 
     def unsubscribe_by_subscriber(self, subscriber: Any) -> int:
@@ -281,12 +276,6 @@ class EventBus:
             for handler_info in handlers_to_remove:
                 self._handler_info[event_type].remove(handler_info)
 
-            if handlers_to_remove:
-                logger.debug(f"取消订阅者 {type(subscriber).__name__}(id={subscriber_id}) 在事件 {event_type.value} 的 {len(handlers_to_remove)} 个订阅")
-
-        if unsubscribed_count > 0:
-            logger.info(f"取消订阅者 {type(subscriber).__name__}(id={subscriber_id}) 的总共 {unsubscribed_count} 个事件订阅")
-
         return unsubscribed_count
 
     def emit(self, event: Event[Any]) -> None:
@@ -294,8 +283,6 @@ class EventBus:
         发送事件
         事件会按优先级顺序传递给所有订阅者
         """
-        logger.debug(f"发送事件: {event.type.value}")
-
         # 使用GTK信号系统发射事件
         self._emitter.emit_event(event.type, event.source, event.data)
 
@@ -309,8 +296,6 @@ class EventBus:
         self._connections.clear()
         self._handler_info.clear()
 
-        logger.info("EventBus cleared.")
-
     @classmethod
     def reset_singleton(cls) -> None:
         """重置单例状态 - 主要用于测试和窗口重新打开"""
@@ -321,7 +306,6 @@ class EventBus:
             cls._initialized = False
             # 同时重置全局事件发射器
             GlobalEventEmitter.reset_singleton()
-            logger.info("EventBus singleton reset")
 
 
 # 全局事件总线实例

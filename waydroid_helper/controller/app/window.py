@@ -184,17 +184,12 @@ class TransparentWindow(Adw.Window):
         overlay_data = event.data
         if overlay_data["action"] == "show":
             self.circle_overlay.set_circle_data(overlay_data)
-            logger.debug(f"Displaying circular overlay: {overlay_data}")
         elif overlay_data["action"] == "hide":
             self.circle_overlay.set_circle_data(None)
-            logger.debug(f"Hiding circular overlay: {overlay_data}")
 
     def _on_widget_settings_requested(self, event: "Event[bool]"):
         """Callback when a widget requests settings, pops up a Popover"""
         widget = event.source
-        logger.info(
-            f"Widget {type(widget).__name__} (id={id(widget)}) requested settings."
-        )
 
         popover = Gtk.Popover()
         popover.set_autohide(event.data)
@@ -228,7 +223,6 @@ class TransparentWindow(Adw.Window):
 
                 def on_mask_clicked(controller, n_press, x, y):
                     """遮罩层点击事件处理"""
-                    logger.debug(f"Mask clicked at coordinates: ({x}, {y})")
                     event_bus.emit(
                         Event(EventType.MASK_CLICKED, self, {"x": int(x), "y": int(y)})
                     )
@@ -339,7 +333,6 @@ class TransparentWindow(Adw.Window):
             confirm_button.add_css_class("suggested-action")
 
             def on_confirm_clicked(btn):
-                logger.info("Configuration popover closed by user.")
                 config_manager.emit("confirmed")
                 popover.popdown()
 
@@ -359,7 +352,6 @@ class TransparentWindow(Adw.Window):
         popover.popup()
 
     def _on_close_request(self, window):
-        logger.info("Close request received, running cleanup...")
         self.on_clear_widgets(None)
         self.close()
         return False
@@ -372,9 +364,7 @@ class TransparentWindow(Adw.Window):
         # Clean up window's own event subscriptions
         from waydroid_helper.controller.core import event_bus
 
-        unsubscribed_count = event_bus.unsubscribe_by_subscriber(self)
-        if unsubscribed_count > 0:
-            logger.debug(f"TransparentWindow 清理了 {unsubscribed_count} 个事件订阅")
+        event_bus.unsubscribe_by_subscriber(self)
 
         # 关闭服务器
         self.server.close()
@@ -396,27 +386,19 @@ class TransparentWindow(Adw.Window):
 
     async def cleanup_scrcpy(self):
         await self.adb_helper.remove_reverse_tunnel()
-        logger.info("Scrcpy cleanup finished.")
 
     async def setup_scrcpy(self):
         """Pushes scrcpy-server and starts it on the device, with retry logic."""
-        logger.info("Waiting for internal server to start...")
         await self.server.wait_started()
 
         if not self.server.server:
-            logger.error("Internal server failed to start. Aborting scrcpy setup.")
             return
 
-        logger.info("Internal server started. Starting scrcpy setup...")
 
         for attempt in range(MAX_RETRY_ATTEMPTS):
-            logger.info(f"Scrcpy setup attempt {attempt + 1}/{MAX_RETRY_ATTEMPTS}...")
             try:
                 # 1. Connect to ADB device first
                 if not await self.adb_helper.connect():
-                    logger.warning(
-                        f"Failed to connect to ADB device. Retrying in {RETRY_DELAY_SECONDS}s..."
-                    )
                     await asyncio.sleep(RETRY_DELAY_SECONDS)
                     continue
 
@@ -425,9 +407,6 @@ class TransparentWindow(Adw.Window):
 
                 # 3. Push server to device
                 if not await self.adb_helper.push_scrcpy_server():
-                    logger.warning(
-                        f"Failed to push scrcpy-server. Retrying in {RETRY_DELAY_SECONDS}s..."
-                    )
                     await asyncio.sleep(RETRY_DELAY_SECONDS)
                     continue
 
@@ -436,42 +415,27 @@ class TransparentWindow(Adw.Window):
                 if not await self.adb_helper.reverse_tunnel(
                     socket_name, self.server.port
                 ):
-                    logger.warning(
-                        f"Failed to set up adb reverse. Retrying in {RETRY_DELAY_SECONDS}s..."
-                    )
                     await asyncio.sleep(RETRY_DELAY_SECONDS)
                     continue
 
                 # 5. Start scrcpy-server on device
                 if not await self.adb_helper.start_scrcpy_server(scid):
-                    logger.warning(
-                        f"Failed to start scrcpy-server. Retrying in {RETRY_DELAY_SECONDS}s..."
-                    )
                     await asyncio.sleep(RETRY_DELAY_SECONDS)
                     continue
 
-                logger.info("Scrcpy setup process completed successfully.")
                 return  # Exit on success
 
             except asyncio.CancelledError:
-                logger.info("Scrcpy setup task was cancelled.")
                 return  # Use return to exit immediately on cancellation
             except Exception as e:
-                logger.error(
-                    f"An unexpected error occurred during setup attempt {attempt + 1}: {e}"
-                )
                 await asyncio.sleep(RETRY_DELAY_SECONDS)
 
-        logger.error(
-            f"Scrcpy setup failed after {MAX_RETRY_ATTEMPTS} attempts. Aborting."
-        )
 
     def setup_mode_system(self):
         """Initializes the dual mode system"""
         # Listen for current_mode property changes
         self.connect("notify::current-mode", self._on_mode_changed)
 
-        logger.debug(f"Dual mode system initialized, current mode: {self.current_mode}")
 
     def setup_event_handlers(self):
         """Sets up event handlers"""
@@ -479,11 +443,8 @@ class TransparentWindow(Adw.Window):
         # default_handler.add_key_mapping("T", lambda: print("🎮 Default: T key test"))
         # default_handler.add_key_mapping("G", lambda: print("🎮 Default: G key test"))
         # default_handler.add_mouse_mapping(2, lambda: print("🖱️ Default: middle click"))  # middle click
+        pass
 
-        logger.debug("Event handler chain initialized")
-        logger.debug(
-            f"Handler list: {[h['name'] for h in self.event_handler_chain.get_handlers_info()]}"
-        )
 
     def setup_window(self):
         """Sets window properties"""
@@ -545,15 +506,9 @@ class TransparentWindow(Adw.Window):
     def on_window_mouse_pressed(self, controller, n_press, x, y):
         """Window-level mouse press event"""
         button = controller.get_current_button()
-        logger.debug(
-            f"Mouse pressed: position({x:.1f}, {y:.1f}), button={button}, mode={self.current_mode}"
-        )
 
         # Use event handler chain in mapping mode
         if self.current_mode == self.MAPPING_MODE:
-            logger.debug(
-                "In mapping mode, use event handler chain to handle mouse event"
-            )
 
             # Create Key object for mouse button
             mouse_key = key_registry.create_mouse_key(button)
@@ -570,10 +525,7 @@ class TransparentWindow(Adw.Window):
             # Process with event handler chain
             handled = self.event_handler_chain.process_event(event)
             if handled:
-                logger.debug("Mouse event handled by event handler chain")
                 return True
-            else:
-                logger.debug("Mouse event not handled by any event handler")
             return
 
         # Mouse event handling in edit mode
@@ -581,13 +533,9 @@ class TransparentWindow(Adw.Window):
             widget_at_position = self.workspace_manager.get_widget_at_position(x, y)
             if not widget_at_position:
                 # Right click on blank area, show create menu
-                logger.debug("Right click on blank area, show create menu")
                 self.menu_manager.show_widget_creation_menu(x, y, self.widget_factory)
             else:
                 # Right click on widget, call widget's right-click callback
-                logger.debug(
-                    f"Right click on widget: {type(widget_at_position).__name__}"
-                )
                 local_x, local_y = self.workspace_manager.global_to_local_coords(
                     widget_at_position, x, y
                 )
@@ -600,9 +548,6 @@ class TransparentWindow(Adw.Window):
     def on_window_mouse_motion(self, controller, x, y):
         """Window-level mouse motion event"""
         if self.current_mode == self.MAPPING_MODE:
-            logger.debug(
-                "In mapping mode, use event handler chain to handle mouse motion"
-            )
             event = controller.get_current_event()
             state = event.get_modifier_state()
             # FIXME This mouse_key should actually be None, this is just for compatibility.
@@ -680,9 +625,6 @@ class TransparentWindow(Adw.Window):
 
     def handle_widget_interaction(self, widget, x, y, n_press=1):
         """Handles widget interaction - supports double-click detection"""
-        logger.debug(
-            f"Handle widget interaction: {type(widget).__name__}, position({x:.1f}, {y:.1f}), click count={n_press}"
-        )
 
         # Convert to widget internal coordinates for edit state check
         local_x, local_y = self.global_to_local_coords(widget, x, y)
@@ -691,13 +633,9 @@ class TransparentWindow(Adw.Window):
         should_keep_editing = False
         if hasattr(widget, "should_keep_editing_on_click"):
             should_keep_editing = widget.should_keep_editing_on_click(local_x, local_y)
-            logger.debug(f"Widget edit status query result: {should_keep_editing}")
 
         if should_keep_editing:
             # If it should keep editing state, don't change selection state, and don't trigger bring to front
-            logger.debug(
-                "Keep editing state, skip selection logic and bring to front operation"
-            )
             # Set skip flag to avoid breaking edit state with delayed bring to front
             widget._skip_delayed_bring_to_front = True
             return  # Return directly, do not execute subsequent selection and bring to front logic
@@ -709,32 +647,26 @@ class TransparentWindow(Adw.Window):
             # Select current widget
             if hasattr(widget, "set_selected"):
                 widget.set_selected(True)
-                logger.debug("Set widget to selected state")
 
         # Selection brings to front - using delayed method
         # Clear skip flag (if it exists), ensure normal bring to front works
         if hasattr(widget, "_skip_delayed_bring_to_front"):
             delattr(widget, "_skip_delayed_bring_to_front")
-            logger.debug("Clear skip delayed bring to front flag")
 
         self.schedule_bring_to_front(widget)
 
         # Convert to widget internal coordinates
         local_x, local_y = self.global_to_local_coords(widget, x, y)
-        logger.debug(f"Convert to local coordinates: ({local_x:.1f}, {local_y:.1f})")
 
         # Handle double-click event
         if n_press == 2:
-            logger.debug("Double click detected")
             # When double-clicking, mark widget to avoid delayed bring to front operation
             if not hasattr(widget, "_skip_delayed_bring_to_front"):
                 widget._skip_delayed_bring_to_front = True
-                logger.debug("Mark widget to skip delayed bring to front operation")
 
             if hasattr(widget, "on_widget_double_clicked"):
                 widget.on_widget_double_clicked(local_x, local_y)
             # Double click does not trigger bring to front when entering edit, to avoid interference with edit state
-            logger.debug("Double click completed, skip bring to front operation")
             return
 
         # Record the operation to be performed, but do not execute immediately
@@ -745,22 +677,18 @@ class TransparentWindow(Adw.Window):
         # Check if it's a resize area
         if hasattr(widget, "check_resize_direction"):
             resize_direction = widget.check_resize_direction(local_x, local_y)
-            logger.debug(f"Check resize direction: {resize_direction}")
             if resize_direction:
                 # When starting to resize, if the widget is in edit state, force exit edit
                 if hasattr(widget, "should_keep_editing_on_click"):
                     # This means the widget has an edit decorator, force trigger selection change to exit edit
                     self.clear_all_selections()
                     widget.set_selected(True)
-                    logger.debug("When resizing, force exit edit state")
 
                 self.pending_resize_direction = resize_direction
-                logger.debug("Prepare resize operation")
                 return
 
         # Otherwise, prepare for drag
         self.pending_resize_direction = None
-        logger.debug("Prepare drag operation")
 
         # Call widget's click callback
         if hasattr(widget, "on_widget_clicked"):
@@ -769,13 +697,9 @@ class TransparentWindow(Adw.Window):
     def on_window_mouse_released(self, controller, n_press, x, y):
         """Window-level mouse release event"""
         button = controller.get_current_button()
-        logger.debug(f"Mouse released: position({x:.1f}, {y:.1f}), button={button}")
 
         # Use event handler chain in mapping mode
         if self.current_mode == self.MAPPING_MODE:
-            logger.debug(
-                "In mapping mode, use event handler chain to handle mouse release"
-            )
 
             # Create Key object for mouse button
             mouse_key = key_registry.create_mouse_key(button)
@@ -792,10 +716,7 @@ class TransparentWindow(Adw.Window):
             # Process with event handler chain
             handled = self.event_handler_chain.process_event(event)
             if handled:
-                logger.debug("Mouse release event handled by event handler chain")
                 return True
-            else:
-                logger.debug("Mouse release event not handled by any event handler")
             return
 
         # Mouse release handling in edit mode, delegate to workspace_manager
@@ -891,9 +812,6 @@ class TransparentWindow(Adw.Window):
                 hasattr(widget, "_skip_delayed_bring_to_front")
                 and widget._skip_delayed_bring_to_front
             ):
-                logger.debug(
-                    "Skip delayed bring to front operation (widget is editing)"
-                )
                 # Clear flag
                 delattr(widget, "_skip_delayed_bring_to_front")
                 return False
@@ -917,9 +835,6 @@ class TransparentWindow(Adw.Window):
                 current_state = getattr(widget, "is_selected", False)
                 if current_state != selected_state:
                     widget.set_selected(selected_state)
-                    logger.debug(f"Bring to front: {current_state} -> {selected_state}")
-                else:
-                    logger.debug(f"Bring to front: {selected_state}")
 
         except Exception as e:
             logger.error(f"Error bringing widget to front: {e}")
@@ -958,8 +873,6 @@ class TransparentWindow(Adw.Window):
                 widget_count += 1
             child = child.get_next_sibling()
 
-        mode_name = "mapping" if mapping_mode else "edit"
-        logger.debug(f"Set {widget_count} widgets to {mode_name} mode")
 
     def create_widget_at_position(self, widget: "BaseWidget", x: int, y: int):
         """Creates a component at the specified position"""
@@ -977,17 +890,6 @@ class TransparentWindow(Adw.Window):
                 success = self.register_widget_key_mapping(widget, key_combination)
                 if success:
                     success_count += 1
-                    logger.debug(
-                        f"Register multi-key mapping: {key_combination} -> {type(widget).__name__}({direction})"
-                    )
-                else:
-                    logger.debug(
-                        f"Register multi-key mapping failed: {key_combination} -> {direction}"
-                    )
-
-            logger.debug(
-                f"Multi-key component {type(widget).__name__} registered: {success_count}/{total_count}"
-            )
 
         elif hasattr(widget, "final_keys") and widget.final_keys:
             # Traditional single-key mapping components
@@ -995,20 +897,9 @@ class TransparentWindow(Adw.Window):
             for key_combination in widget.final_keys:
                 success = self.register_widget_key_mapping(widget, key_combination)
                 if success:
-                    logger.debug(
-                        f"Auto register component default key mapping: {key_combination} -> {type(widget).__name__}"
-                    )
                     # Update component display text to reflect registered keys
                     if hasattr(widget, "text") and not widget.text:
                         widget.text = str(key_combination)
-                else:
-                    logger.debug(
-                        f"Register component default key mapping failed: {key_combination}"
-                    )
-        else:
-            logger.debug(
-                f"Component {type(widget).__name__} has no default key, skip auto registration"
-            )
 
     def on_clear_widgets(self, button: Gtk.Button | None):
         """Clears all components"""
@@ -1025,17 +916,11 @@ class TransparentWindow(Adw.Window):
             # Remove widget from UI
             self.fixed.remove(widget)
             widget.on_delete()
-            logger.debug(
-                f"Clear widget {type(widget).__name__}(id={id(widget)}) and its key mapping"
-            )
 
         # Clear interaction states
         self.workspace_manager.dragging_widget = None
         self.workspace_manager.resizing_widget = None
 
-        logger.debug(
-            f"Clear all components, {len(widgets_to_delete)} widgets and their key mappings"
-        )
 
     def get_physical_keyval(self, keycode):
         """Gets the standard keyval for the physical key (independent of modifier keys)"""
@@ -1048,7 +933,7 @@ class TransparentWindow(Adw.Window):
                 if success:
                     return Gdk.keyval_to_upper(keyval)
         except Exception as e:
-            logger.debug(f"Failed to get physical keyval: {e}")
+            logger.error(f"Failed to get physical keyval: {e}")
         return 0
 
     def on_global_key_press(self, controller, keyval, keycode, state):
@@ -1075,14 +960,12 @@ class TransparentWindow(Adw.Window):
 
         # Use event handler chain in mapping mode
         if self.current_mode == self.MAPPING_MODE:
-            logger.debug("In mapping mode, use event handler chain to handle key event")
 
             # Get standard keyval for physical key
             physical_keyval = self.get_physical_keyval(keycode)
             if physical_keyval == 0:
                 # If failed to get, fallback to original keyval
                 physical_keyval = keyval
-                logger.debug(f"Fallback to original keyval: {Gdk.keyval_name(keyval)}")
 
             # Process modifier keys themselves
             if self._is_modifier_key(keyval):
@@ -1126,19 +1009,13 @@ class TransparentWindow(Adw.Window):
                 # Process with event handler chain
                 handled = self.event_handler_chain.process_event(event)
                 if handled:
-                    logger.debug("Key event handled by event handler chain")
                     return True
-                else:
-                    logger.debug("Key event not handled by any event handler")
 
         # General key handling in edit mode or mapping mode
         if keyval == Gdk.KEY_Escape:
             if self.current_mode == self.EDIT_MODE:
                 # Edit mode: cancel all selections
                 self.clear_all_selections()
-            else:
-                # Mapping mode: do nothing for now, or switch back to edit mode
-                logger.debug("In mapping mode, press ESC key")
             return True
 
         # Only handle edit-related keys in edit mode
@@ -1203,7 +1080,6 @@ class TransparentWindow(Adw.Window):
     def _on_mode_changed(self, widget, pspec):
         """Callback when mode property changes"""
         new_mode = self.current_mode
-        logger.debug(f"Mode changed to: {new_mode}")
 
         # Notify all widgets to switch drawing mode
         mapping_mode = new_mode == self.MAPPING_MODE
@@ -1213,7 +1089,6 @@ class TransparentWindow(Adw.Window):
         if new_mode == self.MAPPING_MODE:
             # Enter mapping mode: cancel all selections, disable edit functions
             self.clear_all_selections()
-            logger.debug("Enter mapping mode, edit function disabled")
 
             self.show_notification(_("Mapping Mode (F1: Switch Mode)"))
 
@@ -1222,40 +1097,23 @@ class TransparentWindow(Adw.Window):
             self.set_title(f"{APP_TITLE} - Mapping Mode (F1: Switch Mode)")
             self.set_cursor_from_name("default")
 
-            # Display mapping mode help information
-            logger.debug("Enter mapping mode!")
-            logger.debug(
-                f"- Press configured key combination to trigger corresponding widget action"
-            )
-            logger.debug("- F1: Switch to edit mode")
-            logger.debug("- ESC: Other operations")
 
         else:
             # Enter edit mode: restore edit functions
-            logger.debug("Enter edit mode, edit function enabled")
             self.show_notification(_("Edit Mode (F1: Switch Mode)"))
             self.set_title(f"{APP_TITLE} - Edit Mode (F1: Switch Mode)")
 
             # Display edit mode help information
-            logger.debug("Enter edit mode!")
-            logger.debug("- Right click on blank area: create widget")
-            logger.debug("- Double click widget: edit key mapping")
-            logger.debug("- Left click drag: move widget")
-            logger.debug("- Delete: delete selected widget")
-            logger.debug("- F1: Switch to mapping mode")
             event_bus.emit(Event(EventType.EXIT_STARING, self, None))
 
     def switch_mode(self, new_mode):
         """Switches mode"""
         if new_mode not in [self.EDIT_MODE, self.MAPPING_MODE]:
-            logger.debug(f"Invalid mode: {new_mode}")
             return False
 
         if self.current_mode == new_mode:
-            logger.debug(f"Already in {new_mode} mode")
             return True
 
-        logger.debug(f"Switch mode: {self.current_mode} -> {new_mode}")
 
         # Use property system to set mode, which will trigger _on_mode_changed callback
         self.set_property("current-mode", new_mode)
@@ -1326,18 +1184,11 @@ class TransparentWindow(Adw.Window):
     def on_global_key_release(self, controller, keyval, keycode, state):
         """Global key release event - uses event handler chain"""
         if self.current_mode == self.MAPPING_MODE:
-            logger.debug(
-                "In mapping mode, use event handler chain to handle key release"
-            )
-
             # Get standard keyval for physical key
             physical_keyval = self.get_physical_keyval(keycode)
             if physical_keyval == 0:
                 # If failed to get, fallback to original keyval
                 physical_keyval = keyval
-                logger.debug(
-                    f"Release fallback to original keyval: {Gdk.keyval_name(keyval)}"
-                )
 
             # Process modifier keys themselves
             if self._is_modifier_key(keyval):
@@ -1381,10 +1232,7 @@ class TransparentWindow(Adw.Window):
                 # Process with event handler chain
                 handled = self.event_handler_chain.process_event(event)
                 if handled:
-                    logger.debug("Key release event handled by event handler chain")
                     return True
-                else:
-                    logger.debug("Key release event not handled by any event handler")
 
         return False
 

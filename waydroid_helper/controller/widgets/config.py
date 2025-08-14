@@ -487,12 +487,10 @@ class ConfigManager(GObject.Object):
     def set_value(self, key: str, value: Any, update_ui: bool = True) -> bool:
         """设置配置值"""
         if key not in self.configs:
-            logger.warning(f"Config key not found: {key}")
             return False
         
         config = self.configs[key]
         if not config.validate(value):
-            logger.warning(f"Invalid value for config {key}: {value}")
             self.emit('config-validated', key, False)
             return False
         
@@ -511,7 +509,6 @@ class ConfigManager(GObject.Object):
         self.emit('config-changed', key, value)
         self.emit('config-validated', key, True)
         
-        logger.debug(f"Config {key} changed: {old_value} -> {value}")
         return True
     
     def get_value(self, key: str) -> Any:
@@ -528,7 +525,6 @@ class ConfigManager(GObject.Object):
                 callback(changed_key, value, self.restoring)
         
         self.connect("config-changed", signal_handler)
-        logger.debug(f"Added change callback for config key: {key}")
     
     def _on_ui_value_changed(self, key: str, value: Any) -> None:
         """UI控件值变更回调"""

@@ -5,7 +5,7 @@
 处理未被其他处理器处理的事件，提供兜底的默认行为
 """
 
-import logging
+from waydroid_helper.util.log import logger
 from typing import Callable
 
 from waydroid_helper.controller.core.handler.default.default_key_handler import \
@@ -35,8 +35,6 @@ class DefaultEventHandler(InputEventHandler):
 
     def handle_event(self, event: InputEvent) -> bool:
         """处理默认事件"""
-        logging.debug(f"[DEBUG] 默认处理器处理事件: {event.event_type}")
-
         try:
             if event.event_type == "key_press":
                 return self._handle_default_key_press(event)
@@ -54,7 +52,7 @@ class DefaultEventHandler(InputEventHandler):
                 return self._handle_default_mouse_zoom(event)
 
         except Exception as e:
-            logging.error(f"[ERROR] 默认处理器出错: {e}")
+            logger.error(f"Default event handler failed to process event: {e}")
 
         return False
 
@@ -74,14 +72,13 @@ class DefaultEventHandler(InputEventHandler):
             return False
 
         key_name = event.key.name
-        logging.debug(f"[DEBUG] 默认处理按键按下: {key_name}")
         # 检查是否有自定义映射
         if key_name in self.key_mappings:
             try:
                 self.key_mappings[key_name](event)
                 return True
             except Exception as e:
-                logging.error(f"[ERROR] 执行自定义按键映射失败: {e}")
+                logger.error(f"Failed to execute custom key mapping: {e}")
 
         if not event.raw_data:
             return False
@@ -99,9 +96,6 @@ class DefaultEventHandler(InputEventHandler):
         if not event.key:
             return False
 
-        key_name = event.key.name
-        logging.debug(f"[DEBUG] 默认处理按键释放: {key_name}")
-
         if not event.raw_data:
             return False
 
@@ -118,17 +112,13 @@ class DefaultEventHandler(InputEventHandler):
         if not event.button:
             return False
 
-        logging.debug(
-            f"[DEBUG] 默认处理鼠标按下: 按钮{event.button} 位置{event.position}"
-        )
-
         # 检查是否有自定义映射
         if event.button in self.mouse_mappings:
             try:
                 self.mouse_mappings[event.button](event)
                 return True
             except Exception as e:
-                logging.error(f"[ERROR] 执行自定义鼠标映射失败: {e}")
+                logger.error(f"Failed to execute custom mouse mapping: {e}")
 
         if not event.raw_data:
             return False
@@ -146,8 +136,6 @@ class DefaultEventHandler(InputEventHandler):
         if not event.button:
             return False
 
-        logging.debug(f"[DEBUG] 默认处理鼠标释放: 按钮{event.button}")
-
         if not event.raw_data:
             return False
 
@@ -162,12 +150,10 @@ class DefaultEventHandler(InputEventHandler):
     def add_key_mapping(self, key_name: str, callback: Callable[[InputEvent], None]):
         """添加自定义按键映射"""
         self.key_mappings[key_name] = callback
-        logging.debug(f"[DEBUG] 添加自定义按键映射: {key_name}")
 
     def add_mouse_mapping(self, button: int, callback: Callable[[InputEvent], None]):
         """添加自定义鼠标映射"""
         self.mouse_mappings[button] = callback
-        logging.debug(f"[DEBUG] 添加自定义鼠标映射: 按钮{button}")
 
     def _handle_default_mouse_scroll(self, event: InputEvent) -> bool:
         """处理默认鼠标滚动"""

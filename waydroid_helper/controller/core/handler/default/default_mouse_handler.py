@@ -13,7 +13,6 @@ from waydroid_helper.controller.core.control_msg import (InjectScrollEventMsg,
                                                          InjectTouchEventMsg)
 from waydroid_helper.controller.core.event_bus import (Event, EventType,
                                                        event_bus)
-from waydroid_helper.util.log import logger
 
 if TYPE_CHECKING:
     from gi.repository import Gtk
@@ -224,7 +223,6 @@ class MouseDefault(MouseBase):
     def zoom_processor(
         self, controller: 'Gtk.EventControllerScroll', range: float
     ) -> bool:
-        logger.debug(f"{self.scroll_begin_x}, {self.scroll_begin_y}")
         # msg = ControlMsg(
         #     ControlMsgType.INJECT_TOUCH_EVENT,
         #     {
@@ -237,5 +235,4 @@ class MouseDefault(MouseBase):
         # )
         # logging.info(msg.data)
         # self.server.send(msg.pack())
-        logger.info(range)
         return True

@@ -2,13 +2,12 @@
 """
 控制消息模块
 """
-
-import logging
 import struct
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import IntEnum
 
+from waydroid_helper.util.log import logger
 from waydroid_helper.controller.android import (AKeyCode, AKeyEventAction,
                                                 AMetaState, AMotionEventAction,
                                                 AMotionEventButtons)
@@ -107,7 +106,7 @@ class InjectKeycodeMsg(ControlMsg):
                 self.metastate,
             )
         except Exception as e:
-            logging.error(e)
+            logger.error(e)
         return packed_data
 
 
@@ -126,7 +125,7 @@ class InjectTextMsg(ControlMsg):
             packed_data = struct.pack(">BI", self.msg_type, len(text))
             packed_data += text
         except Exception as e:
-            logging.error(e)
+            logger.error(e)
         return packed_data
 
 
@@ -150,7 +149,7 @@ class InjectTouchEventMsg(ControlMsg):
         client_x, client_y, client_w, client_h = self.position
 
         if device_w == 0 or device_h == 0:
-            logging.warning("Device resolution not set, using client resolution. Coordinates may be incorrect.")
+            logger.warning("Device resolution not set, using client resolution. Coordinates may be incorrect.")
             device_w, device_h = client_w, client_h
         
         # Scale coordinates
@@ -194,7 +193,7 @@ class InjectScrollEventMsg(ControlMsg):
         client_x, client_y, client_w, client_h = self.position
 
         if device_w == 0 or device_h == 0:
-            logging.warning("Device resolution not set, using client resolution. Coordinates may be incorrect.")
+            logger.warning("Device resolution not set, using client resolution. Coordinates may be incorrect.")
             device_w, device_h = client_w, client_h
 
         # Scale coordinates

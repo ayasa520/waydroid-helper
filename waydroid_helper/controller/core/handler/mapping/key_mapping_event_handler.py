@@ -5,7 +5,6 @@
 
 from waydroid_helper.controller.core.handler.event_handlers import (
     EventHandlerPriority, InputEvent, InputEventHandler)
-from waydroid_helper.util.log import logger
 
 from .key_mapping_manager import key_mapping_manager
 
@@ -36,8 +35,6 @@ class KeyMappingEventHandler(InputEventHandler):
         """
         if not self.can_handle(event):
             return False
-
-        logger.debug(f"KeyMappingEventHandler is processing: {event.event_type}")
 
         # 对于按键事件，我们只关心主键（Key对象），组合逻辑由manager处理
         if event.event_type in ["key_press", "mouse_press"]:

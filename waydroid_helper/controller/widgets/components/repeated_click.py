@@ -30,7 +30,6 @@ from waydroid_helper.controller.widgets.base.base_widget import BaseWidget
 from waydroid_helper.controller.widgets.config import (create_dropdown_config,
                                                        create_text_config)
 from waydroid_helper.controller.widgets.decorators import Editable
-from waydroid_helper.util.log import logger
 
 
 class OperatingMethod(Enum):
@@ -304,10 +303,8 @@ class RepeatedClick(BaseWidget):
                 
                 await asyncio.sleep(interval - 0.001)  # 剩余时间等待
                 
-        except asyncio.CancelledError:
-            logger.debug("Long press combo click task cancelled")
-        except Exception as e:
-            logger.error(f"Error in long press combo click: {e}")
+        except Exception:
+            pass
         finally:
             if self._is_clicking: # Only send UP if not cancelled
                 await self._send_click_sequence(w, h, pointer_id)
@@ -338,10 +335,8 @@ class RepeatedClick(BaseWidget):
                 if i < click_count - 1:  # 最后一次点击后不需要等待
                     await asyncio.sleep(interval - 0.001)
                     
-        except asyncio.CancelledError:
-            logger.debug("Click after button click task cancelled")
-        except Exception as e:
-            logger.error(f"Error in click after button click: {e}")
+        except Exception:
+            pass
         finally:
             if self._is_clicking:  # Only send UP if not cancelled
                 await self._send_click_sequence(w, h, pointer_id)
@@ -377,7 +372,6 @@ class RepeatedClick(BaseWidget):
         """分配 pointer_id，如果失败则记录警告"""
         pointer_id = pointer_id_manager.allocate(self)
         if pointer_id is None:
-            logger.warning("Cannot allocate pointer_id for repeated click")
             return None
         return pointer_id
 
@@ -396,14 +390,13 @@ class RepeatedClick(BaseWidget):
             # LONG_PRESS_COMBO模式：开始连击
             try:
                 clicks_per_second = int(self.get_config_value("clicks_per_second") or "20")
-                print(f"clicks_per_second: {clicks_per_second}")
                 clicks_per_second = max(1, min(clicks_per_second, 100))  # 限制范围1-100
                 
                 # 创建新的异步任务
                 self._click_task = asyncio.create_task(self._long_press_combo_click(clicks_per_second))
                 
             except ValueError:
-                logger.error("Invalid clicks_per_second value")
+                pass
                 
         elif operating_method == OperatingMethod.CLICK_AFTER_BUTTON.value:
             # CLICK_AFTER_BUTTON模式：按下时不操作
@@ -438,7 +431,7 @@ class RepeatedClick(BaseWidget):
                 self._click_task = asyncio.create_task(self._click_after_button_click(click_count))
                 
             except ValueError:
-                logger.error("Invalid repeated_click_count value")
+                pass
                 
         return True
 
@@ -523,7 +516,6 @@ class RepeatedClick(BaseWidget):
     
     def _on_operating_method_changed(self, key: str, value: str, from_ui: bool) -> None:
         """操作方式配置变更回调"""
-        logger.debug(f"Operating method changed to: {value}")
         self._update_config_visibility()
     
     def create_config_ui(self) -> 'Gtk.Widget':
@@ -548,4 +540,3 @@ class RepeatedClick(BaseWidget):
         config_manager.set_visible("clicks_per_second", operating_method == OperatingMethod.LONG_PRESS_COMBO.value)
         config_manager.set_visible("repeated_click_count", operating_method == OperatingMethod.CLICK_AFTER_BUTTON.value)
         
-        logger.debug(f"Updated config visibility for operating method: {operating_method}")

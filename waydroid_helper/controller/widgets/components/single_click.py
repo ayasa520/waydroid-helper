@@ -21,7 +21,6 @@ from waydroid_helper.controller.core.control_msg import InjectTouchEventMsg
 from waydroid_helper.controller.core.handler.event_handlers import InputEvent
 from waydroid_helper.controller.widgets.base.base_widget import BaseWidget
 from waydroid_helper.controller.widgets.decorators import Editable
-from waydroid_helper.util.log import logger
 
 
 @Editable
@@ -274,12 +273,8 @@ class SingleClick(BaseWidget):
         # 分配 pointer_id
         pointer_id = pointer_id_manager.allocate(self)
         if pointer_id is None:
-            logger.warning(f"Single click button cannot allocate pointer_id")
             return False
 
-        logger.debug(
-            f"Single click button triggered by key {used_key} at {self.center_x}, {self.center_y}"
-        )
         x, y = self.center_x, self.center_y
         root = self.get_root()
         root = cast('Gtk.Window', root)
@@ -308,7 +303,6 @@ class SingleClick(BaseWidget):
         w, h = root.get_width(), root.get_height()
         pointer_id = pointer_id_manager.allocate(self)
         if pointer_id is None:
-            logger.warning("Single click button cannot allocate pointer_id")
             return False
         msg = InjectTouchEventMsg(
             action=AMotionEventAction.UP,
@@ -321,7 +315,6 @@ class SingleClick(BaseWidget):
         event_bus.emit(Event(EventType.CONTROL_MSG, self, msg))
         # 释放 pointer_id
         pointer_id_manager.release(self)
-        logger.debug(f"Single click button released by key {used_key}")
         return True
 
     def get_editable_regions(self)->list['EditableRegion']:

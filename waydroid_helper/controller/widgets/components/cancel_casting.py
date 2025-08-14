@@ -19,7 +19,6 @@ from waydroid_helper.controller.core import (Event, EventType, KeyCombination,
 from waydroid_helper.controller.core.handler.event_handlers import InputEvent
 from waydroid_helper.controller.widgets.base.base_widget import BaseWidget
 from waydroid_helper.controller.widgets.decorators import Editable
-from waydroid_helper.util.log import logger
 
 
 @Editable
@@ -303,7 +302,6 @@ class CancelCasting(BaseWidget):
         # 分配 pointer_id
         pointer_id = pointer_id_manager.allocate(self)
         if pointer_id is None:
-            logger.warning(f"Cancel casting button cannot allocate pointer_id")
             return False
 
         x, y = self.center_x, self.center_y
@@ -354,7 +352,6 @@ class CancelCasting(BaseWidget):
     def on_delete(self):
         """组件被删除时的清理"""
         super().on_delete()
-        logger.info(f"CancelCasting widget {id(self)} on_delete called")
         
         # 发送销毁通知
         event_data = {

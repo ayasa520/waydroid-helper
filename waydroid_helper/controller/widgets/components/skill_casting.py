@@ -34,8 +34,6 @@ from waydroid_helper.controller.widgets.config import (create_dropdown_config,
                                                        create_switch_config)
 from waydroid_helper.controller.widgets.decorators import (Editable, Resizable,
                                                            ResizableDecorator)
-from waydroid_helper.util.log import logger
-
 
 class SkillState(Enum):
     """技能释放状态枚举"""
@@ -199,7 +197,6 @@ class SkillCasting(BaseWidget):
         """启动异步事件处理器"""
         if self._event_processor_task is None or self._event_processor_task.done():
             self._event_processor_task = asyncio.create_task(self._process_events())
-            logger.debug(f"Started event processor for skill casting widget {id(self)}")
 
     async def _process_events(self):
         """异步事件处理器主循环"""
@@ -209,12 +206,8 @@ class SkillCasting(BaseWidget):
                 event = await self._event_queue.get()
                 await self._handle_event(event)
                 self._event_queue.task_done()
-        except asyncio.CancelledError:
-            logger.debug(
-                f"Event processor cancelled for skill casting widget {id(self)}"
-            )
-        except Exception as e:
-            logger.error(f"Error in event processor: {e}")
+        except:
+            pass
 
     async def _handle_event(self, event: SkillEvent):
         """处理单个事件"""
@@ -227,8 +220,8 @@ class SkillCasting(BaseWidget):
                 await self._handle_mouse_motion_async(event)
             elif event.type == "cancel_casting":
                 await self._handle_cancel_casting_async(event)
-        except Exception as e:
-            logger.error(f"Error handling event {event.type}: {e}")
+        except:
+            pass
 
     def _on_mouse_motion(self, event):
         """鼠标移动事件回调 - 将事件放入队列"""
@@ -244,7 +237,6 @@ class SkillCasting(BaseWidget):
             # 这是字典格式的事件数据
             position = event.data["position"]
         else:
-            logger.warning("Mouse motion event missing position data")
             return
 
         skill_event = SkillEvent(
@@ -254,8 +246,8 @@ class SkillCasting(BaseWidget):
         # 非阻塞方式放入队列
         try:
             self._event_queue.put_nowait(skill_event)
-        except asyncio.QueueFull:
-            logger.warning("Event queue full, dropping mouse motion event")
+        except:
+            pass
 
     def _on_cancel_casting(self, event):
         """取消施法事件回调 - 将事件放入队列"""
@@ -266,8 +258,8 @@ class SkillCasting(BaseWidget):
         # 非阻塞方式放入队列
         try:
             self._event_queue.put_nowait(skill_event)
-        except asyncio.QueueFull:
-            logger.warning("Event queue full, dropping cancel casting event")
+        except:
+            pass
 
     async def _handle_key_press(self, event: SkillEvent):
         """异步处理按键按下事件"""
@@ -329,22 +321,15 @@ class SkillCasting(BaseWidget):
             or "x" not in event_data
             or "y" not in event_data
         ):
-            logger.error("Cancel casting event missing x,y coordinates")
             return
 
         cancel_x = event_data["x"]
         cancel_y = event_data["y"]
         self._cancel_target_position = (cancel_x, cancel_y)
 
-        logger.info(
-            f"Cancel casting requested for widget {id(self)}, target: ({cancel_x}, {cancel_y})"
-        )
-
         if self._skill_state == SkillState.MOVING:
             # 当前正在移动中，等待移动完成后再执行取消流程
-            logger.debug(
-                "Currently moving, cancel will be processed after movement completion"
-            )
+            pass
             # 不取消当前任务，让它自然完成，然后在 _skill_casting_flow 中处理取消
         else:
             # 当前不在移动状态，立即开始取消施法移动
@@ -367,7 +352,6 @@ class SkillCasting(BaseWidget):
         # 分配指针ID并发送DOWN事件
         pointer_id = pointer_id_manager.allocate(self)
         if pointer_id is None:
-            logger.error(f"Failed to allocate pointer ID for {self}")
             return
 
         self._current_position = (self.center_x, self.center_y)
@@ -386,9 +370,6 @@ class SkillCasting(BaseWidget):
             # 移动完成后，检查是否有取消请求
             if self._cancel_target_position is not None:
                 # 有待处理的取消事件，开始取消施法移动
-                logger.debug(
-                    "Cancel request detected after movement completion, starting cancel flow"
-                )
                 await self._cancel_casting_move()
                 return
 
@@ -412,19 +393,14 @@ class SkillCasting(BaseWidget):
 
         except asyncio.CancelledError:
             # 被取消时的处理
-            logger.debug("Skill casting flow cancelled")
             await self._release_skill()
         except Exception as e:
-            logger.error(f"Error in skill casting flow: {e}")
             await self._release_skill()
 
     async def _cancel_casting_move(self):
         """取消施法的平滑移动"""
         if self._cancel_target_position is None:
-            logger.error("Cannot start cancel move: no target position set")
             return
-
-        logger.debug(f"Starting cancel move to {self._cancel_target_position}")
 
         try:
             # 设置目标位置并开始移动
@@ -436,14 +412,11 @@ class SkillCasting(BaseWidget):
             await self._smooth_move_to_target(self._cancel_target_position)
 
             # 移动完成，发送UP事件并重置
-            logger.debug("Cancel move completed, sending UP event")
             await self._release_skill()
 
         except asyncio.CancelledError:
-            logger.debug("Cancel casting move cancelled")
             await self._release_skill()
-        except Exception as e:
-            logger.error(f"Error in cancel casting move: {e}")
+        except Exception:
             await self._release_skill()
 
     async def _smooth_move_to_target(self, target: tuple[float, float]):
@@ -559,7 +532,7 @@ class SkillCasting(BaseWidget):
             # 如果当前选中状态，重新发送圆形绘制事件
             self._update_circle_if_selected()
         except (ValueError, TypeError):
-            logger.error(f"Invalid circle radius value: {value}")
+            pass
 
     def _on_cast_timing_changed(self, key: str, value: str, restoring:bool) -> None:
         """处理施法时机配置变更"""
@@ -567,7 +540,7 @@ class SkillCasting(BaseWidget):
             # self.cast_timing = str(value)
             pass
         except (ValueError, TypeError):
-            logger.error(f"Invalid cast timing value: {value}")
+            pass
 
     def _on_cancel_button_config_changed(self, key: str, value: bool, restoring:bool) -> None:
         """处理取消施法按钮配置变更"""
@@ -579,7 +552,7 @@ class SkillCasting(BaseWidget):
             else:
                 self._disable_cancel_button()
         except (ValueError, TypeError):
-            logger.error(f"Invalid cancel button value: {value}")
+            pass
 
     # def _on_custom_event(self, event):
     #     """处理自定义事件"""
@@ -596,7 +569,6 @@ class SkillCasting(BaseWidget):
     def _enable_cancel_button(self):
         """启用取消施法按钮"""
         if self.cancel_button_widget["widget"] is not None:
-            logger.debug("Cancel button already enabled")
             return
 
         root = self.get_root()
@@ -609,16 +581,12 @@ class SkillCasting(BaseWidget):
             "y": h / 2,
         }
 
-        logger.debug(
-            f"Requesting creation of cancel button for skill widget {id(self)}"
-        )
         event_bus.emit(Event(EventType.CREATE_WIDGET, self, create_data))
         self.cancel_button_widget["widget"] = create_data["widget"]
 
     def _disable_cancel_button(self):
         """禁用取消施法按钮"""
         if self.cancel_button_widget["widget"] is None:
-            logger.debug("Cancel button already disabled")
             return
 
         # 发送事件通知window删除取消按钮
@@ -974,7 +942,6 @@ class SkillCasting(BaseWidget):
         pos = position if position is not None else self._current_position
         root = self.get_root()
         if not root:
-            logger.warning("Failed to get root window")
             return
         root = cast("Gtk.Window", root)
         w, h = root.get_width(), root.get_height()
@@ -982,7 +949,6 @@ class SkillCasting(BaseWidget):
         buttons = AMotionEventButtons.PRIMARY if action != AMotionEventAction.UP else 0
         pointer_id = pointer_id_manager.get_allocated_id(self)
         if pointer_id is None:
-            logger.warning(f"Failed to get pointer ID for {self}")
             return
 
         msg = InjectTouchEventMsg(
@@ -1034,7 +1000,7 @@ class SkillCasting(BaseWidget):
         try:
             self._event_queue.put_nowait(skill_event)
         except asyncio.QueueFull:
-            logger.warning("Event queue full, dropping event")
+            pass
 
         return True
 
@@ -1054,7 +1020,7 @@ class SkillCasting(BaseWidget):
         try:
             self._event_queue.put_nowait(skill_event)
         except asyncio.QueueFull:
-            logger.warning("Event queue full, dropping key release event")
+            pass
 
         return True
 

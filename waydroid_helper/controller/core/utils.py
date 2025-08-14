@@ -9,8 +9,6 @@ import random
 import threading
 from typing import TYPE_CHECKING, Any, TypedDict
 
-from waydroid_helper.util.log import logger
-
 if TYPE_CHECKING:
     pass
 
@@ -82,7 +80,6 @@ class PointerIdManager:
             self._allocated_ids: dict[Any, int] = {}  # widget_id -> pointer_id
 
             PointerIdManager._initialized = True
-            logger.info("PointerIdManager singleton initialized")
 
     def allocate(self, widget:Any) -> int | None:
         """为 widget 分配一个 pointer_id"""
@@ -91,25 +88,14 @@ class PointerIdManager:
 
         # 如果该 widget 已经有分配的 pointer_id，直接返回
         if widget_id in self._allocated_ids:
-            logger.debug(
-                f"Widget {type(widget).__name__}(id={widget_id}) already has pointer_id={self._allocated_ids[widget_id]}"
-            )
             return self._allocated_ids[widget_id]
 
         # 分配新的 pointer_id
         if not self._available_ids:
-            logger.warning(
-                f"No available pointer_id, currently allocated: {list(self._allocated_ids.values())}"
-            )
             return None
 
         pointer_id = self._available_ids.pop()
         self._allocated_ids[widget_id] = pointer_id
-
-        logger.debug(
-            f"Allocate pointer_id={pointer_id} to Widget {type(widget).__name__}(id={widget_id})"
-        )
-        logger.debug(f"Remaining available pointer_id: {sorted(self._available_ids)}")
 
         return pointer_id
 
@@ -119,18 +105,11 @@ class PointerIdManager:
         widget_id = widget
 
         if widget_id not in self._allocated_ids:
-            logger.debug(
-                f"Widget {type(widget).__name__}(id={widget_id}) has no allocated pointer_id"
-            )
             return False
 
         pointer_id = self._allocated_ids.pop(widget_id)
         self._available_ids.add(pointer_id)
 
-        logger.debug(
-            f"Release pointer_id={pointer_id} from Widget {type(widget).__name__}(id={widget_id})"
-        )
-        logger.debug(f"Current available pointer_id: {sorted(self._available_ids)}")
 
         return True
 
@@ -156,10 +135,8 @@ class PointerIdManager:
                 # 清理所有分配的 pointer_id
                 cls._instance._available_ids = set(range(1, 11))
                 cls._instance._allocated_ids.clear()
-                logger.debug("PointerIdManager state cleared")
             cls._instance = None
             cls._initialized = False
-            logger.info("PointerIdManager singleton reset")
 
 
 # 全局 pointer_id 管理器实例

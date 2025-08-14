@@ -15,7 +15,6 @@ from waydroid_helper.controller.core import (Event, EventType, KeyCombination,
 from waydroid_helper.controller.core.control_msg import InjectTouchEventMsg
 from waydroid_helper.controller.core.handler.event_handlers import InputEvent
 from waydroid_helper.controller.widgets.base.base_widget import BaseWidget
-from waydroid_helper.util.log import logger
 
 
 class Fire(BaseWidget):
@@ -57,12 +56,10 @@ class Fire(BaseWidget):
 
     def _on_aim_triggered(self, event: Event[None]):
         """处理瞄准触发事件"""
-        logger.debug("Fire button aim triggered")
         self.aim_triggered = True
 
     def _on_aim_released(self, event: Event[None]):
         """处理瞄准释放事件"""
-        logger.debug("Fire button aim released")
         self.aim_triggered = False
 
     def draw_widget_content(self, cr: "Context[Surface]", width: int, height: int):
@@ -192,16 +189,12 @@ class Fire(BaseWidget):
             used_key = str(next(iter(self.final_keys)))
         else:
             used_key = "未知按键"
-        logger.debug(
-            f"Fire button triggered by key {used_key} at {self.center_x}, {self.center_y}"
-        )
         x, y = self.center_x, self.center_y
         root = self.get_root()
         root = cast("Gtk.Window", root)
         w, h = root.get_width(), root.get_height()
         pointer_id = pointer_id_manager.allocate(self)
         if pointer_id is None:
-            logger.warning(f"Fire button cannot allocate pointer_id")
             return False
         msg = InjectTouchEventMsg(
             action=AMotionEventAction.DOWN,
@@ -228,14 +221,12 @@ class Fire(BaseWidget):
             used_key = str(next(iter(self.final_keys)))
         else:
             used_key = "未知按键"
-        logger.debug(f"Fire button released by key {used_key}")
         x, y = self.center_x, self.center_y
         root = self.get_root()
         root = cast("Gtk.Window", root)
         w, h = root.get_width(), root.get_height()
         pointer_id = pointer_id_manager.get_allocated_id(self)
         if pointer_id is None:
-            logger.warning(f"Fire button cannot get pointer_id")
             return False
         msg = InjectTouchEventMsg(
             action=AMotionEventAction.UP,

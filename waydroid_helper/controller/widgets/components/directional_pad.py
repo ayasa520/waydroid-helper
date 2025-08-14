@@ -30,7 +30,6 @@ from waydroid_helper.controller.widgets import BaseWidget
 from waydroid_helper.controller.widgets.config import create_dropdown_config
 from waydroid_helper.controller.widgets.decorators import (Editable, Resizable,
                                                            ResizableDecorator)
-from waydroid_helper.util.log import logger
 from waydroid_helper.util.task import Task
 
 
@@ -187,23 +186,17 @@ class DirectionalPad(BaseWidget):
         if self._joystick_active and any(self.pressed_directions.values()):
             new_target = self._get_target_position()
             self._move_to(new_target, smooth=False)     
-            logger.debug(f"Swipehold radius changed, moved to new target: {new_target}")
 
     def set_movement_params(self, interval: int, max_steps: int):
         """设置平滑移动的参数"""
         self._move_interval = interval / 1000.0  # 转换为秒
         self._move_steps_total = max_steps
-        logger.info(
-            f"Directional pad movement parameters updated: interval={interval}ms, steps={max_steps}"
-        )
 
     def set_movement_mode(self, mode: str):
         if mode not in [MovementMode.SMOOTH.value, MovementMode.INSTANT.value]:
-            logger.warning(f"Invalid movement mode: {mode}, using 'smooth'")
             # self._movement_mode = MovementMode.SMOOTH
             return
         # self._movement_mode = MovementMode(mode)
-        logger.info(f"Directional pad movement mode set to: {mode}")
 
     def __del__(self):
         """清理异步任务"""
@@ -248,13 +241,11 @@ class DirectionalPad(BaseWidget):
             self._movement_task = self._task_manager.create_task(
                 self._smooth_move_to(target)
             )
-            logger.debug(f"Directional pad smooth move started -> {target}")
         else:
             # 创建瞬间移动任务
             self._movement_task = self._task_manager.create_task(
                 self._instant_move_to(target)
             )
-            logger.debug(f"Directional pad instant move to -> {target}")
 
     async def _instant_move_to(self, target: tuple[float, float]) -> None:
         """瞬间移动到目标位置"""
@@ -264,12 +255,8 @@ class DirectionalPad(BaseWidget):
             self.queue_draw()
             if self._joystick_active:
                 self._emit_touch_event(AMotionEventAction.MOVE)
-            logger.debug(f"Directional pad instant move completed -> {target}")
-        except asyncio.CancelledError:
-            logger.debug("Instant move task cancelled")
-            raise
-        except Exception as e:
-            logger.error(f"Error in instant move: {e}")
+        except Exception:
+            pass
         finally:
             await self._set_movement_state(MovementState.IDLE)
 
@@ -310,13 +297,9 @@ class DirectionalPad(BaseWidget):
             # 确保到达最终位置
             self._current_position = target
             self.queue_draw()
-            logger.debug(f"Directional pad smooth move completed -> {target}")
 
-        except asyncio.CancelledError:
-            logger.debug("Smooth move task cancelled")
-            raise
-        except Exception as e:
-            logger.error(f"Error in smooth move: {e}")
+        except Exception:
+            pass
         finally:
             await self._set_movement_state(MovementState.IDLE)
 
@@ -585,7 +568,6 @@ class DirectionalPad(BaseWidget):
         pos = position if position is not None else self._current_position
         root = self.get_root()
         if not root:
-            logger.warning("Failed to get root window")
             return
         root = cast("Gtk.Window", root)
         w, h = root.get_width(), root.get_height()
@@ -593,7 +575,6 @@ class DirectionalPad(BaseWidget):
         buttons = AMotionEventButtons.PRIMARY if action != AMotionEventAction.UP else 0
         pointer_id = pointer_id_manager.get_allocated_id(self)
         if pointer_id is None:
-            logger.warning(f"Failed to get pointer ID for {self}")
             return
 
         msg = InjectTouchEventMsg(
@@ -609,7 +590,6 @@ class DirectionalPad(BaseWidget):
     def on_key_triggered(self, key_combination: KeyCombination | None = None, event: "InputEvent | None" = None) -> bool:
         """当映射的按键被触发时的行为 - 根据按键确定方向"""
         if not key_combination:
-            logger.debug(f"Directional pad key triggered (no key specified)")
             return False
 
         direction = self.get_direction_from_key(key_combination)
@@ -619,7 +599,6 @@ class DirectionalPad(BaseWidget):
             if not self._joystick_active:
                 pointer_id = pointer_id_manager.allocate(self)
                 if pointer_id is None:
-                    logger.error(f"Failed to allocate pointer ID for {self}")
                     return False
                 self._joystick_active = True
                 self._current_position = self.center
@@ -628,33 +607,21 @@ class DirectionalPad(BaseWidget):
             else:
                 self._move_to(target, smooth=False)
 
-            region_info = self.edit_regions.get(direction)
-            if region_info and "center" in region_info:
-                center = region_info["center"]
-                center_x, center_y = center
-                logger.debug(
-                    f"Directional pad {direction} direction triggered by key {key_combination} at {self.x+center_x}, {self.y+center_y}"
-                )
 
             # 这里可以调用具体的方向处理方法
             self.on_direction_triggered(direction, key_combination)
             return True
         else:
-            logger.debug(f"Directional pad received unknown key: {key_combination}")
             return False
 
     def on_key_released(self, key_combination: KeyCombination | None = None, event: "InputEvent | None" = None) -> bool:
         """当映射的按键被弹起时的行为 - 根据按键确定方向"""
         if not key_combination:
-            logger.debug(f"Directional pad key released (no key specified)")
             return False
 
         direction = self.get_direction_from_key(key_combination)
         if direction:
             self.pressed_directions[direction] = False
-            logger.debug(
-                f"Directional pad {direction} direction released by key {key_combination}"
-            )
 
             if not any(self.pressed_directions.values()):
                 # 所有键释放: 停用摇杆，瞬移回中心
@@ -663,7 +630,6 @@ class DirectionalPad(BaseWidget):
                 self._emit_touch_event(AMotionEventAction.UP)
                 pointer_id_manager.release(self)
                 self._move_to(self.center, smooth=False)
-                logger.debug("All keys released, joystick returned to center")
             else:
                 # 还有其他键按下: 更新目标位置并瞬移
                 self._move_to(self._get_target_position(), smooth=False)
@@ -671,9 +637,6 @@ class DirectionalPad(BaseWidget):
             self.on_direction_released(direction, key_combination)
             return True
         else:
-            logger.debug(
-                f"Directional pad received unknown key release: {key_combination}"
-            )
             return False
 
     def _draw_joystick_dot(
@@ -703,15 +666,11 @@ class DirectionalPad(BaseWidget):
 
     def on_direction_triggered(self, direction: str, key_combination: KeyCombination):
         """方向被触发时的具体处理 - 子类可以重写此方法"""
-        logger.debug(
-            f"Directional pad {direction} direction activated: {key_combination}"
-        )
+        pass
 
     def on_direction_released(self, direction: str, key_combination: KeyCombination):
         """方向被释放时的具体处理 - 子类可以重写此方法"""
-        logger.debug(
-            f"Directional pad {direction} direction released: {key_combination}"
-        )
+        pass
 
     def draw_widget_content(self, cr: "Context[Surface]", width: int, height: int):
         # 计算圆心和半径

@@ -22,7 +22,6 @@ from gi.repository import Gdk, GObject, Gtk
 from waydroid_helper.controller.core import (Event, EventType, KeyCombination,
                                              event_bus)
 from waydroid_helper.controller.widgets.config import ConfigManager
-from waydroid_helper.util.log import logger
 
 if TYPE_CHECKING:
     from cairo import Context, Surface
@@ -304,9 +303,6 @@ class BaseWidget(Gtk.DrawingArea):
                 if hasattr(self, "set_content_height"):
                     self.set_content_height(self.MAPPING_MODE_HEIGHT)
 
-                logger.debug(
-                    f"{type(self).__name__} switched to mapping mode, size: {self.width}x{self.height} -> {self.MAPPING_MODE_WIDTH}x{self.MAPPING_MODE_HEIGHT}"
-                )
             else:
                 parent = self.get_parent()
                 parent = cast('Gtk.Fixed', parent)
@@ -318,10 +314,6 @@ class BaseWidget(Gtk.DrawingArea):
                     self.set_content_width(self.width)
                 if hasattr(self, "set_content_height"):
                     self.set_content_height(self.height)
-
-                logger.debug(
-                    f"{type(self).__name__} switched to edit mode, size restored: {self.width}x{self.height}"
-                )
 
             self.queue_draw()
 
@@ -588,6 +580,4 @@ class BaseWidget(Gtk.DrawingArea):
 
         # 清理事件总线订阅
         from waydroid_helper.controller.core import event_bus
-        unsubscribed_count = event_bus.unsubscribe_by_subscriber(self)
-        if unsubscribed_count > 0:
-            logger.debug(f"Widget {type(self).__name__}(id={id(self)}) 清理了 {unsubscribed_count} 个事件订阅")
+        event_bus.unsubscribe_by_subscriber(self)

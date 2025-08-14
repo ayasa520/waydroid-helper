@@ -4,7 +4,6 @@ Wayland 平台实现
 """
 
 import ctypes
-import logging
 from typing import Callable
 
 from gi.repository import GObject
@@ -17,8 +16,7 @@ from pywayland.protocol.relative_pointer_unstable_v1 import \
 from pywayland.protocol.wayland import WlCompositor, WlSeat, WlSurface
 
 from ..base import PlatformBase
-
-logger = logging.getLogger(__name__)
+from waydroid_helper.util.log import logger
 
 # 加载libgtk-4.so.1
 libgtk = ctypes.CDLL("libgtk-4.so.1")

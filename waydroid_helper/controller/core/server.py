@@ -112,7 +112,7 @@ class Server:
 
     def send_msg(self, event: Event[ControlMsg]):
         msg: ControlMsg = event.data
-        logger.debug(f"Send: {msg!r}")
+        logger.debug("Send: %s", msg)
         packed_msg: bytes | None = msg.pack()
         if packed_msg is not None:
             self.send(packed_msg)

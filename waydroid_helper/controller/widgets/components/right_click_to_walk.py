@@ -21,8 +21,6 @@ from waydroid_helper.controller.core.handler.event_handlers import InputEvent
 from waydroid_helper.controller.widgets.base.base_widget import BaseWidget
 from waydroid_helper.controller.widgets.decorators import (Resizable,
                                                            ResizableDecorator)
-from waydroid_helper.util.log import logger
-
 
 class JoystickState(Enum):
     """摇杆状态枚举"""
@@ -522,7 +520,6 @@ class RightClickToWalk(BaseWidget):
         pos = position if position is not None else self._current_position
         root = self.get_root()
         if not root:
-            logger.warning("Failed to get root window")
             return
         root = cast("Gtk.Window", root)
         w, h = root.get_width(), root.get_height()
@@ -530,7 +527,6 @@ class RightClickToWalk(BaseWidget):
         buttons = AMotionEventButtons.PRIMARY if action != AMotionEventAction.UP else 0
         pointer_id = pointer_id_manager.get_allocated_id(self)
         if pointer_id is None:
-            logger.warning(f"Failed to get pointer ID for {self}")
             return
 
         msg = InjectTouchEventMsg(
@@ -617,7 +613,6 @@ class RightClickToWalk(BaseWidget):
                 # 分配指针ID并发送DOWN事件
                 pointer_id = pointer_id_manager.allocate(self)
                 if pointer_id is None:
-                    logger.error(f"Failed to allocate pointer ID for {self}")
                     return False
                 
                 self._current_position = (self.center_x, self.center_y)

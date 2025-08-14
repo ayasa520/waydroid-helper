@@ -201,15 +201,11 @@ class ContextMenuManager:
             widget = widget_factory.create_widget(widget_type, x=x, y=y)
             if widget:
                 self.parent_window.create_widget_at_position(widget, x, y)
-                logger.debug(f"Created {widget_type} widget at position ({x}, {y})")
-            else:
-                logger.debug(f"Failed to create {widget_type} widget")
         except Exception as e:
-            logger.debug(f"Error creating {widget_type} widget: {e}")
+            logger.error(f"Error creating {widget_type} widget: {e}")
 
     def _refresh_widgets(self, widget_factory: "WidgetFactory"):
         """刷新组件列表"""
-        logger.debug("Refreshing widget list...")
         widget_factory.reload_widgets()
         widget_factory.print_discovered_widgets()
 
@@ -246,16 +242,10 @@ class ContextMenuManager:
             ):
                 screen_width = self.parent_window.get_width() or 1920
                 screen_height = self.parent_window.get_height() or 1080
-                logger.warning(
-                    f"Failed to get screen size({e}), using window size: {screen_width}x{screen_height}"
-                )
                 return screen_width, screen_height
             else:
                 screen_width = 1920
                 screen_height = 1080
-                logger.warning(
-                    f"Failed to get screen size({e}), using default value: {screen_width}x{screen_height}"
-                )
                 return screen_width, screen_height
 
     def _serialize_key_combination(self, key_combination: KeyCombination) -> list[str]:
@@ -315,7 +305,6 @@ class ContextMenuManager:
     def _on_save_layout_file_selected(self, success: bool, file_path: str | None):
         """处理保存文件选择的回调"""
         if not success or not file_path:
-            logger.info("Save layout cancelled by user")
             return
 
         try:
@@ -397,10 +386,6 @@ class ContextMenuManager:
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(layout_data, f, indent=2, ensure_ascii=False)
 
-            logger.info(f"Layout saved to: {file_path}")
-            logger.info(f"Saved {len(widgets_data)} widgets")
-            logger.info(f"Screen resolution: {screen_width}x{screen_height}")
-
         except Exception as e:
             logger.error(f"Failed to save layout: {e}")
 
@@ -431,13 +416,11 @@ class ContextMenuManager:
     def _on_load_layout_file_selected(self, success: bool, file_path: str | None, widget_factory: "WidgetFactory"):
         """处理加载文件选择的回调"""
         if not success or not file_path:
-            logger.info("Load layout cancelled by user")
             return
 
         try:
             # 检查文件是否存在
             if not Path(file_path).exists():
-                logger.error(f"Layout file does not exist: {file_path}")
                 return
 
             # 读取布局文件
@@ -462,12 +445,6 @@ class ContextMenuManager:
                 saved_height = saved_resolution.get("height", current_screen_height)
                 scale_x = current_screen_width / saved_width
                 scale_y = current_screen_height / saved_height
-                logger.info(
-                    f"Original screen: {saved_width}x{saved_height}, current screen: {current_screen_width}x{current_screen_height}"
-                )
-                logger.info(f"Scale: X={scale_x:.3f}, Y={scale_y:.3f}")
-            else:
-                logger.info("Layout file does not have screen resolution information, not scaling")
 
             # 清空现有组件
             if hasattr(self.parent_window, "on_clear_widgets"):
@@ -533,26 +510,11 @@ class ContextMenuManager:
                             if "config" in widget_data and hasattr(widget, "get_config_manager"):
                                 config_manager = widget.get_config_manager()
                                 config_manager.deserialize(widget_data["config"])
-                                logger.debug(f"Restored configuration for {widget_type} widget")
                             
                             widgets_created += 1
-                            logger.debug(
-                                f"Restored {widget_type} widget: original position ({original_x}, {original_y}) -> new position ({x}, {y}), original size ({original_width}x{original_height}) -> new size ({width}x{height})"
-                            )
-
-                        else:
-                            logger.error(
-                                "Failed to create widget, missing create_widget_at_position method"
-                            )
-                    else:
-                        logger.error(f"Failed to create {widget_type} widget")
 
                 except Exception as e:
                     logger.error(f"Failed to create widget: {e}")
                     continue
-
-            logger.info(f"Layout loaded, restored {widgets_created} widgets")
-
-
         except Exception as e:
             logger.error(f"Failed to load layout: {e}")

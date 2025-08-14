@@ -74,7 +74,7 @@ class KeyPressCommand(Command):
                     )
                 )
             except ValueError:
-                logger.warning(f"Macro command: cannot recognize key '{key_name}'")
+                pass
 
     async def cancel(self, context: "Macro") -> None:
         """取消按键按下 - 释放所有由此命令按下的按键"""
@@ -90,7 +90,7 @@ class KeyPressCommand(Command):
                         )
                     )
                 except ValueError:
-                    logger.warning(f"Macro command: cannot recognize key '{key_name}'")
+                    pass
 
 
 class KeyReleaseCommand(Command):
@@ -118,7 +118,7 @@ class KeyReleaseCommand(Command):
                     )
                 )
             except ValueError:
-                logger.warning(f"Macro command: cannot recognize key '{key_name}'")
+                pass
 
 
 class KeySwitchCommand(Command):
@@ -207,13 +207,7 @@ class PressCommand(Command):
         for idx, (x, y) in enumerate(coordinates):
             point_id = self._point_identifiers[idx]
             pointer_id = pointer_id_manager.allocate(point_id)
-            logger.warning(
-                f"Press command: point_id={point_id}, id(point_id)={id(point_id)}"
-            )
             if pointer_id is None:
-                logger.warning(
-                    f"Failed to allocate pointer_id for Press command at point {self.points[idx]}"
-                )
                 return  # Exit early if allocation fails
 
             msg = InjectTouchEventMsg(
@@ -315,9 +309,6 @@ class ReleaseCommand(Command):
             identifiers: List of point identifiers from PressCommand
         """
         if len(identifiers) != len(self.points):
-            logger.warning(
-                f"Identifier count mismatch: expected {len(self.points)}, got {len(identifiers)}"
-            )
             return
         self._point_identifiers = identifiers
 
@@ -334,14 +325,8 @@ class ReleaseCommand(Command):
         for idx, (x, y) in enumerate(coordinates):
             point_id = self._point_identifiers[idx]
             # 打印一下 id(point_id) 红色
-            logger.warning(
-                f"Release command: point_id={point_id}, id(point_id)={id(point_id)}"
-            )
             pointer_id = pointer_id_manager.get_allocated_id(point_id)
             if pointer_id is None:
-                logger.warning(
-                    f"Failed to get pointer_id for Release command at point {self.points[idx]}"
-                )
                 continue  # Continue with other points even if one fails
 
             msg = InjectTouchEventMsg(
@@ -416,12 +401,6 @@ class SleepCommand(Command):
     async def execute(self, context: "Macro") -> None:
         if self.sleep_time > 0:
             await asyncio.sleep(self.sleep_time)
-        else:
-
-            logger.warning(
-                f"Macro command: sleep time must be greater than 0, current value: {self.sleep_time}"
-            )
-
 
 class ReleaseAllCommand(Command):
     """释放所有按键命令"""
@@ -561,20 +540,17 @@ class CommandFactory:
     @staticmethod
     def create_command(command_type: str, args: list[str]) -> Command | None:
         """根据命令类型和参数创建命令对象"""
-        from waydroid_helper.util.log import logger
 
         if command_type == "key_press":
             if args:
                 return KeyPressCommand(args)
             else:
-                logger.warning("Macro command: key_press missing parameters.")
                 return None
 
         elif command_type == "key_release":
             if args:
                 return KeyReleaseCommand(args)
             else:
-                logger.warning("Macro command: key_release missing parameters.")
                 return None
 
         elif command_type == "sleep":
@@ -583,12 +559,8 @@ class CommandFactory:
                     sleep_time = int(args[0]) / 1000
                     return SleepCommand(sleep_time)
                 except ValueError:
-                    logger.warning(
-                        f"Macro command: sleep parameter is invalid '{args[0]}'"
-                    )
                     return None
             else:
-                logger.warning("Macro command: sleep missing parameters.")
                 return None
 
         elif command_type == "release_all":
@@ -597,31 +569,26 @@ class CommandFactory:
             if args:
                 return KeySwitchCommand(args)
             else:
-                logger.warning("Macro command: key_switch missing parameters.")
                 return None
         elif command_type == "click":
             if args:
                 return ClickCommand(args)
             else:
-                logger.warning("Macro command: click missing parameters.")
                 return None
         elif command_type == "press":
             if args:
                 return PressCommand(args)
             else:
-                logger.warning("Macro command: press missing parameters.")
                 return None
         elif command_type == "release":
             if args:
                 return ReleaseCommand(args)
             else:
-                logger.warning("Macro command: release missing parameters.")
                 return None
         elif command_type == "switch":
             if args:
                 return SwitchCommand(args)
             else:
-                logger.warning("Macro command: switch missing parameters.")
                 return None
         elif command_type == "enter_staring":
             return EnterStaringCommand()
@@ -631,22 +598,17 @@ class CommandFactory:
             if args:
                 return SwipeholdRadiusCommand(float(args[0]))
             else:
-                logger.warning("Macro command: swipehold_radius missing parameters.")
                 return None
         elif command_type == "swipehold_radius_switch":
             if args:
                 return SwipeholdRadiusSwitchCommand(float(args[0]))
             else:
-                logger.warning(
-                    "Macro command: swipehold_radius_switch missing parameters."
-                )
                 return None
 
         elif command_type == "other_command":
             return OtherCommand(args)
 
         else:
-            logger.warning(f"Macro command: unknown command '{command_type}'")
             return None
 
 
@@ -918,11 +880,9 @@ class Macro(BaseWidget):
         # 1. 终止当前执行的任务
         if self.current_press_task and not self.current_press_task.done():
             self.current_press_task.cancel()
-            logger.debug("Cancelled current press task for release_all")
 
         if self.current_release_task and not self.current_release_task.done():
             self.current_release_task.cancel()
-            logger.debug("Cancelled current release task for release_all")
 
         # 2. 启动新的异步任务执行取消操作
         asyncio.create_task(self._execute_release_all_async())
@@ -936,15 +896,12 @@ class Macro(BaseWidget):
             for command in all_commands:
                 try:
                     await command.cancel(self)
-                except Exception as e:
-                    logger.warning(
-                        f"Failed to cancel command {type(command).__name__}: {e}"
-                    )
+                except Exception:
+                    pass
 
-            logger.debug("Release all commands completed successfully")
 
-        except Exception as e:
-            logger.error(f"Release all commands execution exception: {e}")
+        except Exception:
+            pass
 
     def get_editable_regions(self) -> list["EditableRegion"]:
         return [

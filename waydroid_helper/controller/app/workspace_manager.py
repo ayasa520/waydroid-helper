@@ -45,11 +45,9 @@ class WorkspaceManager:
             
             if not widget_at_position:
                 # 点击空白区域，取消所有选择
-                logger.debug("Left click on blank area, clearing all selections")
                 self.clear_all_selections()
             else:
                 # 点击widget，处理选择、拖拽或调整大小
-                logger.debug(f"Left click on widget: {type(widget_at_position).__name__}")
                 self.handle_widget_interaction(widget_at_position, x, y, n_press)
 
     def handle_mouse_motion(self, controller, x, y):
@@ -71,10 +69,8 @@ class WorkspaceManager:
             # 只有移动超过阈值才开始拖拽/调整大小
             if dx > 5 or dy > 5:  # 5像素的拖拽阈值
                 if self.pending_resize_direction:
-                    logger.debug(f"Starting resize: widget={type(self.selected_widget).__name__}, direction={self.pending_resize_direction}")
                     self.start_widget_resize(self.selected_widget, self.interaction_start_x, self.interaction_start_y, self.pending_resize_direction)
                 else:
-                    logger.debug(f"Starting drag: widget={type(self.selected_widget).__name__}")
                     self.start_widget_drag(self.selected_widget, self.interaction_start_x, self.interaction_start_y)
 
         # 更新鼠标指针样式
@@ -100,32 +96,26 @@ class WorkspaceManager:
         """处理鼠标释放事件"""
         # 停止拖拽和调整大小
         if self.dragging_widget:
-            logger.debug(f"Stopping drag: {type(self.dragging_widget).__name__}")
             self.dragging_widget = None
         
         if self.resizing_widget:
-            logger.debug(f"Stopping resize: {type(self.resizing_widget).__name__}")
             if hasattr(self.resizing_widget, 'on_resize_release'):
                 self.resizing_widget.on_resize_release()
             self.resizing_widget = None
             self.resize_direction = None
         
         # 清除待处理状态
-        if self.selected_widget:
-            logger.debug("Clearing pending state")
         self.selected_widget = None
         self.pending_resize_direction = None
 
     def handle_widget_interaction(self, widget, x, y, n_press=1):
         """处理widget交互 - 支持双击检测"""
-        logger.debug(f"Handling widget interaction: {type(widget).__name__}, position({x:.1f}, {y:.1f}), clicks={n_press}")
         
         local_x, local_y = self.global_to_local_coords(widget, x, y)
         
         should_keep_editing = False
         if hasattr(widget, 'should_keep_editing_on_click'):
             should_keep_editing = widget.should_keep_editing_on_click(local_x, local_y)
-            logger.debug(f"Widget edit state query result: {should_keep_editing}")
         
         if should_keep_editing:
             if not hasattr(widget, '_skip_delayed_bring_to_front'):
@@ -135,26 +125,20 @@ class WorkspaceManager:
         self.clear_all_selections(exclude_widget=widget)
         if hasattr(widget, 'set_selected'):
             widget.set_selected(True)
-            logger.debug("Setting widget to selected state")
         
         if hasattr(widget, '_skip_delayed_bring_to_front'):
             delattr(widget, '_skip_delayed_bring_to_front')
-            logger.debug("Clearing skip delayed bring to front flag")
         
         self.schedule_bring_to_front(widget)
         
         local_x, local_y = self.global_to_local_coords(widget, x, y)
-        logger.debug(f"Converting to local coordinates: ({local_x:.1f}, {local_y:.1f})")
         
         if n_press == 2:
-            logger.debug("Double click detected")
             if not hasattr(widget, '_skip_delayed_bring_to_front'):
                 widget._skip_delayed_bring_to_front = True
-                logger.debug("Marking widget to skip delayed bring to front operation")
             
             if hasattr(widget, 'on_widget_double_clicked'):
                 widget.on_widget_double_clicked(local_x, local_y)
-            logger.debug("Double click completed, skipping bring to front operation")
             return
         
         self.selected_widget = widget
@@ -163,20 +147,16 @@ class WorkspaceManager:
         
         if hasattr(widget, 'check_resize_direction'):
             resize_direction = widget.check_resize_direction(local_x, local_y)
-            logger.debug(f"Checking resize direction: {resize_direction}")
             if resize_direction:
                 if hasattr(widget, 'should_keep_editing_on_click'):
                     self.clear_all_selections()
                     if hasattr(widget, 'set_selected'):
                         widget.set_selected(True)
-                    logger.debug("Forcing exit from edit state during resize")
                 
                 self.pending_resize_direction = resize_direction
-                logger.debug("Preparing resize operation")
                 return
         
         self.pending_resize_direction = None
-        logger.debug("Preparing drag operation")
         
         if hasattr(widget, 'on_widget_clicked'):
             widget.on_widget_clicked(local_x, local_y)
@@ -266,7 +246,6 @@ class WorkspaceManager:
         if widget and widget.get_parent() == self.fixed:
             self.window.unregister_widget_key_mapping(widget)
             self.fixed.remove(widget)
-            logger.debug(f"Deleted widget {type(widget).__name__}(id={id(widget)}) and its key mapping")
             
             # 如果删除的是当前正在操作的widget，清除状态
             if self.dragging_widget == widget:
@@ -282,16 +261,13 @@ class WorkspaceManager:
         from waydroid_helper.controller.core import event_bus
 
         # 清理事件总线订阅
-        unsubscribed_count = event_bus.unsubscribe_by_subscriber(self)
-        if unsubscribed_count > 0:
-            logger.debug(f"WorkspaceManager 清理了 {unsubscribed_count} 个事件订阅")
+        event_bus.unsubscribe_by_subscriber(self)
 
         # 清理状态
         self.dragging_widget = None
         self.resizing_widget = None
         self.selected_widget = None
 
-        logger.info("WorkspaceManager cleanup completed")
 
     # def delete_selected_widgets(self):
     #     """删除所有选中的widget"""
@@ -326,7 +302,6 @@ class WorkspaceManager:
         """延迟执行的置顶操作"""
         try:
             if hasattr(widget, '_skip_delayed_bring_to_front') and widget._skip_delayed_bring_to_front:
-                logger.debug("Skipping delayed bring to front operation (widget is being edited)")
                 delattr(widget, '_skip_delayed_bring_to_front')
                 return False
             
