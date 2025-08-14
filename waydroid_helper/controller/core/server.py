@@ -55,7 +55,6 @@ class Server:
                 if not message:
                     break
                 writer.write(message)
-                await writer.drain()
         finally:
             logger.info(f"Closing the connection to {addr!r}")
             self.writers.remove(writer)
@@ -108,14 +107,27 @@ class Server:
         logger.info("Server closed.")
 
     def send(self, msg: bytes):
-        asyncio.create_task(self.message_queue.put(msg))
+        """优化版本：直接使用 put_nowait，避免额外的函数调用开销"""
+        try:
+            self.message_queue.put_nowait(msg)
+        except asyncio.QueueFull:
+            # 如果队列满了，丢弃最旧的消息以避免阻塞
+            try:
+                self.message_queue.get_nowait()
+                self.message_queue.put_nowait(msg)
+            except asyncio.QueueEmpty:
+                pass
 
     def send_msg(self, event: Event[ControlMsg]):
+        """优化版本：减少日志调用和条件检查"""
         msg: ControlMsg = event.data
-        logger.debug("Send: %s", msg)
-        packed_msg: bytes | None = msg.pack()
-        if packed_msg is not None:
-            self.send(packed_msg)
+        # 只在需要时才调用 debug 日志（检查日志级别）
+        if logger.isEnabledFor(10):  # DEBUG level = 10
+            logger.debug("Send: %s", msg)
+
+        # 优化后的 pack() 方法总是返回 bytes，无需检查 None
+        packed_msg: bytes = msg.pack()
+        self.send(packed_msg)
 
     @classmethod
     def reset_singleton(cls) -> None:
