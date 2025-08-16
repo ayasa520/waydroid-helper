@@ -14,7 +14,7 @@ import os
 from collections.abc import Awaitable
 from functools import partial
 from gettext import gettext as _
-from typing import Any, Callable
+from typing import Any, Callable, Dict, Optional, List
 
 from gi.repository import GLib, GObject
 
@@ -23,16 +23,13 @@ from waydroid_helper.util import (SubprocessError, SubprocessManager, Task,
 
 CONFIG_PATH = os.environ.get("WAYDROID_CONFIG", "/var/lib/waydroid/waydroid.cfg")
 
+# Import new architecture components
+from waydroid_helper.model_controller import ModelController
+from waydroid_helper.models import SessionState, ModelState
 
-# TODO 异常处理
-class WaydroidState(enum.IntEnum):
-    LOADING = 0x01
-    UNINITIALIZED = 0x02
-    STOPPED = 0x04
-    # waydroid session is running
-    RUNNING = 0x08
-    # connected to app
-    CONNECTED = 0x10
+# Compatibility aliases for existing code
+WaydroidState = SessionState
+PropsState = ModelState
 
 
 def bool_to_str(b: bool, flag: int = 0):
@@ -61,574 +58,285 @@ def str_to_bool(s: str) -> bool:
         return False
 
 
-class PropsState(enum.IntEnum):
-    UNINITIALIZED = 1
-    READY = 2
-
-
 # 有一说一, 将来直接通过 app_process 跑一个 java 服务器比 subprocess 更好
 
 
-class Waydroid(GObject.Object):
+class PersistPropsCompat(GObject.Object):
+    """Compatibility wrapper for persist properties"""
+
+    state = GObject.Property(type=object)
+
+    def __init__(self, controller: ModelController):
+        super().__init__()
+        self._controller = controller
+        self.set_property("state", PropsState.UNINITIALIZED)
+
+        # Bind to model state - use GLib.idle_add to ensure proper initialization
+        GLib.idle_add(self._setup_state_binding)
+
+        # Set up property bindings for all persist properties
+        self._setup_property_bindings()
+
+    def _setup_state_binding(self):
+        """Set up state binding after initialization"""
+        self._controller.property_model.connect("notify::state", self._on_model_state_changed)
+        # Sync initial state
+        initial_state = self._controller.property_model.get_property("state")
+        self.set_property("state", initial_state)
+        return False  # Don't repeat
+
+    def _on_model_state_changed(self, model: GObject.Object, param: GObject.ParamSpec):
+        """Update compatibility state when model state changes"""
+        model_state = model.get_property("state")
+        self.set_property("state", model_state)
+
+    def _setup_property_bindings(self):
+        """Set up property bindings - simplified approach"""
+        # Instead of dynamic GObject properties, we'll handle property access
+        # through get_property/set_property overrides
+        pass
+
+    def get_property(self, property_name: str) -> Any:
+        """Get property value from model"""
+        if property_name == "state":
+            return super().get_property(property_name)
+
+        # Convert property name format (handle both dashes and underscores)
+        model_prop_name = property_name.replace("-", "_")
+        return self._controller.property_model.get_property_value(model_prop_name)
+
+    def set_property(self, property_name: str, value: Any):
+        """Set property value in model"""
+        if property_name == "state":
+            super().set_property(property_name, value)
+            return
+
+        # Convert property name format (handle both dashes and underscores)
+        model_prop_name = property_name.replace("-", "_")
+        self._controller.property_model.set_property_value(model_prop_name, value)
+
+    async def fetch(self):
+        """Fetch properties (compatibility method)"""
+        # This is handled automatically by the controller
+        pass
+
+    async def reset(self):
+        """Reset properties (compatibility method)"""
+        await self._controller.reset_persist_properties()
+
+    async def save(self, name: str):
+        """Save a property (compatibility method)"""
+        await self._controller.save_persist_property(name)
+
+
+class PrivilegedPropsCompat(GObject.Object):
+    """Compatibility wrapper for privileged properties"""
+
+    state = GObject.Property(type=object)
+    android_version = GObject.Property(type=str, default="")
+
+    def __init__(self, controller: ModelController):
+        super().__init__()
+        self._controller = controller
+        self.set_property("state", PropsState.UNINITIALIZED)
+
+        # Bind to model states - use GLib.idle_add to ensure proper initialization
+        GLib.idle_add(self._setup_state_binding)
+
+        # Set up property bindings for all privileged properties
+        self._setup_property_bindings()
+
+    def _setup_state_binding(self):
+        """Set up state binding after initialization"""
+        # Privileged props bind to privileged_state, not the main state
+        self._controller.property_model.connect("notify::privileged-state", self._on_privileged_state_changed)
+        self._controller.session_model.connect("notify::android-version", self._on_android_version_changed)
+        # Sync initial state
+        initial_state = self._controller.property_model.get_property("privileged-state")
+        self.set_property("state", initial_state)
+        return False  # Don't repeat
+
+    def _on_privileged_state_changed(self, model: GObject.Object, param: GObject.ParamSpec):
+        """Update compatibility state when privileged state changes"""
+        privileged_state = model.get_property("privileged-state")
+        self.set_property("state", privileged_state)
+
+    def _on_android_version_changed(self, model: GObject.Object, param: GObject.ParamSpec):
+        """Update Android version when session model changes"""
+        android_version = model.get_property("android_version")
+        self.set_property("android_version", android_version)
+
+    def _setup_property_bindings(self):
+        """Set up property bindings - simplified approach"""
+        # Instead of dynamic GObject properties, we'll handle property access
+        # through get_property/set_property overrides
+        pass
+
+    def get_property(self, property_name: str) -> Any:
+        """Get property value from model"""
+        if property_name in ("state", "android_version"):
+            return super().get_property(property_name)
+
+        # Convert property name format (handle both dashes and underscores)
+        model_prop_name = property_name.replace("-", "_")
+        return self._controller.property_model.get_property_value(model_prop_name)
+
+    def set_property(self, property_name: str, value: Any):
+        """Set property value in model"""
+        if property_name in ("state", "android_version"):
+            super().set_property(property_name, value)
+            return
+
+        # Convert property name format (handle both dashes and underscores)
+        model_prop_name = property_name.replace("-", "_")
+        self._controller.property_model.set_property_value(model_prop_name, value)
+
+    def set_device_info(self, data: Dict[str, Any]):
+        """Set device info (compatibility method)"""
+        self._controller._task.create_task(self._controller.set_device_info(data))
+
+    async def fetch(self):
+        """Fetch properties (compatibility method)"""
+        # This is handled automatically by the controller
+        pass
+
+    async def reset(self):
+        """Reset properties (compatibility method)"""
+        await self._controller.reset_privileged_properties()
+
+    async def save(self):
+        """Save properties (compatibility method)"""
+        await self._controller.save_all_privileged_properties()
+
+    async def restore(self):
+        """Restore properties (compatibility method)"""
+        await self._controller.restore_privileged_properties()
+
+
+class WaydroidCompat(GObject.Object):
+    """
+    Compatibility wrapper for the old Waydroid class.
+
+    This class provides the same interface as the original Waydroid class
+    but uses the new clean architecture internally. This allows for
+    incremental migration of the codebase.
+    """
     state: WaydroidState = GObject.Property( # pyright: ignore[reportAssignmentType]
         type=object
-    )  
-
-    _subprocess: SubprocessManager = SubprocessManager()
-    _task: Task = Task()
-
-    class PersistProps(GObject.Object):
-        state: GObject.Property = GObject.Property(type=object)
-
-        _subprocess: SubprocessManager = SubprocessManager()
-        transform: dict[str, list[Callable[[Any], Any]]] = {
-            "multi-windows": [str_to_bool, partial(bool_to_str, flag=1)],
-            "cursor-on-subsurface": [str_to_bool, partial(bool_to_str, flag=1)],
-            "invert-colors": [str_to_bool, partial(bool_to_str, flag=1)],
-            "suspend": [str_to_bool, partial(bool_to_str, flag=1)],
-            "uevent": [str_to_bool, partial(bool_to_str, flag=1)],
-            "fake-touch": [lambda x: x, lambda x: x],
-            "fake-wifi": [lambda x: x, lambda x: x],
-            "height-padding": [lambda x: x, lambda x: x],
-            "width-padding": [lambda x: x, lambda x: x],
-            "height": [lambda x: x, lambda x: x],
-            "width": [lambda x: x, lambda x: x],
-        }
-        ready_state_list: dict[str, bool] = dict()
-        multi_windows: GObject.Property = GObject.Property(
-            default=False,
-            type=bool,
-            nick="persist.waydroid.multi_windows",
-            blurb=_("Enable window integration with the desktop"),
-        )
-        cursor_on_subsurface: GObject.Property = GObject.Property(
-            default=False,
-            type=bool,
-            nick="persist.waydroid.cursor_on_subsurface",
-            blurb=_(
-                "Workaround for showing the cursor inmulti_windows mode on some compositors"
-            ),
-        )
-        invert_colors: GObject.Property = GObject.Property(
-            default=False,
-            type=bool,
-            nick="persist.waydroid.invert_colors",
-            blurb=_(
-                "Swaps the color space from RGBA to BGRA (only works with our patched mutter so far)"
-            ),
-        )
-        suspend: GObject.Property = GObject.Property(
-            default=False,
-            type=bool,
-            nick="persist.waydroid.suspend",
-            blurb=_(
-                "Let the Waydroid container sleep (after the display timeout) when no apps are active"
-            ),
-        )
-        uevent: GObject.Property = GObject.Property(
-            default=False,
-            type=bool,
-            nick="persist.waydroid.uevent",
-            blurb=_("Allow android direct access to hotplugged devices"),
-        )
-        fake_touch: GObject.Property = GObject.Property(
-            default="",
-            type=str,
-            nick="persist.waydroid.fake_touch",
-            blurb=_(
-                "Interpret mouse inputs as touch inputs. Enter the package names separated by ','. Use the wildcard '*' to match all Apps"
-            ),
-        )
-        fake_wifi: GObject.Property = GObject.Property(
-            default="",
-            type=str,
-            nick="persist.waydroid.fake_wifi",
-            blurb=_(
-                "Make the Apps appear as if connected to WiFi. Enter the package names separated by ','. Use the wildcard '*' to match all Apps"
-            ),
-        )
-        height_padding: GObject.Property = GObject.Property(
-            default="",
-            type=str,
-            nick="persist.waydroid.height_padding",
-            blurb=_("Adjust height padding"),
-        )
-        width_padding: GObject.Property = GObject.Property(
-            default="",
-            type=str,
-            nick="persist.waydroid.width_padding",
-            blurb=_("Adjust width padding"),
-        )
-        width: GObject.Property = GObject.Property(
-            default="",
-            type=str,
-            nick="persist.waydroid.width",
-            blurb=_("Used for user to override desired resolution"),
-        )
-
-        height: GObject.Property = GObject.Property(
-            default="",
-            type=str,
-            nick="persist.waydroid.height",
-            blurb=_("Used for user to override desired resolution"),
-        )
-
-        def _list_properties(self):
-            return [prop for prop in self.list_properties() if prop.name != "state"]
-
-        async def reset(self):
-            self.state = PropsState.UNINITIALIZED
-            coros:set[Awaitable[Any]] = set()
-            for each in self._list_properties():
-                self.set_property(each.name, each.default_value)
-                coros.add(self.save(each.name))
-
-            await asyncio.gather(*coros)
-            self.state = PropsState.READY
-
-        async def fetch(self):
-            def get_persist_prop(name: str, result: str):
-                output = (
-                    result.replace(
-                        "[gbinder] Service manager /dev/binder has appeared", ""
-                    )
-                    .strip()
-                    .split("\n")[-1]
-                )
-                value = self.transform[name][0](output)
-
-                self.set_property(name, value)
-
-            self.state = PropsState.UNINITIALIZED
-            tasks :set[Awaitable[Any]] = set()
-            for prop in self._list_properties():
-                coro = self._subprocess.run(
-                    f"waydroid prop get {prop.nick}", key=prop.name
-                )
-                tasks.add(coro)
-
-            results = await asyncio.gather(*tasks)
-            for each in results:
-                get_persist_prop(each["key"], each["stdout"])
-            self.state = PropsState.READY
-
-        async def save(self, name: str):
-            key = self.find_property(name).nick # pyright: ignore[reportUnknownVariableType]
-            value = self.transform[name][1](self.get_property(name))
-            await self._subprocess.run(f'waydroid prop set {key} "{value}"')
-
-        def reset_state(self):
-            self.state = PropsState.UNINITIALIZED
-
-        def set_ready_state(self, name: str, state: bool):
-            self.ready_state_list[name] = state
-
-        def get_ready_state(self, name: str):
-            return self.ready_state_list.get(name)
-
-        def ready(self):
-            for prop in self._list_properties():
-                if self.get_ready_state(prop.name) == True:
-                    continue
-                else:
-                    return False
-            return True
-
-        # def reset_ready_list(self):
-        #     for prop in self._list_properties():
-        #         self.set_ready_state(prop.name, False)
-
-        def __init__(self) -> None:
-            super().__init__()
-            # self.reset_ready_list()
-            self.state = PropsState.UNINITIALIZED
-
-    class PrivilegedProps(GObject.Object):
-        state: GObject.Property = GObject.Property(type=object)
-        _subprocess: SubprocessManager = SubprocessManager()
-
-        transform: dict[str, list[Callable[[Any], Any]]] = {
-            "qemu-hw-mainkeys": [
-                str_to_bool,
-                lambda x: "1" if x else "0",
-            ],
-            "ro-product-brand": [lambda x: x, lambda x: x],
-            "ro-product-manufacturer": [lambda x: x, lambda x: x],
-            "ro-system-build-product": [lambda x: x, lambda x: x],
-            "ro-product-name": [lambda x: x, lambda x: x],
-            "ro-product-device": [lambda x: x, lambda x: x],
-            "ro-product-model": [lambda x: x, lambda x: x],
-            "ro-system-build-flavor": [lambda x: x, lambda x: x],
-            "ro-build-fingerprint": [lambda x: x, lambda x: x],
-            "ro-system-build-description": [lambda x: x, lambda x: x],
-            "ro-bootimage-build-fingerprint": [lambda x: x, lambda x: x],
-            "ro-build-display-id": [lambda x: x, lambda x: x],
-            "ro-build-tags": [lambda x: x, lambda x: x],
-            "ro-build-description": [lambda x: x, lambda x: x],
-            "ro-vendor-build-fingerprint": [lambda x: x, lambda x: x],
-            "ro-vendor-build-id": [lambda x: x, lambda x: x],
-            "ro-vendor-build-tags": [lambda x: x, lambda x: x],
-            "ro-vendor-build-type": [lambda x: x, lambda x: x],
-            "ro-odm-build-tags": [lambda x: x, lambda x: x],
-        }
-        qemu_hw_mainkeys: GObject.Property = GObject.Property(
-            default=0, type=bool, nick="qemu.hw.mainkeys", blurb=_("hide navbar")
-        )
-        ro_product_brand: GObject.Property = GObject.Property(
-            type=str, default="", nick="ro.product.brand"
-        )
-        ro_product_manufacturer: GObject.Property = GObject.Property(
-            type=str, default="", nick="ro.product.manufacturer"
-        )
-        ro_system_build_product: GObject.Property = GObject.Property(
-            type=str, default="", nick="ro.system.build.product"
-        )
-        ro_product_name: GObject.Property = GObject.Property(
-            type=str, default="", nick="ro.product.name"
-        )
-        ro_product_device: GObject.Property = GObject.Property(
-            type=str, default="", nick="ro.product.device"
-        )
-        ro_product_model: GObject.Property = GObject.Property(
-            type=str, default="", nick="ro.product.model"
-        )
-        ro_system_build_flavor: GObject.Property = GObject.Property(
-            type=str, default="", nick="ro.system.build.flavor"
-        )
-        ro_build_fingerprint: GObject.Property = GObject.Property(
-            type=str, default="", nick="ro.build.fingerprint"
-        )
-        ro_system_build_description: GObject.Property = GObject.Property(
-            type=str, default="", nick="ro.system.build.description"
-        )
-        ro_bootimage_build_fingerprint: GObject.Property = GObject.Property(
-            type=str, default="", nick="ro.bootimage.build.fingerprint"
-        )
-        ro_build_display_id: GObject.Property = GObject.Property(
-            type=str, default="", nick="ro.build.display.id"
-        )
-        ro_build_tags: GObject.Property = GObject.Property(
-            type=str, default="", nick="ro.build.tags"
-        )
-        ro_build_description: GObject.Property = GObject.Property(
-            type=str, default="", nick="ro.build.description"
-        )
-        ro_vendor_build_fingerprint: GObject.Property = GObject.Property(
-            type=str, default="", nick="ro.vendor.build.fingerprint"
-        )
-        ro_vendor_build_id: GObject.Property = GObject.Property(
-            type=str, default="", nick="ro.vendor.build.id"
-        )
-        ro_vendor_build_tags: GObject.Property = GObject.Property(
-            type=str, default="", nick="ro.vendor.build.tags"
-        )
-        ro_vendor_build_type: GObject.Property = GObject.Property(
-            type=str, default="", nick="ro.vendor.build.type"
-        )
-        ro_odm_build_tags: GObject.Property = GObject.Property(
-            type=str, default="", nick="ro.odm.build.tags"
-        )
-
-        android_version: str = GObject.Property(
-            type=str, default=""
-        )  # pyright: ignore[reportAssignmentType]
-
-        cfg: configparser.ConfigParser = configparser.ConfigParser()
-        cfg_old: configparser.ConfigParser | None = None
-        # cfg_all: configparser.ConfigParser = None
-        # cfg_all_old: configparser.ConfigParser = None
-
-        def __init__(self) -> None:
-            super().__init__()
-            self.state = PropsState.UNINITIALIZED
-            # self.cfg_all = copy.deepcopy(self.cfg)
-
-        def _list_properties(self):
-            return [
-                prop
-                for prop in self.list_properties()
-                if prop.name not in ["state", "android-version"]
-            ]
-
-        def reset_state(self):
-            self.state = PropsState.UNINITIALIZED
-
-        async def set_extension_props(self, pairs: dict[str, Any]):
-            self.state = PropsState.UNINITIALIZED
-            for k, v in pairs.items():
-                name = k.replace(".", "-")
-                if self.find_property(name):
-                    self.set_property(name, v)
-                else:
-                    self.cfg.set("properties", k, v)
-            self.state = PropsState.READY
-
-        async def remove_extension_props(self, keys: list[str]):
-            self.state = PropsState.UNINITIALIZED
-            for k in keys:
-                name = k.replace(".", "-")
-                if self.find_property(name):
-                    self.set_property(name, self.transform[name][0](""))
-                else:
-                    self.cfg.remove_option("properties", k)
-            self.state = PropsState.READY
-
-        async def reset(self):
-            self.state = PropsState.UNINITIALIZED
-            for each in self._list_properties():
-                self.cfg.remove_option("properties", each.nick)
-                self.set_property(each.name, each.default_value)
-            self.state = PropsState.READY
-            try:
-                await self.save()
-            except SubprocessError as e:
-                logger.error(e)
-                await self.restore()
-
-        def init(self):
-            self.cfg.read(CONFIG_PATH)
-            self.cfg_old = copy.deepcopy(self.cfg)
-
-        async def fetch_android_version(self):
-            system_image_path = os.path.join(
-                self.cfg.get("waydroid", "images_path"), "system.img"
-            )
-            result = await self._subprocess.run(
-                f"debugfs -R 'cat /system/build.prop' {system_image_path} | grep '^ro.build.version.release=' | cut -d'=' -f2"
-            )
-            self.android_version = result["stdout"].strip()
-
-        async def fetch(self):
-            self.state = PropsState.UNINITIALIZED
-            # fallbacks = []
-            for each in self._list_properties():
-                value = self.cfg.get("properties", each.nick, fallback="")
-                self.set_property(each.name, self.transform[each.name][0](value))
-            #     else:
-            #         fallbacks.append(each)
-            # if len(fallbacks) != 0:
-            #     coros = [
-            #         self._subprocess._run_subprocess(
-            #             f"waydroid prop get {each.nick}", key=each.name
-            #         )
-            #         for each in fallbacks
-            #     ]
-            #     results = await asyncio.gather(*coros)
-            #     for result in results:
-            #         output = result["stdout"].strip().split("\n")[-1]
-            #         if (
-            #             "Failed to get service waydroidplatform, trying again..."
-            #             in output
-            #         ):
-            #             output = ""
-            #         value = self.transform[result["key"]][0](output)
-            #         self.set_property(result["key"], value)
-            #         self.cfg_all.set("properties", result["key"], output)
-
-            self.state = PropsState.READY
-
-        def set_device_info(self, data: dict[str, Any]):
-            self.state = PropsState.UNINITIALIZED
-            for k, v in data.items():
-                self.set_property(k.replace(".", "-"), v)
-            # for each in self._list_properties():
-            # print(each.nick, self.get_property(each.name))
-            self.state = PropsState.READY
-
-        async def restore(self):
-            if self.cfg_old is None:
-                return
-            self.cfg = copy.deepcopy(self.cfg_old)
-            await self.fetch()
-            # self.cfg_all = self.cfg_all_old
-            # for each in self._list_properties():
-            #     value = self.cfg_all.get("properties", each.name)
-            #     self.set_property(each.name, self.transform[each.name][0](value))
-
-        async def save(self):
-            # self.cfg_all_old = copy.deepcopy(self.cfg_all)
-            for each in self._list_properties():
-                value = self.get_property(each.name)
-                if self.transform[each.name][1](value) == "":
-                    self.cfg.remove_option("properties", each.nick)
-                else:
-                    self.cfg.set(
-                        "properties", each.nick, self.transform[each.name][1](value)
-                    )
-                # self.cfg_all.set(
-                #     "properties", each.nick, self.transform[each.name][1](value)
-                # )
-                # if self.cfg_all_old.get("properties", each.nick) != self.cfg_all.get(
-                #     "properties", each.nick
-                # ):
-                #     self.cfg.set("properties", each.nick, value)
-
-            cache_dir = os.path.join(GLib.get_user_cache_dir(), "waydroid-helper")
-            cache_config_path = os.path.join(cache_dir, "waydroid.cfg")
-
-            os.makedirs(cache_dir, exist_ok=True)
-            with open(cache_config_path, "w") as f:
-                self.cfg.write(f)
-            cmd = f"pkexec {os.environ['WAYDROID_CLI_PATH']} copy_to_var {cache_config_path} waydroid.cfg"
-
-            try:
-                await self._subprocess.run(cmd, flag=True)
-                self.cfg_old = copy.deepcopy(self.cfg)
-            except SubprocessError as e:
-                logger.error(e)
-
-    persist_props: PersistProps = PersistProps()
-    privileged_props: PrivilegedProps = PrivilegedProps()
-
-    # def on_persist_prop_changed(self, w, param):
-    #     if isinstance(param.default_value, str):
-    #         value = self.persist_props.get_property(param.name) or "''"
-    #     elif isinstance(param.default_value, bool):
-    #         if self.persist_props.get_property(param.name):
-    #             value = "true"
-    #         else:
-    #             value = "false"
-    #     print("Triggered!")
-    #     ProcessLauncher(["waydroid", "prop", "set", param.nick, value])
-
-    async def reset_persist_props(self):
-        await self.persist_props.reset()
-
-    async def reset_privileged_props(self):
-        await self.privileged_props.reset()
-
-    async def init_persist_props(self):
-        await self.persist_props.fetch()
-
-    async def init_privileged_props(self):
-        self.privileged_props.init()
-        await self.privileged_props.fetch()
-        await self.privileged_props.fetch_android_version()
-
-    def reset_persist_props_state(self):
-        # self.persist_props.reset_ready_list()
-        self.persist_props.reset_state()
-
-    def reset_privileged_props_state(self):
-        self.privileged_props.reset_state()
-
-    async def save_privileged_props(self):
-        await self.upgrade(offline=True)
-
-    async def restore_privileged_props(self):
-        await self.privileged_props.restore()
-
-    async def set_extension_props(self, pairs: dict[str, Any]):
-        await self.privileged_props.set_extension_props(pairs)
-        await self.upgrade(offline=True)
-
-    async def remove_extension_props(self, keys: list[str]):
-        await self.privileged_props.remove_extension_props(keys)
-        await self.upgrade(offline=True)
-
-    # 因为双向绑定了, 所以不需要传入值
-    async def save_persist_prop(self, name: str):
-        await self.persist_props.save(name)
-
-    async def update_waydroid_status(self):
-        async with self._lock:
-            result = await self._subprocess.run("waydroid status")
-            output = result["stdout"]
-            match self.state:
-                case WaydroidState.UNINITIALIZED:
-                    if "Session:\tRUNNING" in output:
-                        await self.init_persist_props()
-                        await self.init_privileged_props()
-                        self.set_property("state", WaydroidState.RUNNING)
-                    elif "Session:\tSTOPPED" in output:
-                        await self.init_privileged_props()
-                        self.set_property("state", WaydroidState.STOPPED)
-                case WaydroidState.STOPPED:
-                    if "Session:\tRUNNING" in output:
-                        await self.init_persist_props()
-                        self.set_property("state", WaydroidState.RUNNING)
-                    elif "WayDroid is not initialized" in output:
-                        self.set_property("state", WaydroidState.UNINITIALIZED)
-                case WaydroidState.RUNNING:
-                    if "Session:\tSTOPPED" in output:
-                        self.reset_persist_props_state()
-                        self.set_property("state", WaydroidState.STOPPED)
-                    elif "WayDroid is not initialized" in output:
-                        self.reset_persist_props_state()
-                        self.reset_privileged_props_state()
-                        self.set_property("state", WaydroidState.UNINITIALIZED)
-                case WaydroidState.LOADING:
-                    if "Session:\tSTOPPED" in output:
-                        await self.init_privileged_props()
-                        self.set_property("state", WaydroidState.STOPPED)
-                    elif "WayDroid is not initialized" in output:
-                        self.set_property("state", WaydroidState.UNINITIALIZED)
-                    if "Session:\tRUNNING" in output:
-                        await self.init_privileged_props()
-                        await self.init_persist_props()
-                        self.set_property("state", WaydroidState.RUNNING)
-                case _:
-                    return
-
-    def __update_waydroid_status(self):
-        self._task.create_task(self.update_waydroid_status())
-        return True
+    )
 
     def __init__(self) -> None:
         super().__init__()
-        self.set_property("state", WaydroidState.LOADING)
-        # 立即执行一次, 随后再每两秒一次
-        self._task.create_task(self.update_waydroid_status())
-        GLib.timeout_add_seconds(2, self.__update_waydroid_status)
-        self._lock: asyncio.Lock = asyncio.Lock()
 
+        # Initialize the new architecture
+        self._controller = ModelController()
+
+        # Set up property bindings for compatibility
+        self._setup_compatibility_bindings()
+
+        # Initialize state
+        self.set_property("state", WaydroidState.LOADING)
+
+    def _setup_compatibility_bindings(self):
+        """Set up bindings between new models and old interface"""
+        # Bind session state
+        self._controller.session_model.connect(
+            "notify::state", self._on_session_state_changed
+        )
+
+        # Set up property change listeners
+        self._controller.property_model.add_change_listener(self._on_property_changed)
+
+    def _on_session_state_changed(self, model: GObject.Object, param: GObject.ParamSpec):
+        """Handle session state changes from the new model"""
+        new_state = model.get_property("state")
+        self.set_property("state", new_state)
+
+    def _on_property_changed(self, property_name: str, value: Any):
+        """Handle property changes from the new model"""
+        # This can be used to emit compatibility signals if needed
+        pass
+
+    # Compatibility properties
+    @property
+    def persist_props(self):
+        """Compatibility property for persist props"""
+        if not hasattr(self, '_persist_props_compat'):
+            self._persist_props_compat = PersistPropsCompat(self._controller)
+        return self._persist_props_compat
+
+    @property
+    def privileged_props(self):
+        """Compatibility property for privileged props"""
+        if not hasattr(self, '_privileged_props_compat'):
+            self._privileged_props_compat = PrivilegedPropsCompat(self._controller)
+        return self._privileged_props_compat
+
+    # Session management methods (delegate to controller)
     async def start_session(self):
-        try:
-            await self._subprocess.run(
-                command="waydroid session start", flag=True
-            )
-            # await self.update_waydroid_status()
-        except Exception as e:
-            logger.error(e)
+        """Start Waydroid session"""
+        return await self._controller.start_session()
 
     async def stop_session(self):
-        result = await self._subprocess.run(command="waydroid session stop", flag=True)
-        await self.update_waydroid_status()
-        return result
+        """Stop Waydroid session"""
+        return await self._controller.stop_session()
 
     async def restart_session(self):
-        await self.stop_session()
-        await self.start_session()
+        """Restart Waydroid session"""
+        return await self._controller.restart_session()
 
     async def show_full_ui(self):
-        try:
-            await self._subprocess.run(
-                command="waydroid show-full-ui", flag=True
-            )
-            # await self.update_waydroid_status()
-        except Exception as e:
-            logger.error(e)
+        """Show Waydroid full UI"""
+        return await self._controller.show_full_ui()
 
-    async def upgrade(self, offline: bool | None = None) -> bool:
-        try:
-            if offline:
-                try:
-                    await self.privileged_props.save()
-                    await self._subprocess.run(
-                        command=f"pkexec {os.environ['WAYDROID_CLI_PATH']} upgrade -o",
-                        flag=True,
-                    )
-                except SubprocessError as e:
-                    await self.privileged_props.restore()
-                    logger.error(e)
-            else:
-                await self._subprocess.run(
-                    command=f"pkexec {os.environ['WAYDROID_CLI_PATH']} upgrade",
-                    flag=True,
-                )
-            return True
-        finally:
-            await self.update_waydroid_status()
+    async def upgrade(self, offline: bool = False) -> bool:
+        """Upgrade Waydroid"""
+        return await self._controller.upgrade(offline)
+
+    # Property management methods (delegate to controller)
+    async def reset_persist_props(self):
+        """Reset persist properties"""
+        return await self._controller.reset_persist_properties()
+
+    async def reset_privileged_props(self):
+        """Reset privileged properties"""
+        return await self._controller.reset_privileged_properties()
+
+    async def save_persist_prop(self, name: str):
+        """Save a persist property"""
+        return await self._controller.save_persist_property(name)
+
+    async def save_privileged_props(self):
+        """Save privileged properties"""
+        return await self._controller.save_all_privileged_properties()
+
+    async def restore_privileged_props(self):
+        """Restore privileged properties"""
+        return await self._controller.restore_privileged_properties()
+
+    async def set_extension_props(self, pairs: Dict[str, Any]):
+        """Set extension properties"""
+        return await self._controller.set_extension_properties(pairs)
+
+    async def remove_extension_props(self, keys: List[str]):
+        """Remove extension properties"""
+        return await self._controller.remove_extension_properties(keys)
 
     def get_android_version(self):
-        return self.privileged_props.android_version
+        """Get Android version"""
+        return self._controller.session_model.get_property("android_version")
+
+    # State management methods
+    def reset_persist_props_state(self):
+        """Reset persist props state (compatibility)"""
+        # This is handled automatically by the new architecture
+        pass
+
+    def reset_privileged_props_state(self):
+        """Reset privileged props state (compatibility)"""
+        # This is handled automatically by the new architecture
+        pass
+
+
+# Create alias for backward compatibility
+Waydroid = WaydroidCompat

@@ -52,7 +52,10 @@ waydroid_helper_sources = [
     'infobar.py',
     'extension_row.py',
     'available_version_page.py',
-    'shared_folder.py'
+    'shared_folder.py',
+    'model_controller.py',
+    'models.py',
+    'sdk.py',
 ]
 util_sources = [
     'util/__init__.py',
