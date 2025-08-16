@@ -34,12 +34,12 @@ class PropsPage(Gtk.Box):
     switch_3: Gtk.Switch = Gtk.Template.Child()
     switch_4: Gtk.Switch = Gtk.Template.Child()
     switch_5: Gtk.Switch = Gtk.Template.Child()
-    entry_1: Gtk.Switch = Gtk.Template.Child()
-    entry_2: Gtk.Switch = Gtk.Template.Child()
-    entry_3: Gtk.Switch = Gtk.Template.Child()
-    entry_4: Gtk.Switch = Gtk.Template.Child()
-    entry_5: Gtk.Switch = Gtk.Template.Child()
-    entry_6: Gtk.Switch = Gtk.Template.Child()
+    entry_1: Gtk.Entry = Gtk.Template.Child()
+    entry_2: Gtk.Entry = Gtk.Template.Child()
+    entry_3: Gtk.Entry = Gtk.Template.Child()
+    entry_4: Gtk.Entry = Gtk.Template.Child()
+    entry_5: Gtk.Entry = Gtk.Template.Child()
+    entry_6: Gtk.Entry = Gtk.Template.Child()
     switch_21: Gtk.Switch = Gtk.Template.Child()
     device_combo: Adw.ComboRow = Gtk.Template.Child()
     overlay: Gtk.Overlay | None = None
@@ -50,9 +50,9 @@ class PropsPage(Gtk.Box):
     reset_privileged_prop_btn: Gtk.Button = Gtk.Template.Child()
 
     timeout_id: dict[Any, Any] = dict()
-
     _task: Task = Task()
-    ids: dict[Any, Any] = dict()
+
+    # Removed complex signal management - no longer needed with new architecture!
 
     def __init__(self, waydroid: Waydroid, **kargs):
         super().__init__(**kargs)
@@ -75,82 +75,83 @@ class PropsPage(Gtk.Box):
         # # self.waydroid.bind_property(
         # #     "state", self.switch_1, "sensitive", GObject.BindingFlags.SYNC_CREATE)
 
-        self.waydroid.persist_props.bind_property(
-            self.switch_1.get_name(),
-            self.switch_1,
-            "active",
-            GObject.BindingFlags.BIDIRECTIONAL,
-        )
+        # REMOVED: bind_property calls - new architecture handles this automatically
+        # self.waydroid.persist_props.bind_property(
+        #     self.switch_1.get_name(),
+        #     self.switch_1,
+        #     "active",
+        #     GObject.BindingFlags.BIDIRECTIONAL,
+        # )
 
-        self.waydroid.persist_props.bind_property(
-            self.switch_2.get_name(),
-            self.switch_2,
-            "active",
-            GObject.BindingFlags.BIDIRECTIONAL,
-        )
-        self.waydroid.persist_props.bind_property(
-            self.switch_3.get_name(),
-            self.switch_3,
-            "active",
-            GObject.BindingFlags.BIDIRECTIONAL,
-        )
-        self.waydroid.persist_props.bind_property(
-            self.switch_4.get_name(),
-            self.switch_4,
-            "active",
-            GObject.BindingFlags.BIDIRECTIONAL,
-        )
-        self.waydroid.persist_props.bind_property(
-            self.switch_5.get_name(),
-            self.switch_5,
-            "active",
-            GObject.BindingFlags.BIDIRECTIONAL,
-        )
-        self.waydroid.persist_props.bind_property(
-            self.entry_1.get_name(),
-            self.entry_1,
-            "text",
-            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
-        )
-        self.waydroid.persist_props.bind_property(
-            self.entry_2.get_name(),
-            self.entry_2,
-            "text",
-            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
-        )
+        # self.waydroid.persist_props.bind_property(
+        #     self.switch_2.get_name(),
+        #     self.switch_2,
+        #     "active",
+        #     GObject.BindingFlags.BIDIRECTIONAL,
+        # )
+        # self.waydroid.persist_props.bind_property(
+        #     self.switch_3.get_name(),
+        #     self.switch_3,
+        #     "active",
+        #     GObject.BindingFlags.BIDIRECTIONAL,
+        # )
+        # self.waydroid.persist_props.bind_property(
+        #     self.switch_4.get_name(),
+        #     self.switch_4,
+        #     "active",
+        #     GObject.BindingFlags.BIDIRECTIONAL,
+        # )
+        # self.waydroid.persist_props.bind_property(
+        #     self.switch_5.get_name(),
+        #     self.switch_5,
+        #     "active",
+        #     GObject.BindingFlags.BIDIRECTIONAL,
+        # )
+        # self.waydroid.persist_props.bind_property(
+        #     self.entry_1.get_name(),
+        #     self.entry_1,
+        #     "text",
+        #     GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        # )
+        # self.waydroid.persist_props.bind_property(
+        #     self.entry_2.get_name(),
+        #     self.entry_2,
+        #     "text",
+        #     GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        # )
 
-        self.waydroid.persist_props.bind_property(
-            self.entry_3.get_name(),
-            self.entry_3,
-            "text",
-            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
-        )
+        # self.waydroid.persist_props.bind_property(
+        #     self.entry_3.get_name(),
+        #     self.entry_3,
+        #     "text",
+        #     GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        # )
 
-        self.waydroid.persist_props.bind_property(
-            self.entry_4.get_name(),
-            self.entry_4,
-            "text",
-            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
-        )
+        # self.waydroid.persist_props.bind_property(
+        #     self.entry_4.get_name(),
+        #     self.entry_4,
+        #     "text",
+        #     GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        # )
 
-        self.waydroid.persist_props.bind_property(
-            self.entry_5.get_name(),
-            self.entry_5,
-            "text",
-            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
-        )
-        self.waydroid.persist_props.bind_property(
-            self.entry_6.get_name(),
-            self.entry_6,
-            "text",
-            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
-        )
-        self.waydroid.privileged_props.bind_property(
-            self.switch_21.get_name(),
-            self.switch_21,
-            "active",
-            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
-        )
+        # self.waydroid.persist_props.bind_property(
+        #     self.entry_5.get_name(),
+        #     self.entry_5,
+        #     "text",
+        #     GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        # )
+        # self.waydroid.persist_props.bind_property(
+        #     self.entry_6.get_name(),
+        #     self.entry_6,
+        #     "text",
+        #     GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        # )
+        # self.waydroid.privileged_props.bind_property(
+        #     self.switch_21.get_name(),
+        #     self.switch_21,
+        #     "active",
+        #     GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        # )
 
         self.save_notification: InfoBar = InfoBar(
             label=_("Restart the session to apply the changes"),
@@ -193,6 +194,104 @@ class PropsPage(Gtk.Box):
             "notify::ro-product-brand", self.__on_brand_changed
         )
 
+        # Set up simple, permanent signal connections (no more dynamic connect/disconnect!)
+        self._setup_permanent_signal_connections()
+
+        # Set up manual property synchronization (replaces bind_property)
+        self._setup_property_synchronization()
+
+    def _setup_permanent_signal_connections(self):
+        """Set up permanent signal connections - no more complex connect/disconnect logic!"""
+
+        # Connect persist property controls - these stay connected permanently
+        # The handlers will check if the state is ready before acting
+        self.entry_1.connect("notify::text",
+                           partial(self.on_persist_text_changed, name=self.entry_1.get_name()))
+        self.entry_2.connect("notify::text",
+                           partial(self.on_persist_text_changed, name=self.entry_2.get_name()))
+        self.entry_3.connect("notify::text",
+                           partial(self.on_persist_text_changed, name=self.entry_3.get_name(), flag=True))
+        self.entry_4.connect("notify::text",
+                           partial(self.on_persist_text_changed, name=self.entry_4.get_name(), flag=True))
+        self.entry_5.connect("notify::text",
+                           partial(self.on_persist_text_changed, name=self.entry_5.get_name(), flag=True))
+        self.entry_6.connect("notify::text",
+                           partial(self.on_persist_text_changed, name=self.entry_6.get_name(), flag=True))
+
+        self.switch_1.connect("notify::active",
+                            partial(self.on_perisit_switch_clicked, name=self.switch_1.get_name()))
+        self.switch_2.connect("notify::active",
+                            partial(self.on_perisit_switch_clicked, name=self.switch_2.get_name()))
+        self.switch_3.connect("notify::active",
+                            partial(self.on_perisit_switch_clicked, name=self.switch_3.get_name()))
+        self.switch_4.connect("notify::active",
+                            partial(self.on_perisit_switch_clicked, name=self.switch_4.get_name()))
+        self.switch_5.connect("notify::active",
+                            partial(self.on_perisit_switch_clicked, name=self.switch_5.get_name()))
+
+        # Connect privileged property controls
+        self.device_combo.connect("notify::selected-item", self.on_adw_combo_row_selected_item)
+        self.switch_21.connect("notify::active",
+                             partial(self.on_privileged_switch_clicked, name=self.switch_21.get_name()))
+
+    def _setup_property_synchronization(self):
+        """Set up manual property synchronization to replace bind_property"""
+        # Listen for model changes and update UI accordingly
+        self.waydroid._controller.property_model.add_change_listener(self._on_model_property_changed)
+
+        # Set up initial UI state when properties are loaded
+        self.waydroid.persist_props.connect("notify::state", self._sync_persist_props_to_ui)
+        self.waydroid.privileged_props.connect("notify::state", self._sync_privileged_props_to_ui)
+
+    def _on_model_property_changed(self, property_name: str, value: Any):
+        """Handle property changes from the model and update UI"""
+        # Map property names to UI widgets
+        widget_map = {
+            "multi_windows": self.switch_1,
+            "cursor_on_subsurface": self.switch_2,
+            "invert_colors": self.switch_3,
+            "suspend": self.switch_4,
+            "uevent": self.switch_5,
+            "fake_touch": self.entry_1,
+            "fake_wifi": self.entry_2,
+            "height_padding": self.entry_3,
+            "width_padding": self.entry_4,
+            "width": self.entry_5,
+            "height": self.entry_6,
+            "qemu_hw_mainkeys": self.switch_21,
+        }
+
+        widget = widget_map.get(property_name)
+        if widget:
+            # Temporarily block signals to avoid circular updates
+            if hasattr(widget, 'set_active'):  # Switch
+                widget.set_active(bool(value))
+            elif hasattr(widget, 'set_text'):  # Entry
+                widget.set_text(str(value) if value else "")
+
+    def _sync_persist_props_to_ui(self, props_obj: GObject.Object, param: GObject.ParamSpec):
+        """Sync persist properties to UI when they become ready"""
+        if props_obj.get_property("state") == PropsState.READY:
+            # Update all persist property UI elements
+            self.switch_1.set_active(self.waydroid._controller.property_model.get_property_value("multi_windows") or False)
+            self.switch_2.set_active(self.waydroid._controller.property_model.get_property_value("cursor_on_subsurface") or False)
+            self.switch_3.set_active(self.waydroid._controller.property_model.get_property_value("invert_colors") or False)
+            self.switch_4.set_active(self.waydroid._controller.property_model.get_property_value("suspend") or False)
+            self.switch_5.set_active(self.waydroid._controller.property_model.get_property_value("uevent") or False)
+
+            self.entry_1.set_text(str(self.waydroid._controller.property_model.get_property_value("fake_touch") or ""))
+            self.entry_2.set_text(str(self.waydroid._controller.property_model.get_property_value("fake_wifi") or ""))
+            self.entry_3.set_text(str(self.waydroid._controller.property_model.get_property_value("height_padding") or ""))
+            self.entry_4.set_text(str(self.waydroid._controller.property_model.get_property_value("width_padding") or ""))
+            self.entry_5.set_text(str(self.waydroid._controller.property_model.get_property_value("width") or ""))
+            self.entry_6.set_text(str(self.waydroid._controller.property_model.get_property_value("height") or ""))
+
+    def _sync_privileged_props_to_ui(self, props_obj: GObject.Object, param: GObject.ParamSpec):
+        """Sync privileged properties to UI when they become ready"""
+        if props_obj.get_property("state") == PropsState.READY:
+            # Update privileged property UI elements
+            self.switch_21.set_active(self.waydroid._controller.property_model.get_property_value("qemu_hw_mainkeys") or False)
+
     def check_both_properties_changed(self):
         if self._model_changed and self._brand_changed:
             self._model_changed = False
@@ -229,10 +328,14 @@ class PropsPage(Gtk.Box):
         else:
             self.device_combo.set_selected(0)
 
-    # # selected to waydroid prop
     def on_adw_combo_row_selected_item(
         self, comborow: Adw.ComboRow, GParamObject: GObject.ParamSpec
     ):
+        """Handle combo box selection - now with simple state checking"""
+        # Simple state check - no more complex connect/disconnect needed!
+        if self.waydroid.privileged_props.get_property("state") != PropsState.READY:
+            return
+
         self.set_reveal(self.save_privileged_notification, True)
         match comborow.get_selected_item():
             case None:
@@ -247,161 +350,39 @@ class PropsPage(Gtk.Box):
             case _:
                 return
 
-    def __connect(
-        self, source: GObject.Object, signal: str, handler: Callable[..., Any]
-    ):
-        id = source.connect(signal, handler)
-        self.ids[f"{hash(source)}_{signal}"] = id
-
-    def __disconnect(self, source: GObject.Object, signal: str):
-        id = self.ids.get(f"{hash(source)}_{signal}", -1)
-        if id == -1:
-            return
-        source.disconnect(id)
-        self.ids.pop(f"{hash(source)}_{signal}")
+    # REMOVED: Complex __connect/__disconnect mechanism
+    # The new architecture eliminates the need for manual signal management!
 
     def on_waydroid_privileged_state_changed(
         self, w: GObject.Object, param: GObject.ParamSpec
     ):
-        if w.get_property("state") == PropsState.READY:
-            self.switch_21.set_sensitive(True)
-            self.device_combo.set_sensitive(True)
-            self.reset_privileged_prop_btn.set_sensitive(True)
+        """Simplified state handling - just enable/disable UI elements"""
+        state = w.get_property("state")
+        is_ready = state == PropsState.READY
 
-            self.__connect(
-                self.device_combo,
-                "notify::selected-item",
-                self.on_adw_combo_row_selected_item,
-            )
-            self.__connect(
-                self.switch_21,
-                "notify::active",
-                partial(
-                    self.on_privileged_switch_clicked, name=self.switch_21.get_name()
-                ),
-            )
-
-        else:
-            self.__disconnect(self.device_combo, "notify::selected-item")
-            self.__disconnect(self.switch_21, "notify::active")
-            self.switch_21.set_sensitive(False)
-            self.device_combo.set_sensitive(False)
-            self.reset_privileged_prop_btn.set_sensitive(False)
+        # Enable/disable all privileged property controls
+        self.switch_21.set_sensitive(is_ready)
+        self.device_combo.set_sensitive(is_ready)
+        self.reset_privileged_prop_btn.set_sensitive(is_ready)
 
     def on_waydroid_persist_state_changed(
         self, w: GObject.Object, param: GObject.ParamSpec
     ):
-        if w.get_property("state") == PropsState.READY:
-            self.switch_1.set_sensitive(True)
-            self.switch_2.set_sensitive(True)
-            self.switch_3.set_sensitive(True)
-            self.switch_4.set_sensitive(True)
-            self.switch_5.set_sensitive(True)
-            self.entry_1.set_sensitive(True)
-            self.entry_2.set_sensitive(True)
-            self.entry_3.set_sensitive(True)
-            self.entry_4.set_sensitive(True)
-            self.entry_5.set_sensitive(True)
-            self.entry_6.set_sensitive(True)
-            self.reset_persist_prop_btn.set_sensitive(True)
-            self.__connect(
-                self.entry_1,
-                "notify::text",
-                partial(self.on_persist_text_changed, name=self.entry_1.get_name()),
-            )
+        """Simplified state handling - just enable/disable UI elements"""
+        state = w.get_property("state")
+        is_ready = state == PropsState.READY
 
-            self.__connect(
-                self.entry_2,
-                "notify::text",
-                partial(self.on_persist_text_changed, name=self.entry_2.get_name()),
-            )
-            self.__connect(
-                self.entry_3,
-                "notify::text",
-                partial(
-                    partial(self.on_persist_text_changed, flag=True),
-                    name=self.entry_3.get_name(),
-                ),
-            )
-            self.__connect(
-                self.entry_4,
-                "notify::text",
-                partial(
-                    partial(self.on_persist_text_changed, flag=True),
-                    name=self.entry_4.get_name(),
-                ),
-            )
-            self.__connect(
-                self.entry_5,
-                "notify::text",
-                partial(
-                    partial(self.on_persist_text_changed, flag=True),
-                    name=self.entry_5.get_name(),
-                ),
-            )
-            self.__connect(
-                self.entry_6,
-                "notify::text",
-                partial(
-                    partial(self.on_persist_text_changed, flag=True),
-                    name=self.entry_6.get_name(),
-                ),
-            )
 
-            self.__connect(
-                self.switch_1,
-                "notify::active",
-                partial(self.on_perisit_switch_clicked, name=self.switch_1.get_name()),
-            )
 
-            self.__connect(
-                self.switch_2,
-                "notify::active",
-                partial(self.on_perisit_switch_clicked, name=self.switch_2.get_name()),
-            )
+        # Enable/disable all persist property controls
+        controls = [
+            self.switch_1, self.switch_2, self.switch_3, self.switch_4, self.switch_5,
+            self.entry_1, self.entry_2, self.entry_3, self.entry_4, self.entry_5, self.entry_6,
+            self.reset_persist_prop_btn
+        ]
 
-            self.__connect(
-                self.switch_3,
-                "notify::active",
-                partial(self.on_perisit_switch_clicked, name=self.switch_3.get_name()),
-            )
-
-            self.__connect(
-                self.switch_4,
-                "notify::active",
-                partial(self.on_perisit_switch_clicked, name=self.switch_4.get_name()),
-            )
-
-            self.__connect(
-                self.switch_5,
-                "notify::active",
-                partial(self.on_perisit_switch_clicked, name=self.switch_5.get_name()),
-            )
-        else:
-            self.__disconnect(self.switch_1, "notify::active")
-            self.__disconnect(self.switch_2, "notify::active")
-            self.__disconnect(self.switch_3, "notify::active")
-            self.__disconnect(self.switch_4, "notify::active")
-            self.__disconnect(self.switch_5, "notify::active")
-            self.__disconnect(self.entry_1, "notify::text")
-            self.__disconnect(self.entry_2, "notify::text")
-            self.__disconnect(self.entry_3, "notify::text")
-            self.__disconnect(self.entry_3, "notify::text")
-            self.__disconnect(self.entry_4, "notify::text")
-            self.__disconnect(self.entry_5, "notify::text")
-            self.__disconnect(self.entry_6, "notify::text")
-            self.switch_1.set_sensitive(False)
-            self.switch_2.set_sensitive(False)
-            self.switch_3.set_sensitive(False)
-            self.switch_4.set_sensitive(False)
-            self.switch_5.set_sensitive(False)
-            self.entry_1.set_sensitive(False)
-            self.entry_2.set_sensitive(False)
-            self.entry_3.set_sensitive(False)
-            self.entry_4.set_sensitive(False)
-            self.entry_5.set_sensitive(False)
-            self.entry_6.set_sensitive(False)
-            self.reset_persist_prop_btn.set_sensitive(False)
+        for control in controls:
+            control.set_sensitive(is_ready)
 
     def set_reveal(self, widget: InfoBar, reveal_child: bool):
         if (
@@ -424,21 +405,52 @@ class PropsPage(Gtk.Box):
     def on_privileged_switch_clicked(
         self, a: Gtk.Widget, b: GObject.ParamSpec, name: str
     ):
-        # 这种判断state==ready时再connect, state==uninitialized时候disconnect是不是更好?
-        # if self.waydroid.privileged_props.get_property("state") != PropsState.READY:
-        #     return
+        """Handle privileged switch clicks - now with simple state checking"""
+        # Simple state check - no more complex connect/disconnect needed!
+        if self.waydroid.privileged_props.get_property("state") != PropsState.READY:
+            return
+
+        # Update the model with the new value
+        normalized_name = name.replace("-", "_")
+        new_value = a.get_active() if hasattr(a, 'get_active') else False
+
+        # Update the model
+        self.waydroid._controller.property_model.set_property_value(normalized_name, new_value)
+
         self.set_reveal(self.save_privileged_notification, True)
-        # self.save_privileged_notification.set_reveal_child(True)
 
     def __on_persist_text_changed(self, name: str):
+        # Update the model with the new value before saving
+        normalized_name = name.replace("-", "_")
+
+        # Find the corresponding entry widget to get the current value
+        widget_map = {
+            "fake-touch": self.entry_1,
+            "fake-wifi": self.entry_2,
+            "height-padding": self.entry_3,
+            "width-padding": self.entry_4,
+            "width": self.entry_5,
+            "height": self.entry_6,
+        }
+
+        widget = widget_map.get(name)
+        if widget:
+            new_value = widget.get_text()
+
+            # Update the model
+            self.waydroid._controller.property_model.set_property_value(normalized_name, new_value)
+
         self._task.create_task(self.waydroid.save_persist_prop(name))
         self.timeout_id[name] = None
 
     def on_persist_text_changed(
         self, a: Gtk.Widget, b: GObject.ParamSpec, name: str, flag: bool = False
     ):
-        # if self.waydroid.persist_props.get_property("state") != PropsState.READY:
-        #     return
+        """Handle persist text changes - now with simple state checking"""
+        # Simple state check - no more complex connect/disconnect needed!
+        if self.waydroid.persist_props.get_property("state") != PropsState.READY:
+            return
+
         if self.timeout_id.get(name) is not None:
             GLib.source_remove(self.timeout_id[name])
 
@@ -449,13 +461,19 @@ class PropsPage(Gtk.Box):
             self.set_reveal(self.save_notification, True)
 
     def on_perisit_switch_clicked(self, a: Gtk.Switch, b: GObject.ParamSpec, name: str):
-        # print(a.get_widget().get_name())
-        # if self.waydroid.persist_props.get_property("state") != PropsState.READY:
-        #     return
-        # print("callback")
+        """Handle persist switch clicks - now with simple state checking"""
+        # Simple state check - no more complex connect/disconnect needed!
+        if self.waydroid.persist_props.get_property("state") != PropsState.READY:
+            return
+
+        # Update the model with the new value
+        normalized_name = name.replace("-", "_")
+        new_value = a.get_active()
+
+        # Update the model
+        self.waydroid._controller.property_model.set_property_value(normalized_name, new_value)
+
         self.set_reveal(self.save_notification, True)
-        # self.save_notification.set_reveal_child(True)
-        # print("here", name, self.waydroid.persist_props.get_property(name))
         self._task.create_task(self.waydroid.save_persist_prop(name))
 
     # def on_cancel_button_clicked(self, button):

@@ -86,19 +86,13 @@ class InputEventHandlerChain:
         if not self.enabled:
             return False
 
-        logger.debug(f"Process event: {event.event_type}")
-
         for handler in self.handlers:
             if not handler.enabled:
                 continue
 
             if handler.can_handle(event):
-                logger.debug(f"Use handler: {handler.__class__.__name__}")
                 try:
                     if handler.handle_event(event):
-                        logger.debug(
-                            f"Event consumed by handler: {handler.__class__.__name__}"
-                        )
                         return True  # 事件已被消费，停止传递
                 except Exception as e:
                     logger.error(
