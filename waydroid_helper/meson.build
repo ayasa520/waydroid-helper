@@ -47,6 +47,7 @@ waydroid_helper_sources = [
     'window.py',
     'waydroid.py',
     'general_page.py',
+    'instance_detail_page.py',
     'props_page.py',
     'extensions_page.py',
     'infobar.py',

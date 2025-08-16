@@ -102,6 +102,9 @@ class TransparentWindow(Adw.Window):
     def __init__(self, app):
         super().__init__(application=app)
 
+        # 添加关闭状态标志，避免重复关闭
+        self._is_closing = False
+
         self.connect("close-request", self._on_close_request)
 
         self.set_title(APP_TITLE)
@@ -357,6 +360,11 @@ class TransparentWindow(Adw.Window):
         return False
 
     def close(self):
+        # 避免重复关闭
+        if self._is_closing:
+            return
+        self._is_closing = True
+
         # Clean up workspace manager first
         if hasattr(self, "workspace_manager"):
             self.workspace_manager.cleanup()

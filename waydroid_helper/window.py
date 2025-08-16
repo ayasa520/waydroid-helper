@@ -188,27 +188,22 @@ class WaydroidHelperWindow(Adw.ApplicationWindow):
         self.navigation_view.push(adw_navigation_page)
 
         self.waydroid: Waydroid = Waydroid()
+
+        # 创建页面实例
         general_page = GeneralPage(self.waydroid)
-        props_page = PropsPage(self.waydroid)
-        extensions_page = ExtensionsPage(
+        self.props_page = PropsPage(self.waydroid)
+        self.extensions_page = ExtensionsPage(
             self.waydroid, navigation_view=self.navigation_view
         )
 
+        # 设置导航
+        general_page.set_navigation_view(self.navigation_view)
+        general_page.set_pages(self.props_page, self.extensions_page)
+
+        # 只添加主页到主stack
         self.stack_add_titled_with_icon(
             child=general_page,
             name="page01",
             title=_("Home"),
             icon_name="home-symbolic",
-        )
-        self.stack_add_titled_with_icon(
-            child=props_page,
-            name="page02",
-            title=_("Settings"),
-            icon_name="system-symbolic",
-        )
-        self.stack_add_titled_with_icon(
-            child=extensions_page,
-            name="page03",
-            title=_("Extensions"),
-            icon_name="addon-symbolic",
         )

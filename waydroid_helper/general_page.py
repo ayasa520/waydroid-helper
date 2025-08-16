@@ -5,18 +5,14 @@
 # pyright: reportUnknownArgumentType=false
 
 from gettext import gettext as _
-from typing import cast
 
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Adw, GLib, GObject, Gtk
+from gi.repository import Adw, GObject, Gtk
 
-from waydroid_helper.controller import TransparentWindow
-from waydroid_helper.infobar import InfoBar
-from waydroid_helper.shared_folder import SharedFoldersWidget
 from waydroid_helper.util import Task, logger, template
 from waydroid_helper.waydroid import Waydroid, WaydroidState
 
@@ -35,14 +31,11 @@ class GeneralPage(Gtk.Box):
     init_button: Gtk.Button = Gtk.Template.Child("init-button")
     updrade_button: Gtk.Button = Gtk.Template.Child()
     show_full_ui_button: Gtk.Button = Gtk.Template.Child("show-full-ui-button")
-    open_key_mapping_button: Gtk.Button = Gtk.Template.Child("open-key-mapping-button")
-    close_key_mapping_button: Gtk.Button = Gtk.Template.Child("close-key-mapping-button")
-    shared_folders_widget: SharedFoldersWidget = Gtk.Template.Child()
-    # mount_list:Gtk.ListBox = Gtk.Template.Child()
 
     _task: Task = Task()
-    _key_mapping_window: TransparentWindow | None = None
-    _app: Gtk.Application | None = None
+    _navigation_view = None  # Will be set by window
+    _props_page = None  # Will be set by window
+    _extensions_page = None  # Will be set by window
 
     def update_menu(self, state: WaydroidState):
         if state == WaydroidState.RUNNING:
@@ -77,9 +70,6 @@ class GeneralPage(Gtk.Box):
             self.status.set_subtitle("")
             self.status_image.set_from_icon_name("")
             self._disable_buttons()
-            
-        # Always update key mapping buttons status
-        self._update_key_mapping_buttons()
 
     def on_waydroid_state_changed(self, w: GObject.Object, param: GObject.ParamSpec):
         self.update_menu(w.get_property(param.name))
@@ -92,23 +82,46 @@ class GeneralPage(Gtk.Box):
         super().__init__(**kargs)
         self.set_property("waydroid", waydroid)
         self.waydroid.connect("notify::state", self.on_waydroid_state_changed)
-        self.infobar: InfoBar = InfoBar(
-            label=_("Restart the systemd user service immediately"),
-            ok_callback=lambda *_: self.shared_folders_widget.restart_service(),
-        )
-        self.shared_folders_widget.connect(
-            "updated", lambda _: self.infobar.set_reveal_child(True)
-        )
-        self.append(self.infobar)
-        
-        # Initialize application instance
-        self._app = None
-        
-        # Get application instance with delay to ensure UI is fully initialized
-        GLib.idle_add(self._get_app_instance)
-        
-        # Initialize key mapping buttons status after delay
-        GLib.idle_add(self._update_key_mapping_buttons)
+
+    def set_navigation_view(self, navigation_view):
+        """Set the navigation view for page navigation"""
+        self._navigation_view = navigation_view
+
+    def set_pages(self, props_page, extensions_page):
+        """Set the props and extensions page instances"""
+        self._props_page = props_page
+        self._extensions_page = extensions_page
+
+    @Gtk.Template.Callback()
+    def on_status_row_activated(self, row: Adw.ActionRow):
+        """Handle status row click to navigate to instance details"""
+        if self._navigation_view and self._props_page and self._extensions_page:
+            from waydroid_helper.instance_detail_page import InstanceDetailPage
+
+            # Check if detail page already exists
+            detail_page_tag = "instance_detail"
+            existing_page = self._navigation_view.find_page(detail_page_tag)
+
+            if existing_page is None:
+                # Create new detail page with existing page instances
+                detail_page = InstanceDetailPage(
+                    self.waydroid,
+                    self._navigation_view,
+                    self._props_page,
+                    self._extensions_page
+                )
+                detail_page.set_tag(detail_page_tag)
+                self._navigation_view.add(detail_page)
+
+                # Set app instance if available
+                root = self.get_root()
+                if root and hasattr(root, 'get_application'):
+                    app = root.get_application()
+                    if app:
+                        detail_page.set_app(app)
+
+            # Navigate to detail page
+            self._navigation_view.push_by_tag(detail_page_tag)
 
     def _get_app_instance(self):
         """Get application instance with delay"""
@@ -175,72 +188,4 @@ class GeneralPage(Gtk.Box):
         logger.info("sudo waydroid upgrade -o")
         self._task.create_task(self.__on_start_upgrade_offline_clicked())
 
-    #
-    # @Gtk.Template.Callback()
-    # def on_mount_point_add_button_clicked(self, button):
-    #     pass
 
-    def _update_key_mapping_buttons(self):
-        """Update key mapping buttons status"""
-        try:
-            if self._key_mapping_window and self._key_mapping_window.is_visible():
-                self.open_key_mapping_button.set_sensitive(False)
-                self.close_key_mapping_button.set_sensitive(True)
-            else:
-                self.open_key_mapping_button.set_sensitive(True)
-                self.close_key_mapping_button.set_sensitive(False)
-        except Exception as e:
-            logger.error(f"Update key mapping buttons status failed: {e}")
-            # Set to default state when error occurs
-            self.open_key_mapping_button.set_sensitive(True)
-            self.close_key_mapping_button.set_sensitive(False)
-
-    @Gtk.Template.Callback()
-    def on_open_key_mapping_clicked(self, button: Gtk.Button):
-        """Open key mapping window"""
-        logger.info("Open key mapping window")
-        try:
-            if self._app:
-                # Create key mapping window
-                self._key_mapping_window = TransparentWindow(self._app)
-                # Listen for window close event
-                self._key_mapping_window.connect("close-request", self._on_key_mapping_window_closed)
-                self._key_mapping_window.present()
-                # Update button status
-                self._update_key_mapping_buttons()
-                logger.info("Key mapping window opened")
-                
-                # Minimize the main window
-                root = self.get_root()
-                root = cast(Gtk.ApplicationWindow, root)
-                if root and hasattr(root, 'minimize'):
-                    root.minimize()
-                    logger.info("Main window minimized")
-            else:
-                logger.error("Cannot get application instance")
-        except Exception as e:
-            logger.error(f"Open key mapping window failed: {e}")
-
-    def _on_key_mapping_window_closed(self, window):
-        """Callback when key mapping window is closed"""
-        logger.info("Key mapping window closed")
-        self._key_mapping_window = None
-        self._update_key_mapping_buttons()
-        return False  # Allow window to close
-
-    @Gtk.Template.Callback()
-    def on_close_key_mapping_clicked(self, button: Gtk.Button):
-        """Close key mapping window"""
-        logger.info("Close key mapping window")
-        try:
-            if self._key_mapping_window:
-                self._key_mapping_window.close()
-                # No need to set to None here, close-request will trigger callback
-                logger.info("Key mapping window close request sent")
-            else:
-                logger.warning("No open key mapping window")
-        except Exception as e:
-            logger.error(f"Close key mapping window failed: {e}")
-            # Manually clean up on error
-            self._key_mapping_window = None
-            self._update_key_mapping_buttons()

@@ -11,58 +11,34 @@
               <object class="AdwActionRow" id="status">
                 <property name="subtitle" translatable="yes"></property>
                 <property name="title" translatable="yes">Loading</property>
+                <property name="activatable">true</property>
+                <signal name="activated" handler="on_status_row_activated"/>
                 <child type="prefix">
                   <object class="GtkImage" id="status-image"></object>
                 </child>
-                <child type="suffix">
-                  <object class="GtkMenuButton">
-                    <property name="halign">end</property>
-                    <property name="valign">center</property>
-                    <property name="vexpand">true</property>
-                    <property name="hexpand">true</property>
-                    <property name="always-show-arrow">true</property>
-                    <property name="popover">pop_power</property>
-                    <property name="icon-name">system-shutdown-symbolic</property>
-                    <style>
-                      <class name="flat"/>
-                    </style>
-                  </object>
-                </child>
-              </object>
-            </child>
-          </object>
-        </child>
-        <child>
-          <object class="SharedFoldersWidget" id="shared_folders_widget"></object>
-        </child>
-        <child>
-          <object class="AdwPreferencesGroup">
-                         <property name="title" translatable="yes">Key Mapper</property>
-            <child>
-              <object class="AdwActionRow">
-                                 <property name="title" translatable="yes">Key Mapping Window</property>
-                 <property name="subtitle" translatable="yes">Manage key mapping overlay window for game control</property>
                 <child type="suffix">
                   <object class="GtkBox">
                     <property name="orientation">0</property>
                     <property name="spacing">6</property>
                     <child>
-                                             <object class="GtkButton" id="open-key-mapping-button">
-                         <property name="label" translatable="yes">Open</property>
-                         <property name="sensitive">False</property>
-                         <signal name="clicked" handler="on_open_key_mapping_clicked"/>
+                      <object class="GtkMenuButton">
+                        <property name="halign">end</property>
+                        <property name="valign">center</property>
+                        <property name="always-show-arrow">true</property>
+                        <property name="popover">pop_power</property>
+                        <property name="icon-name">system-shutdown-symbolic</property>
                         <style>
-                          <class name="suggested-action"/>
+                          <class name="flat"/>
                         </style>
                       </object>
                     </child>
                     <child>
-                                             <object class="GtkButton" id="close-key-mapping-button">
-                         <property name="label" translatable="yes">Close</property>
-                         <property name="sensitive">False</property>
-                         <signal name="clicked" handler="on_close_key_mapping_clicked"/>
+                      <object class="GtkImage">
+                        <property name="icon-name">go-next-symbolic</property>
+                        <property name="halign">end</property>
+                        <property name="valign">center</property>
                         <style>
-                          <class name="destructive-action"/>
+                          <class name="dim-label"/>
                         </style>
                       </object>
                     </child>
@@ -72,6 +48,7 @@
             </child>
           </object>
         </child>
+
       </object>
     </child>
     <object class="GtkPopover" id="pop_power">
