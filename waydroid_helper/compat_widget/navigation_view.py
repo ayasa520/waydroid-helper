@@ -127,33 +127,47 @@ class NavigationViewMeta(type(GObject.Object)):
             def pop(self) -> bool:
                 if len(self._navigation_stack) > 1:
                     self.maybe_removed = self._navigation_stack.pop()
-                    self._navigation_view.get_page(self.maybe_removed).set_navigatable(
-                        False
-                    )
+                    self._navigation_view.get_page(self.maybe_removed).set_navigatable(False)
                     self._navigation_view.set_visible_child(self._navigation_stack[-1])
                     return True
                 return False
 
             def _on_visible_child_changed(self, leaflet, pspec):
                 """
-                AdwLeaflet
+                AdwLeaflet - 处理手势或键盘触发的导航返回
                 """
                 if not self._navigation_view.get_child_transition_running():
                     current_page = self._navigation_view.get_visible_child()
 
+                    # 如果当前页面就是栈顶页面，说明没有导航变化
                     if current_page == self._navigation_stack[-1]:
                         return
 
-                    # 手势或者键盘触发 NavigationBack, pop 没有被调用
-                    self.maybe_removed = self._navigation_stack.pop()
-                    self._navigation_view.get_page(self.maybe_removed).set_navigatable(
-                        False
-                    )
+                    # 检查是否有 maybe_removed 页面需要处理
+                    if self.maybe_removed is not None:
+                        # 如果页面不在永久页面列表中，从视图中移除
+                        if self.maybe_removed not in self._pages:
+                            self._navigation_view.remove(self.maybe_removed)
 
-                    # pop
-                    if self.maybe_removed not in self._pages:
-                        self._navigation_view.remove(self.maybe_removed)
-                    self.maybe_removed = None
+                        # 清理状态
+                        self.maybe_removed = None
+                        return
+
+                    # 检查当前页面是否在导航栈中
+                    if current_page not in self._navigation_stack:
+                        return
+
+                    # 找到当前页面在栈中的位置
+                    current_index = self._navigation_stack.index(current_page)
+
+                    # 移除当前页面之后的所有页面（用户可能跳过了多个页面）
+                    while len(self._navigation_stack) > current_index + 1:
+                        page_to_remove = self._navigation_stack.pop()
+                        self._navigation_view.get_page(page_to_remove).set_navigatable(False)
+
+                        # 如果页面不在永久页面列表中，从视图中移除
+                        if page_to_remove not in self._pages:
+                            self._navigation_view.remove(page_to_remove)
 
             def push_by_tag(self, tag):
                 for page in self._pages:

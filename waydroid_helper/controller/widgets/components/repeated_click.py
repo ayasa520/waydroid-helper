@@ -325,9 +325,7 @@ class RepeatedClick(BaseWidget):
         
         try:
             for i in range(click_count):
-                print(i)
                 if not self._is_clicking:  # 检查是否应该停止
-                    print("操你妈了个逼")
                     break
                 
                 await self._send_click_sequence(w, h, pointer_id)

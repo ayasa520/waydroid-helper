@@ -45,7 +45,6 @@ class InfoBar(Gtk.Revealer):
     def default_callback(self, widget: Gtk.Revealer, reveal: bool):
         # 1. 重置尺寸请求以触发 GTK 重新计算尺寸
         if hasattr(self, 'label'):
-            print(1)
             self.label.set_size_request(-1, -1)
         
         # 2. 设置 reveal 状态，触发动画

@@ -78,26 +78,27 @@ class HeaderBarMeta(type(GObject.Object)):
                 if not (self._navigation_page and self._navigation_view):
                     self._navigation_page = self.get_ancestor(NavigationPage)
                     self._navigation_view = self.get_ancestor(NavigationView)
+
+                # 检查是否需要返回按钮（不管是否已有title_widget）
+                if self._navigation_page and self._navigation_view:
+                    def on_back_clicked(button):
+                        self._navigation_view.pop()
+
+                    navigation_stack = self._navigation_view.get_navigation_stack()
+                    # 如果不是第一个页面，就需要返回按钮
                     if (
-                        self._navigation_page
-                        and self._navigation_view
-                        and not self._header.get_title_widget()
+                        len(navigation_stack) > 0
+                        and navigation_stack[0] != self._navigation_page
                     ):
+                        back_button = Gtk.Button()
+                        back_button.set_icon_name("go-previous-symbolic")
+                        back_button.add_css_class("flat")
+                        back_button.connect("clicked", on_back_clicked)
+                        self._header.pack_start(back_button)
 
-                        def on_back_clicked(button):
-                            self._navigation_view.pop()
-
+                    # 只有在没有title_widget时才设置默认标题
+                    if not self._header.get_title_widget():
                         title = self._navigation_page.get_title()
-                        navigation_stack = self._navigation_view.get_navigation_stack()
-                        if (
-                            len(navigation_stack) > 0
-                            and navigation_stack[0] != self._navigation_page
-                        ):
-                            back_button = Gtk.Button()
-                            back_button.set_icon_name("go-previous-symbolic")
-                            back_button.add_css_class("flat")
-                            back_button.connect("clicked", on_back_clicked)
-                            self._header.pack_start(back_button)
                         title_label = Gtk.Label()
                         title_label.set_markup(f"<b>{title}</b>")
                         self._header.set_title_widget(title_label)

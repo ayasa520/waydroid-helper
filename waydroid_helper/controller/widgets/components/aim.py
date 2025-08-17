@@ -244,7 +244,6 @@ class Aim(BaseWidget):
             await asyncio.sleep(0.05)
             await self._send_touch_down(w, h)
             self._current_pos = (float(self.center_x)+dx, float(self.center_y)+dy)
-            print(self._current_pos)
             await self._send_touch_move(w, h)
             return
 

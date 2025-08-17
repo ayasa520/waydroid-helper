@@ -119,6 +119,9 @@ class GeneralPage(Gtk.Box):
                     app = root.get_application()
                     if app:
                         detail_page.set_app(app)
+            else:
+                # 如果页面已存在，确保它是最新的状态
+                detail_page = existing_page
 
             # Navigate to detail page
             self._navigation_view.push_by_tag(detail_page_tag)
