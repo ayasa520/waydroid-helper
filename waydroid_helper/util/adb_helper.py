@@ -8,11 +8,21 @@ from waydroid_helper.util.subprocess_manager import SubprocessManager
 
 SCRCPY_SERVER_PATH_ON_DEVICE = "/data/local/tmp/scrcpy-server.jar"
 SCRCPY_VERSION = "3.3.1"
-# We assume the third_party folder is at project root/controller/third_party
-SCRCPY_SERVER_PATH_ON_PC = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    "../controller/third_party/scrcpy-server",
-)
+
+# Get the correct path for scrcpy-server, handling both normal and AppImage environments
+def _get_scrcpy_server_path() -> str:
+    # In AppImage environment, use PKGDATADIR
+    pkgdatadir = os.environ.get('PKGDATADIR')
+    if pkgdatadir:
+        return os.path.join(pkgdatadir, "waydroid_helper/controller/third_party/scrcpy-server")
+
+    # Fallback to relative path for normal installation
+    return os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "../controller/third_party/scrcpy-server",
+    )
+
+SCRCPY_SERVER_PATH_ON_PC = _get_scrcpy_server_path()
 
 
 class AdbHelper:
