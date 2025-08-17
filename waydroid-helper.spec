@@ -1,5 +1,5 @@
 Name:           waydroid-helper
-Version:        0.2.3
+Version:         0.2.4
 Release:        1%{?dist}
 Summary:        A GUI application for Waydroid configuration and extension installation
 
@@ -19,7 +19,6 @@ BuildRequires:  gobject-introspection-devel
 BuildRequires:  gettext
 BuildRequires:  dbus-devel
 BuildRequires:  systemd
-BuildRequires:  libcap-devel
 BuildRequires:  desktop-file-utils
 
 Requires:       python3
@@ -27,7 +26,6 @@ Requires:       gtk4
 Requires:       libadwaita
 Requires:       waydroid
 Requires:       fakeroot
-Requires:       attr
 Requires:       python3-aiofiles
 Requires:       python3-httpx
 Requires:       python3-cairo

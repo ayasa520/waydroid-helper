@@ -116,7 +116,7 @@ For manual installation, you'll need to install the dependencies and build the p
 1. Install dependencies:
 
     ```bash
-    sudo apt install libgtk-4-1 libgtk-4-dev libadwaita-1-dev libadwaita-1-0 libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-4.0 gir1.2-adw-1 gettext ninja-build fakeroot attr libcap-dev libdbus-1-dev desktop-file-utils software-properties-common -y
+    sudo apt install libgtk-4-1 libgtk-4-dev libadwaita-1-dev libadwaita-1-0 libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-4.0 gir1.2-adw-1 gettext ninja-build fakeroot libdbus-1-dev desktop-file-utils software-properties-common -y
     ```
 
 
@@ -142,7 +142,7 @@ For manual installation, you'll need to install the dependencies and build the p
 1. Install dependencies:
 
     ```bash
-    sudo dnf install gtk4 gtk4-devel libadwaita libadwaita-devel gobject-introspection-devel gcc cairo-devel pkgconf-pkg-config python3-devel gobject-introspection gtk4-devel libadwaita-devel gettext ninja-build fakeroot attr libcap-devel dbus-devel desktop-file-utils -y
+    sudo dnf install gtk4 gtk4-devel libadwaita libadwaita-devel gobject-introspection-devel gcc cairo-devel pkgconf-pkg-config python3-devel gobject-introspection gtk4-devel libadwaita-devel gettext ninja-build fakeroot dbus-devel desktop-file-utils -y
     ```
 
 2. Clone the repository:
