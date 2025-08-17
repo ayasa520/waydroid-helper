@@ -11,279 +11,638 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: waydroid_helper/ui/GeneralPage.ui:13 waydroid_helper/generalpage.py:49
+#: waydroid_helper/window.py:100
+msgid "Click to refresh extension list"
+msgstr ""
+
+#: waydroid_helper/window.py:141
+msgid "_Preferences"
+msgstr "偏好設定"
+
+#: waydroid_helper/window.py:145
+msgid "_About waydroid-helper"
+msgstr "關於"
+
+#: waydroid_helper/window.py:207
+msgid "Home"
+msgstr "主頁"
+
+#: waydroid_helper/general_page.py:42
+msgid "Connected"
+msgstr "已連接"
+
+#: waydroid_helper/general_page.py:43
+msgid "Waydroid session is running"
+msgstr "Waydroid session 正在运行"
+
+#: waydroid_helper/general_page.py:51
+msgid "Stopped"
+msgstr "已停止"
+
+#: waydroid_helper/general_page.py:52
+msgid "Waydroid session is stopped"
+msgstr "Waydroid 執行階段已停止"
+
+#: waydroid_helper/general_page.py:61
+msgid "Uninitialized"
+msgstr "未初始化"
+
+#: waydroid_helper/general_page.py:62
+msgid "Waydroid is not initialized"
+msgstr "Waydroid 尚未初始化"
+
+#: waydroid_helper/general_page.py:69 data/ui/GeneralPage.ui:13
 msgid "Loading"
 msgstr "加載中"
 
-#: waydroid_helper/ui/GeneralPage.ui:47
-msgid "Start"
-msgstr "啟動"
+#: waydroid_helper/instance_detail_page.py:58
+msgid "Details"
+msgstr ""
 
-#: waydroid_helper/ui/GeneralPage.ui:54
-msgid "Stop"
-msgstr "停止"
+#. Use existing settings tab
+#: waydroid_helper/instance_detail_page.py:62
+#: waydroid_helper/controller/app/window.py:322
+msgid "Settings"
+msgstr "設定"
 
+#. Use existing extensions tab
+#: waydroid_helper/instance_detail_page.py:66
+msgid "Extensions"
+msgstr "擴充元件"
 
-#: waydroid_helper/ui/GeneralPage.ui:61
-msgid "Show full ui"
-msgstr "顯示完整界面"
+#: waydroid_helper/instance_detail_page.py:100
+msgid "Restart the systemd user service immediately"
+msgstr "立即重新啟動 systemd 使用者服務"
 
-#: waydroid_helper/ui/GeneralPage.ui:61
-msgid "Restart(Update configs)"
-msgstr "重新啟動（更新設置）"
+#: waydroid_helper/instance_detail_page.py:115
+msgid "Key Mapper"
+msgstr ""
 
-#: waydroid_helper/ui/GeneralPage.ui:78
-msgid "Initialize"
-msgstr "初始化"
+#: waydroid_helper/instance_detail_page.py:119
+msgid "Key Mapping Window"
+msgstr ""
 
-#: waydroid_helper/ui/PropsPage.ui:235 waydroid_helper/ui/PropsPage.ui:246
-msgid "Reset"
-msgstr "重設"
+#: waydroid_helper/instance_detail_page.py:120
+msgid "Manage key mapping overlay window for game control"
+msgstr ""
 
-#: waydroid_helper/ui/PropsPage.ui:224
-msgid "spoof device"
-msgstr "偽裝機型"
+#: waydroid_helper/instance_detail_page.py:126
+msgid "Open"
+msgstr ""
 
+#: waydroid_helper/instance_detail_page.py:133
+msgid "Close"
+msgstr ""
 
-#: waydroid_helper/ui/ExtensionRow.ui:6
-msgid "Show"
-msgstr "查看"
+#: waydroid_helper/props_page.py:157
+msgid "Restart the session to apply the changes"
+msgstr "重新啟動執行階段以套用變更"
 
-#: waydroid_helper/ui/InfoBar.ui:34
-msgid "Cancel"
-msgstr "取消"
+#: waydroid_helper/props_page.py:162
+msgid "Save and restart the container"
+msgstr "儲存並重新啟動容器"
 
-#: waydroid_helper/ui/InfoBar.ui:43
+#: waydroid_helper/shared_folder.py:61
+msgid "Shared Folders"
+msgstr "共享資料夾"
+
+#: waydroid_helper/shared_folder.py:196
+msgid ""
+"Use the button below to add your first shared folder. For file sharing to "
+"work, you need to have <a href='https://bindfs.org/'>bindfs</a> installed."
+msgstr ""
+"使用下方按鈕新增你的第一個共享資料夾。需要安裝 <a href='https://"
+"bindfs.org/'>bindfs</a> 才能共享資料夾。"
+
+#: waydroid_helper/available_version_page.py:148
+msgid "Available Versions"
+msgstr "可用版本"
+
+# " waydroid_helper/available_version_page.py:204
+#: waydroid_helper/available_version_page.py:211
+msgid "Installation Complete"
+msgstr "安裝完成"
+
+# " waydroid_helper/available_version_page.py:205
+#: waydroid_helper/available_version_page.py:212
+#, python-brace-format
+msgid "{0} has been successfully installed."
+msgstr "{0} 已成功安裝。"
+
+#: waydroid_helper/available_version_page.py:216
+#: waydroid_helper/available_version_page.py:236
+#: waydroid_helper/available_version_page.py:246
+#: waydroid_helper/available_version_page.py:301
+#: waydroid_helper/available_version_page.py:329
+#: waydroid_helper/controller/app/window.py:335 data/ui/InfoBar.ui:46
 msgid "OK"
 msgstr "確認"
 
-#: waydroid_helper/ui/PropsPage.ui:10
+# " waydroid_helper/available_version_page.py:217
+#: waydroid_helper/available_version_page.py:231
+msgid "Uninstallation Complete"
+msgstr "解除安裝完成"
+
+# " waydroid_helper/available_version_page.py:218
+#: waydroid_helper/available_version_page.py:232
+#, python-brace-format
+msgid "{0} has been successfully uninstalled."
+msgstr "{0} 已成功解除安裝。"
+
+#: waydroid_helper/available_version_page.py:245
+#: waydroid_helper/compat_widget/file_dialog.py:118
+#: waydroid_helper/compat_widget/shared_folder_dialog.py:231
+#: data/ui/InfoBar.ui:39
+msgid "Cancel"
+msgstr "取消"
+
+#: waydroid_helper/available_version_page.py:279
+msgid "Extension Installation"
+msgstr "安裝擴充元件"
+
+#: waydroid_helper/available_version_page.py:280
+msgid "Do you want to install"
+msgstr "是否要安裝"
+
+#: waydroid_helper/available_version_page.py:284
+msgid "Extension Conflict"
+msgstr "擴充元件衝突"
+
+#: waydroid_helper/available_version_page.py:285
+msgid "Do you want to uninstall the conflicting extensions"
+msgstr "是否要解除安裝以下衝突的擴充元件"
+
+# " waydroid_helper/available_version_page.py:282
+#: waydroid_helper/available_version_page.py:299
+msgid "Installation Failed"
+msgstr "安裝失敗"
+
+#: waydroid_helper/available_version_page.py:316
+msgid "Uninstall Confirmation"
+msgstr "解除安裝確認"
+
+#: waydroid_helper/available_version_page.py:317
+msgid "Do you want to uninstall"
+msgstr "是否要解除安裝"
+
+#: waydroid_helper/available_version_page.py:327
+msgid "Uninstallation Failed"
+msgstr "解除安裝失敗"
+
+#: waydroid_helper/tools/extensions_manager.py:436
+#, python-brace-format
+msgid ""
+"Your Android version is not supported. Required version: {0}. Current "
+"version: {1}."
+msgstr ""
+
+#: waydroid_helper/compat_widget/file_dialog.py:119
+msgid "Select"
+msgstr "選擇"
+
+#: waydroid_helper/compat_widget/shared_folder_dialog.py:177
+msgid "Source"
+msgstr "來源"
+
+#: waydroid_helper/compat_widget/shared_folder_dialog.py:195
+msgid "Target"
+msgstr "目標"
+
+#: waydroid_helper/compat_widget/shared_folder_dialog.py:200
+msgid "Target Directory"
+msgstr "目標目錄"
+
+#. cancel_button.connect("clicked", self._on_cancel)
+#: waydroid_helper/compat_widget/shared_folder_dialog.py:236
+msgid "Save"
+msgstr "儲存"
+
+#: waydroid_helper/compat_widget/shared_folder_dialog.py:264
+msgid "Select Folder"
+msgstr "選擇資料夾"
+
+#. Initial hint
+#. Enter edit mode: restore edit functions
+#: waydroid_helper/controller/app/window.py:183
+#: waydroid_helper/controller/app/window.py:1111
+msgid "Edit Mode (F1: Switch Mode)"
+msgstr ""
+
+#: waydroid_helper/controller/app/window.py:329
+msgid "This widget has no settings."
+msgstr ""
+
+#: waydroid_helper/controller/app/window.py:1101
+msgid "Mapping Mode (F1: Switch Mode)"
+msgstr ""
+
+#. 如果没有发现任何可创建的组件，显示提示
+#: waydroid_helper/controller/ui/menus.py:153
+msgid "No widgets found"
+msgstr ""
+
+#: waydroid_helper/controller/ui/menus.py:181
+msgid "Refresh widgets"
+msgstr ""
+
+#. (_("Show widget info"), lambda: self._show_widget_info(widget_factory)),
+#: waydroid_helper/controller/ui/menus.py:183
+msgid "Clear all"
+msgstr ""
+
+#: waydroid_helper/controller/ui/menus.py:184
+msgid "Save layout"
+msgstr ""
+
+#: waydroid_helper/controller/ui/menus.py:185
+msgid "Load layout"
+msgstr ""
+
+#: waydroid_helper/controller/ui/menus.py:284
+#: waydroid_helper/controller/ui/menus.py:396
+msgid "JSON files"
+msgstr ""
+
+#: waydroid_helper/controller/ui/menus.py:290
+#, fuzzy
+msgid "Save Layout"
+msgstr ""
+
+#: waydroid_helper/controller/ui/menus.py:402
+#, fuzzy
+msgid "Load Layout"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/aim.py:43
+#: waydroid_helper/controller/widgets/components/aim.py:69
+msgctxt "Controller Widgets"
+msgid "Aim"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/aim.py:46
+msgctxt "Controller Widgets"
+msgid ""
+"FPS staple: drag to game's view area, pair with Fire for mouse-aim shooting. "
+"Resize box to match in-game rotation zone."
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/aim.py:105
+msgctxt "Controller Widgets"
+msgid "Sensitivity"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/aim.py:112
+msgctxt "Controller Widgets"
+msgid "Adjusts the sensitivity of aim movement"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/cancel_casting.py:29
+#: waydroid_helper/controller/widgets/components/cancel_casting.py:79
+msgctxt "Controller Widgets"
+msgid "Cancel Casting"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/cancel_casting.py:32
+msgctxt "Controller Widgets"
+msgid ""
+"Drag the key to the cancel casting position. While casting a spell, hold "
+"down the cancel cast button to cancel the cast."
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/directional_pad.py:63
+#: waydroid_helper/controller/widgets/components/directional_pad.py:111
+msgctxt "Controller Widgets"
+msgid "Directional Pad"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/directional_pad.py:66
+msgctxt "Controller Widgets"
+msgid ""
+"Drag and place it onto the game's movement wheel to control walking "
+"direction. After assigning keys, drag the dotted frame to resize the button; "
+"make sure the blue frame of the directional pad matches the size of the game "
+"wheel."
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/directional_pad.py:166
+#: waydroid_helper/controller/widgets/components/repeated_click.py:473
+msgctxt "Controller Widgets"
+msgid "Operating Method"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/directional_pad.py:169
+msgctxt "Controller Widgets"
+msgid "Slide control"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/directional_pad.py:170
+msgctxt "Controller Widgets"
+msgid "Click control"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/directional_pad.py:173
+msgctxt "Controller Widgets"
+msgid "Adjusts the operating method of the directional pad"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/fire.py:23
+#: waydroid_helper/controller/widgets/components/fire.py:47
+msgctxt "Controller Widgets"
+msgid "Fire"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/fire.py:26
+msgctxt "Controller Widgets"
+msgid ""
+"Commonly used in FPS games, add a button to the attack/fire button position, "
+"use the left mouse button to click, and must be used with the aim button. "
+"Note: Only supports left mouse button, cannot be modified, and won't work "
+"alone."
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/macro.py:620
+#: waydroid_helper/controller/widgets/components/macro.py:647
+msgctxt "Controller Widgets"
+msgid "Macro"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/macro.py:623
+msgctxt "Controller Widgets"
+msgid "Execute macro commands when triggered."
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/macro.py:680
+msgctxt "Controller Widgets"
+msgid "Macro Command"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/macro.py:684
+msgctxt "Controller Widgets"
+msgid ""
+"The macro commands to execute when triggered. Supported commands:\n"
+"- key_press <key1,key2,...>: Press keys\n"
+"- key_release <key1,key2,...>: Release keys\n"
+"- key_switch <key1,key2,...>: Switch keys (toggle between press/release)\n"
+"- click <x,y> [x1,y1] ...: Click at coordinates (combines press and "
+"release)\n"
+"- press <x,y> [x1,y1] ...: Press at coordinates (DOWN events only)\n"
+"- release <x,y> [x1,y1] ...: Release at coordinates (UP events only)\n"
+"- switch <x,y> [x1,y1] ...: Switch at coordinates (toggle between press/"
+"release)\n"
+"- sleep <milliseconds>: Delay execution\n"
+"- release_all: Release all currently pressed keys\n"
+"- enter_staring: Enter staring/aiming mode\n"
+"- exit_staring: Exit staring/aiming mode\n"
+"- swipehold_radius <factor>: Set swipehold radius\n"
+"- swipehold_radius_switch <factor>: Set swipehold radius and switch\n"
+"- Use 'release_actions' to separate press and release commands\n"
+"- Lines starting with # are comments\n"
+"- Use 'mouse' as coordinate to use current cursor position"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/repeated_click.py:46
+#: waydroid_helper/controller/widgets/components/repeated_click.py:85
+msgctxt "Controller Widgets"
+msgid "Repeated Click"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/repeated_click.py:49
+msgctxt "Controller Widgets"
+msgid "Simulate repeated click operations at a specific position."
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/repeated_click.py:476
+msgctxt "Controller Widgets"
+msgid "Long-press combo"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/repeated_click.py:477
+msgctxt "Controller Widgets"
+msgid "Click after button"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/repeated_click.py:482
+msgctxt "Controller Widgets"
+msgid "Choose the operating method for repeated clicking"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/repeated_click.py:489
+msgctxt "Controller Widgets"
+msgid "Number of clicks per second"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/repeated_click.py:493
+msgctxt "Controller Widgets"
+msgid "Number of clicks to perform per second in long-press combo mode"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/repeated_click.py:500
+msgctxt "Controller Widgets"
+msgid "Number of clicks"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/repeated_click.py:504
+msgctxt "Controller Widgets"
+msgid "Number of repeated clicks to perform in click after button mode"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/right_click_to_walk.py:38
+#: waydroid_helper/controller/widgets/components/right_click_to_walk.py:68
+msgctxt "Controller Widgets"
+msgid "Right Click to Walk"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/right_click_to_walk.py:41
+msgctxt "Controller Widgets"
+msgid ""
+"Add to the game's movement wheel: hold and drag to steer, single-click to "
+"auto-walk to cursor. Ideal for MOBAs."
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/single_click.py:31
+#: waydroid_helper/controller/widgets/components/single_click.py:71
+msgctxt "Controller Widgets"
+msgid "Single Click"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/single_click.py:34
+msgctxt "Controller Widgets"
+msgid "Simulate a click operation at a specific position."
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/skill_casting.py:75
+#: waydroid_helper/controller/widgets/components/skill_casting.py:133
+msgctxt "Controller Widgets"
+msgid "Skill Casting"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/skill_casting.py:78
+msgctxt "Controller Widgets"
+msgid ""
+"Commonly used when using the characters' skills, click and cooperate with "
+"the mouse to release skills."
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/skill_casting.py:88
+msgctxt "Controller Widgets"
+msgid "Enable Cancel Button"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/skill_casting.py:92
+msgctxt "Controller Widgets"
+msgid "Enable a cancel casting button that can interrupt ongoing skill casting"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/skill_casting.py:481
+msgctxt "Controller Widgets"
+msgid "Casting Radius"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/skill_casting.py:488
+msgctxt "Controller Widgets"
+msgid "Fine-tune according to the casting range of different skills"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/skill_casting.py:495
+msgctxt "Controller Widgets"
+msgid "Cast Timing"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/skill_casting.py:503
+msgctxt "Controller Widgets"
+msgid "On Release"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/skill_casting.py:505
+msgctxt "Controller Widgets"
+msgid "Immediate"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/skill_casting.py:506
+msgctxt "Controller Widgets"
+msgid "Manual"
+msgstr ""
+
+#: waydroid_helper/controller/widgets/components/skill_casting.py:511
+msgctxt "Controller Widgets"
+msgid ""
+"Determines when the skill casting ends: On Release (default), Immediate "
+"(auto-release after moving), or Manual (sticky mode)"
+msgstr ""
+
+#: data/ui/GeneralPage.ui:68
+msgid "Start"
+msgstr "啟動"
+
+#: data/ui/GeneralPage.ui:75
+msgid "Stop"
+msgstr "停止"
+
+#: data/ui/GeneralPage.ui:82
+msgid "Show full ui"
+msgstr "顯示完整界面"
+
+#: data/ui/GeneralPage.ui:89
+msgid "Restart(Update configs)"
+msgstr "重新啟動（更新設置）"
+
+#: data/ui/GeneralPage.ui:106
+msgid "Initialize"
+msgstr "初始化"
+
+#: data/ui/PropsPage.ui:10
 msgid ""
 "Effective only while Waydroid session is running. Some settings require "
 "restarting the Waydroid session to apply"
-msgstr "僅在 Waydroid 執行階段執行時有效，部份設定需要重新啟動 Waydroid 執行階段才能套用"
+msgstr ""
+"僅在 Waydroid 執行階段執行時有效，部份設定需要重新啟動 Waydroid 執行階段才能套用"
 
-#: waydroid_helper/ui/PropsPage.ui:15 waydroid_helper/waydroid.py:77
+#: data/ui/PropsPage.ui:16
 msgid "Enable window integration with the desktop"
 msgstr "啟用多重視窗模式"
 
-#: waydroid_helper/ui/PropsPage.ui:31 waydroid_helper/waydroid.py:84
+#: data/ui/PropsPage.ui:32
 msgid ""
 "Workaround for showing the cursor inmulti_windows mode on some compositors"
 msgstr "在某些視窗合成器上多重視窗模式顯示游標的解決方法"
 
-#: waydroid_helper/ui/PropsPage.ui:47 waydroid_helper/waydroid.py:92
+#: data/ui/PropsPage.ui:48
 msgid ""
 "Swaps the color space from RGBA to BGRA (only works with our patched mutter "
 "so far)"
 msgstr "將色彩空間由 RGBA 切換為 BGRA（目前僅適用於我們修補過的 mutter）"
 
-#: waydroid_helper/ui/PropsPage.ui:63 waydroid_helper/waydroid.py:100
+#: data/ui/PropsPage.ui:64
 msgid ""
 "Let the Waydroid container sleep (after the display timeout) when no apps "
 "are active"
 msgstr "當沒有應用程式執行時使 Waydroid 容器休眠"
 
-#: waydroid_helper/ui/PropsPage.ui:79 waydroid_helper/waydroid.py:107
+#: data/ui/PropsPage.ui:80
 msgid "Allow android direct access to hotplugged devices"
 msgstr "允許 Android 系統直接存取熱插拔裝置"
 
-#: waydroid_helper/ui/PropsPage.ui:94
+#: data/ui/PropsPage.ui:95
 msgid ""
 "Interpret mouse inputs as touch inputs. Enter the package names separated by "
 "\",\". Use the wildcard \"*\" to match all Apps"
-msgstr "將滑鼠輸入轉換為觸控輸入。以\",\"分隔包名輸入，使用通用符號\"*\"匹配所有應用程式"
+msgstr ""
+"將滑鼠輸入轉換為觸控輸入。以\",\"分隔包名輸入，使用通用符號\"*\"匹配所有應用程式"
 
-#: waydroid_helper/ui/PropsPage.ui:101 waydroid_helper/ui/PropsPage.ui:121
+#: data/ui/PropsPage.ui:101 data/ui/PropsPage.ui:120
 msgid "Package names"
 msgstr "包名"
 
-#: waydroid_helper/ui/PropsPage.ui:112
+#: data/ui/PropsPage.ui:112
 msgid ""
 "Make the Apps appear as if connected to WiFi. Enter the package names "
 "separated by \",\". Use the wildcard \"*\" to match all Apps"
 msgstr "使應用程式認為已連線至 WiFi。以\",\"分隔包名輸入，使用通用符號\"*\"匹配所有應用程式"
 
-#: waydroid_helper/waydroid.py:142 waydroid_helper/ui/PropsPage.ui:130
+#: data/ui/PropsPage.ui:129
 msgid "Adjust height padding"
 msgstr "調整高度填充"
 
-#: waydroid_helper/waydroid.py:148 waydroid_helper/ui/PropsPage.ui:148
+#: data/ui/PropsPage.ui:138 data/ui/PropsPage.ui:156 data/ui/PropsPage.ui:174
+#: data/ui/PropsPage.ui:192
+msgid "empty or 0-9999"
+msgstr ""
+
+#: data/ui/PropsPage.ui:147
 msgid "Adjust width padding"
 msgstr "調整寬度填充"
 
-#: waydroid_helper/waydroid.py:154 waydroid_helper/waydroid.py:161
-#: waydroid_helper/ui/PropsPage.ui:166 waydroid_helper/ui/PropsPage.ui:184
+#: data/ui/PropsPage.ui:165 data/ui/PropsPage.ui:183
 msgid "Used for user to override desired resolution"
 msgstr "用於使用者覆寫所需的解析度"
 
-#: waydroid_helper/ui/PropsPage.ui:135 waydroid_helper/waydroid.py:193
+#: data/ui/PropsPage.ui:207
 msgid "hide navbar"
 msgstr "隱藏導航欄"
 
-#: waydroid_helper/gtk/help-overlay.ui:11
+#: data/ui/PropsPage.ui:223
+msgid "spoof device"
+msgstr ""
+
+#: data/ui/PropsPage.ui:234 data/ui/PropsPage.ui:241
+msgid "Reset"
+msgstr "重設"
+
+#: data/ui/ExtensionRow.ui:6
+msgid "Show"
+msgstr "查看"
+
+#: data/ui/help-overlay.ui:11
 msgctxt "shortcut window"
 msgid "General"
 msgstr "通用"
 
-#: waydroid_helper/gtk/help-overlay.ui:14
+#: data/ui/help-overlay.ui:14
 msgctxt "shortcut window"
 msgid "Show Shortcuts"
 msgstr "顯示快捷鍵"
 
-#: waydroid_helper/gtk/help-overlay.ui:20
+#: data/ui/help-overlay.ui:20
 msgctxt "shortcut window"
 msgid "Quit"
 msgstr "退出"
-
-#: waydroid_helper/extensionwindow.py:22
-msgid "Available Versions"
-msgstr "可用版本"
-
-#: waydroid_helper/ui/window.ui:26
-msgid "Menu"
-msgstr "選單"
-
-#: waydroid_helper/ui/window.ui:52
-msgid "_Preferences"
-msgstr "偏好設定"
-
-#: waydroid_helper/ui/window.ui:56
-msgid "_Keyboard Shortcuts"
-msgstr "快捷鍵"
-
-#: waydroid_helper/ui/window.ui:60
-msgid "_About waydroid-helper"
-msgstr "關於"
-
-#: waydroid_helper/generalpage.py:26
-msgid "Connected"
-msgstr "已連接"
-
-#: waydroid_helper/generalpage.py:27
-msgid "Waydroid session is running"
-msgstr "Waydroid 執行階段正在執行"
-
-#: waydroid_helper/generalpage.py:34
-msgid "Stopped"
-msgstr "已停止"
-
-#: waydroid_helper/generalpage.py:35
-msgid "Waydroid session is stopped"
-msgstr "Waydroid 執行階段已停止"
-
-#: waydroid_helper/generalpage.py:42
-msgid "Uninitialized"
-msgstr "未初始化"
-
-#: waydroid_helper/generalpage.py:43
-msgid "Waydroid is not initialized"
-msgstr "Waydroid 尚未初始化"
-
-#: waydroid_helper/propspage.py:134
-msgid "Restart the session to apply the changes"
-msgstr "重新啟動執行階段以套用變更"
-
-#: waydroid_helper/propspage.py:139
-msgid "Save and restart the container"
-msgstr "儲存並重新啟動容器"
-
-#: waydroid_helper/waydroid.py:114
-msgid ""
-"Interpret mouse inputs as touch inputs. Enter the package names separated by "
-"','. Use the wildcard '*' to match all Apps"
-msgstr "將滑鼠輸入轉換為觸控輸入。以\",\"分隔包名輸入，使用通用符號\"*\"匹配所有應用程式"
-
-#: waydroid_helper/waydroid.py:122
-msgid ""
-"Make the Apps appear as if connected to WiFi. Enter the package names "
-"separated by ','. Use the wildcard '*' to match all Apps"
-msgstr "使應用程式認為已連線至 WiFi。以\",\"分隔包名輸入，使用通用符號\"*\"匹配所有應用程式"
-
-#: waydroid_helper/window.py:46
-msgid "Home"
-msgstr "主頁"
-
-#: waydroid_helper/window.py:52
-msgid "Settings"
-msgstr "設定"
-
-#: waydroid_helper/window.py:58
-msgid "Extensions"
-msgstr "擴充元件"
-
-#: waydroid_helper/extensionwindow.py:123
-msgid "Extension Conflict"
-msgstr "擴充元件衝突"
-
-#: waydroid_helper/extensionwindow.py:140
-msgid "Uninstall Confirmation"
-msgstr "解除安裝確認"
-
-#: waydroid_helper/extensionwindow.py:124
-msgid "Do you want to uninstall the conflicting extensions"
-msgstr "是否要解除安裝以下衝突的擴充元件"
-
-#: waydroid_helper/extensionwindow.py:141
-msgid "Do you want to uninstall"
-msgstr "是否要解除安裝"
-
-#: waydroid_helper/extensionwindow.py:131
-msgid "Extension Installation"
-msgstr "安裝擴充元件"
-
-#: waydroid_helper/extensionwindow.py:132
-msgid "Do you want to install"
-msgstr "是否要安裝"
-
-#" waydroid_helper/available_version_page.py:282
-msgid "Installation Failed"
-msgstr "安裝失敗"
-
-#" waydroid_helper/available_version_page.py:305
-msgid "Uninstallaion Failed"
-msgstr "解除安裝失敗"
-
-
-#" waydroid_helper/available_version_page.py:204
-msgid "Installation Complete"
-msgstr "安裝完成"
-
-#" waydroid_helper/available_version_page.py:217
-msgid "Uninstallation Complete"
-msgstr "解除安裝完成"
-
-#" waydroid_helper/available_version_page.py:205
-msgid "{0} has been successfully installed."
-msgstr "{0} 已成功安裝。"
-
-#" waydroid_helper/available_version_page.py:218
-msgid "{0} has been successfully uninstalled."
-msgstr "{0} 已成功解除安裝。"
-
-msgid "Shared Folders"
-msgstr "共享資料夾"
-
-msgid "Use the button below to add your first shared folder. For file sharing to work, you need to have <a href='https://bindfs.org/'>bindfs</a> installed."
-msgstr "使用下方按鈕新增你的第一個共享資料夾。需要安裝 <a href='https://bindfs.org/'>bindfs</a> 才能共享資料夾。"
-
-msgid "Restart the systemd user service immediately"
-msgstr "立即重新啟動 systemd 使用者服務"
-
-msgid "Source"
-msgstr "來源"
-
-msgid "Target"
-msgstr "目標"
-
-msgid "Save"
-msgstr "儲存"
-
-msgid "Target Directory"
-msgstr "目標目錄"
-
-msgid "Select Folder"
-msgstr "選擇資料夾"
-
-msgid "Select"
-msgstr "選擇"
