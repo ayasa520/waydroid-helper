@@ -16,5 +16,6 @@
     <file alias="home-symbolic.svg">icons/home-symbolic.svg</file>
     <file alias="system-shutdown-symbolic.svg">icons/system-shutdown-symbolic.svg</file>
     <file alias="system-symbolic.svg">icons/system-symbolic.svg</file>
+    <file alias="info-symbolic.svg">icons/info-symbolic.svg</file>
   </gresource>
 </gresources>
