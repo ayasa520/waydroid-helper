@@ -34,7 +34,7 @@ class AdbHelper:
         """Connects to the ADB device using the configured serial."""
         logger.info(f"Connecting to ADB device: {self.serial}")
         try:
-            result = await self.sm.run(f"adb connect {self.serial}")
+            result = await self.sm.run(f"adb disconnect {self.serial}; adb connect {self.serial}")
             output = result["stdout"]
             if "connected" in output.lower() or "already connected" in output.lower():
                 logger.info(f"Successfully connected to {self.serial}")
