@@ -1,0 +1,86 @@
+name: OBS Debian Auto Upload
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install build dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y devscripts build-essential dh-make fakeroot git osc
+
+      - name: Configure OSC
+        env:
+          OSC_USER: ${{ secrets.OBS_USER }}
+          OSC_PASS: ${{ secrets.OBS_PASS }}
+        run: |
+          mkdir -p ~/.config/osc
+          cat > ~/.config/osc/oscrc << EOF
+          [general]
+          apiurl = https://api.opensuse.org
+          
+          [https://api.opensuse.org]
+          user = $OSC_USER
+          pass = $OSC_PASS
+          EOF
+
+      - name: Set version with git hash
+        id: version
+        run: |
+          BASE_VERSION=$(dpkg-parsechangelog --show-field Version | cut -d- -f1)
+          TIMESTAMP=$(date +%Y%m%d%H%M)
+          FULL_VERSION="${BASE_VERSION}-0~${TIMESTAMP}"
+          echo "FULL_VERSION=$FULL_VERSION" >> $GITHUB_ENV
+          echo "Using version: $FULL_VERSION"
+
+      - name: Update debian/changelog
+        env:
+          DEBEMAIL: "ayasa0520@gmail.com"
+          DEBFULLNAME: "rikka"
+        run: |
+          dch -b --newversion "$FULL_VERSION" "Automated build from GitHub Actions"
+
+      - name: Build source package
+        run: |
+          dpkg-source -b .
+
+      - name: Upload to OBS
+        env:
+          OBS_PROJECT: ${{ secrets.OBS_PROJECT }}
+          OBS_PACKAGE: ${{ secrets.OBS_PACKAGE }}
+        run: |
+          # 记录当前工作目录
+          WORK_DIR=$(pwd)
+          echo "Current directory: $WORK_DIR"
+          
+          # 列出生成的源码包文件
+          echo "Generated source package files:"
+          ls -la ../*.dsc ../*.tar.* || echo "Files not in parent directory"
+          ls -la *.dsc *.tar.* 2>/dev/null || echo "Files not in current directory"
+          
+          # Checkout OBS 项目
+          osc co "$OBS_PROJECT" "$OBS_PACKAGE"
+          cd "$OBS_PROJECT/$OBS_PACKAGE"
+
+          osc rm *.dsc *.tar.* 2>/dev/null || true
+          
+          # 从工作目录复制文件（注意路径调整）
+          cp "$WORK_DIR"/../*.dsc . 2>/dev/null || cp "$WORK_DIR"/*.dsc .
+          cp "$WORK_DIR"/../*.tar.* . 2>/dev/null || cp "$WORK_DIR"/*.tar.* .
+          
+          # 验证文件是否复制成功
+          echo "Files in OBS package directory:"
+          ls -la
+          
+          # 添加并提交
+          osc addremove
+          osc commit -m "Auto-update $FULL_VERSION from GitHub Actions"

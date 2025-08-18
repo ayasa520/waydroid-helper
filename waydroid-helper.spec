@@ -1,6 +1,6 @@
 Name:           waydroid-helper
 Version:         0.2.5
-Release:        1%{?dist}
+Release:        0.%(date +%%Y%%m%%d.%%H%%M)%{?dist}
 Summary:        A GUI application for Waydroid configuration and extension installation
 
 License:        GPLv3+
