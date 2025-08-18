@@ -3,8 +3,8 @@
 # /var/lib/waydroid
 # ~/.local/share/waydroid/data
 # user=$(logname)
-DATA_DIR="/home/$(logname)/.local/share/waydroid/data"
-VAR_DIR="/var/lib/waydroid"
+DATA_DIR=$(realpath "/home/$(logname)/.local/share/waydroid/data")
+VAR_DIR=$(realpath "/var/lib/waydroid")
 OVERLAY_DIR="$VAR_DIR/overlay"
 OVERLAY_RW_DIR="$VAR_DIR/overlay_rw"
 
@@ -35,6 +35,7 @@ function copy_to_var() {
             cp -rf "$1" "$dest_path"
         fi
     else
+        echo "Error: $dest_path is outside of $VAR_DIR" >&2
         exit 1
     fi
     
@@ -45,6 +46,7 @@ function rm_var() {
     if [[ "$dest_path" == "$VAR_DIR"/* ]]; then
         rm -rf "$dest_path"
     else
+        echo "Error: $dest_path is outside of $VAR_DIR" >&2
         exit 1
     fi
     
@@ -100,6 +102,7 @@ function cp_to_data() {
             cp -rf "$src_path" "$dest_path"
         fi
     else
+        echo "Error: $dest_path is outside of $DATA_DIR" >&2
         exit 1
     fi
     
@@ -119,6 +122,7 @@ function rm_data(){
         if [[ "$dest_path" == "$DATA_DIR"/* ]]; then
             rm -rf "$dest_path"
         else
+            echo "Error: $dest_path is outside of $DATA_DIR" >&2
             exit 1
         fi
     done
