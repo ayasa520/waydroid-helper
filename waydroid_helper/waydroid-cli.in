@@ -79,7 +79,20 @@ function call_package() {
     pkgdir="$startdir/pkg"
     rm -rf $srcdir && mkdir -p $srcdir
     rm -rf $pkgdir && mkdir -p $pkgdir
-    fakeroot bash -c "set -e;CARCH=$CARCH startdir=$startdir srcdir=$srcdir pkgdir=$pkgdir;cd $startdir;source $startdir/EXTENSION && package; tar -czpf \"${name}-${version}.tar.gz\" -C pkg ."
+
+    # 尝试使用 fakeroot，如果失败则使用 fakeroot-sysv
+    if ! fakeroot bash -c "set -e;CARCH=$CARCH startdir=$startdir srcdir=$srcdir pkgdir=$pkgdir;cd $startdir;source $startdir/EXTENSION && package; tar -czpf \"${name}-${version}.tar.gz\" -C pkg ."; then
+        echo "fakeroot failed, checking for fakeroot-sysv..."
+        if command -v fakeroot-sysv >/dev/null 2>&1; then
+            echo "Using fakeroot-sysv as fallback..."
+            rm -rf $srcdir && mkdir -p $srcdir
+            rm -rf $pkgdir && mkdir -p $pkgdir
+            fakeroot-sysv bash -c "set -e;CARCH=$CARCH startdir=$startdir srcdir=$srcdir pkgdir=$pkgdir;cd $startdir;source $startdir/EXTENSION && package; tar -czpf \"${name}-${version}.tar.gz\" -C pkg ."
+        else
+            echo "Error: fakeroot-sysv not found, cannot proceed" >&2
+            exit 1
+        fi
+    fi
 }
 function install_tar_gz() {
     tar -xzpf "$1" -C "$OVERLAY_DIR"
