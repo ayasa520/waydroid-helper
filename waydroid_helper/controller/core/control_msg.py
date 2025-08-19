@@ -186,11 +186,8 @@ class InjectScrollEventMsg(ControlMsg):
         client_x, client_y, client_w, client_h = self.position
         scaled_x, scaled_y, device_w, device_h = scale_coordinates(client_x, client_y, client_w, client_h)
 
-        # 预计算滚动值，使用更高效的 clamp 操作
-        hscroll_clamped = max(-1.0, min(1.0, self.hscroll * 0.0625))  # 0.0625 = 1/16
-        vscroll_clamped = max(-1.0, min(1.0, self.vscroll * 0.0625))
-        hscroll_fixed = to_fixed_point_i16(hscroll_clamped)
-        vscroll_fixed = to_fixed_point_i16(vscroll_clamped)
+        hscroll_fixed = to_fixed_point_i16(self.hscroll)
+        vscroll_fixed = to_fixed_point_i16(self.vscroll)
 
         return struct.pack(
             ">BIIHHhhI",

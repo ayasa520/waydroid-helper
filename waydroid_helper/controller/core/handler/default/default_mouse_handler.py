@@ -117,6 +117,12 @@ class MouseDefault(MouseBase):
         if event is None:
             return False
         buttons_state = self.convert_buttons(event)
+
+        x = max(0, x)
+        y = max(0, y)
+        self._current_x = x
+        self._current_y = y
+
         if not self.mouse_hover and buttons_state == 0:
             return False
         action = (
@@ -124,10 +130,6 @@ class MouseDefault(MouseBase):
             if buttons_state != 0
             else AMotionEventAction.HOVER_MOVE
         )
-        x = max(0, x)
-        y = max(0, y)
-        self._current_x = x
-        self._current_y = y
         position = (int(x), int(y), w, h)
         pressure = 1.0
         msg = InjectTouchEventMsg(
@@ -215,7 +217,16 @@ class MouseDefault(MouseBase):
                 hscroll = -hscroll
                 vscroll = -vscroll
             buttons = self.convert_buttons(event)
-            msg = InjectScrollEventMsg(position, hscroll, vscroll, buttons)
+
+            if hscroll !=0 and hscroll.is_integer() or vscroll != 0 and vscroll.is_integer():
+                factor = 0.0625
+            else:
+                factor = 0.005
+
+            hscroll_clamped = max(-1.0, min(1.0, hscroll * factor))
+            vscroll_clamped = max(-1.0, min(1.0, vscroll * factor))
+
+            msg = InjectScrollEventMsg(position, hscroll_clamped, vscroll_clamped, buttons)
             event_bus.emit(Event(EventType.CONTROL_MSG, self, msg))
             return True
 
