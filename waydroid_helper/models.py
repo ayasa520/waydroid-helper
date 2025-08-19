@@ -180,6 +180,17 @@ class PropertyModel(GObject.Object):
                 description=_("Used for user to override desired resolution"),
                 is_privileged=False
             ),
+            # 其实不是 persist, 但是先放这里
+            PropertyDefinition(
+                name="boot_completed",
+                nick="sys.boot_completed",
+                property_type=bool,
+                default_value=False,
+                description=_("Enable window integration with the desktop"),
+                transform_in=self._str_to_bool,
+                transform_out=partial(self._bool_to_str, flag=2),
+                is_privileged=False
+            ),
         ]
         
         # Privileged properties (require root access to modify config files)

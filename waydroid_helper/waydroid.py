@@ -128,6 +128,10 @@ class PersistPropsCompat(GObject.Object):
         """Save a property (compatibility method)"""
         await self._controller.save_persist_property(name)
 
+    async def refresh(self, name: str):
+        """Refresh a property from Waydroid (compatibility method)"""
+        return await self._controller.refresh_persist_property(name)
+
 
 class PrivilegedPropsCompat(GObject.Object):
     """Compatibility wrapper for privileged properties"""
@@ -305,6 +309,10 @@ class WaydroidCompat(GObject.Object):
     async def save_persist_prop(self, name: str):
         """Save a persist property"""
         return await self._controller.save_persist_property(name)
+
+    async def refresh_persist_prop(self, name: str):
+        """Refresh a persist property from Waydroid"""
+        return await self._controller.refresh_persist_property(name)
 
     async def save_privileged_props(self):
         """Save privileged properties"""

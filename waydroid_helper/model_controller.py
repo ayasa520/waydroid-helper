@@ -217,6 +217,31 @@ class ModelController(GObject.Object):
         except Exception as e:
             logger.error(f"Failed to save persist property {property_name}: {e}")
             return False
+
+    async def refresh_persist_property(self, property_name: str) -> bool:
+        """Refresh a single persist property from Waydroid"""
+        try:
+            # Convert property name format (handle both dashes and underscores)
+            normalized_name = property_name.replace("-", "_")
+
+            prop_def = self.property_model.get_property_definition(normalized_name)
+            if not prop_def or prop_def.is_privileged:
+                logger.error(f"Property {property_name} (normalized: {normalized_name}) is not a persist property")
+                return False
+
+            # Get current value from Waydroid
+            raw_value = await self.property_manager.get_persist_property(prop_def.nick)
+            transformed_value = prop_def.transform_in(raw_value)
+
+            # Update the model
+            self.property_model.set_property_value(normalized_name, transformed_value)
+
+            logger.info(f"Refreshed persist property {normalized_name} = {transformed_value} (raw: {raw_value})")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to refresh persist property {property_name}: {e}")
+            return False
     
     async def save_all_privileged_properties(self) -> bool:
         """Save all privileged properties to config file"""

@@ -532,18 +532,18 @@ class PackageManager(GObject.Object):
         operations = yml[operation_key]
         for operation in operations:
             for func_name, args in operation.items():
-                command = await self.generate_command(func_name, args)
-                if command:
-                    # commands.append(command)
-                    resp = await self._subprocess.run(
-                        command,
-                        env={
-                            "pkgdir": os.path.join(
-                                self.cache_dir, "extensions", info["name"], "pkg"
-                            )
-                        },
-                    )
-                    logger.info(resp)
+                commands = await self.generate_command(func_name, args)
+                if commands:
+                    for cmd in commands:
+                        resp = await self._subprocess.run(
+                            cmd,
+                            env={
+                                "pkgdir": os.path.join(
+                                    self.cache_dir, "extensions", info["name"], "pkg"
+                                )
+                            },
+                        )
+                        logger.info(resp)
                 else:
                     logger.error(
                         f"Unsupported function or invalid arguments: {func_name}"
@@ -597,16 +597,17 @@ class PackageManager(GObject.Object):
                 src = args.get("src")
                 dest = args.get("dest")
                 if src and dest:
-                    return command_map[func_name].format(
+                    return [command_map[func_name].format(
                         cli_path=os.environ["WAYDROID_CLI_PATH"], src=src, dest=dest
-                    )
+                    )]
             elif func_name == "rm_apk":
                 apks = " ".join(['"' + apk + '"' for apk in args])
                 # 等待直到 self.waydroid.state == WaydroidState.RUNNING, 超时 raise
                 async def wait_for_running(timeout: float = 30.0):
                     start_time = asyncio.get_event_loop().time()
                     while True:
-                        if self.waydroid.state == WaydroidState.RUNNING:
+                        await self.waydroid.refresh_persist_prop("boot_completed")
+                        if self.waydroid.state == WaydroidState.RUNNING and self.waydroid.persist_props.get_property("boot_completed"): 
                             return
                         if asyncio.get_event_loop().time() - start_time > timeout:
                             raise asyncio.TimeoutError(f"Failed to start waydroid session")
@@ -614,14 +615,22 @@ class PackageManager(GObject.Object):
                 if self.waydroid.state == WaydroidState.STOPPED:
                     self._task.create_task(self.waydroid.start_session())
                 await wait_for_running()
-                return command_map[func_name].format(
+
+                commands = [command_map[func_name].format(
                     cli_path=os.environ["WAYDROID_CLI_PATH"], apks=apks
-                )
+                )]
+                paths = await self.get_apk_path(args)
+                if paths.strip() != "":
+                    commands.insert(0, command_map["rm_data"].format(
+                        cli_path=os.environ["WAYDROID_CLI_PATH"], paths=paths
+                    ))
+                return commands
+                
             else:
                 paths = " ".join(['"' + path + '"' for path in args])
-                return command_map[func_name].format(
+                return [command_map[func_name].format(
                     cli_path=os.environ["WAYDROID_CLI_PATH"], paths=paths
-                )
+                )]
 
         return None
 
