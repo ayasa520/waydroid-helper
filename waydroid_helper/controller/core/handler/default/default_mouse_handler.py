@@ -1,5 +1,7 @@
 import gi
 
+from waydroid_helper.controller.core.handler.event_handlers import InputEvent
+
 gi.require_version("Gdk", "4.0")
 from abc import ABC, abstractmethod
 from enum import IntEnum
@@ -7,18 +9,22 @@ from typing import TYPE_CHECKING, cast
 
 from gi.repository import Gdk
 
-from waydroid_helper.controller.android.input import (AMotionEventAction,
-                                                      AMotionEventButtons)
-from waydroid_helper.controller.core.control_msg import (InjectScrollEventMsg,
-                                                         InjectTouchEventMsg)
-from waydroid_helper.controller.core.event_bus import (Event, EventType,
-                                                       event_bus)
+from waydroid_helper.controller.android.input import (
+    AMotionEventAction,
+    AMotionEventButtons,
+)
+from waydroid_helper.controller.core.control_msg import (
+    InjectScrollEventMsg,
+    InjectTouchEventMsg,
+)
+from waydroid_helper.controller.core.event_bus import Event, EventType, event_bus
 
 if TYPE_CHECKING:
     from gi.repository import Gtk
 
+
 class PointerId(IntEnum):
-    MOUSE = 2**64 -1
+    MOUSE = 2**64 - 1
     GENERIC_FINGER = 2**64 - 2
     VIRTUAL_FINGER = 2**64 - 3
 
@@ -26,14 +32,14 @@ class PointerId(IntEnum):
 class MouseBase(ABC):
     @abstractmethod
     def click_processor(
-        self, controller: 'Gtk.GestureClick', n_press: int, x: float, y: float
+        self, controller: "Gtk.GestureClick", n_press: int, x: float, y: float
     ) -> bool:
         pass
 
     @abstractmethod
     def scroll_processor(
         self,
-        controller: 'Gtk.EventControllerScroll',
+        controller: "Gtk.EventControllerScroll",
         dx: float | None = None,
         dy: float | None = None,
     ) -> bool:
@@ -41,13 +47,13 @@ class MouseBase(ABC):
 
     @abstractmethod
     def motion_processor(
-        self, controller: 'Gtk.EventControllerMotion', x: float, y: float
+        self, controller: "Gtk.EventControllerMotion", x: float, y: float
     ) -> bool:
         pass
 
     @abstractmethod
     def zoom_processor(
-        self, controller: 'Gtk.EventControllerScroll', range: float
+        self, controller: "Gtk.EventControllerScroll", range: float
     ) -> bool:
         pass
 
@@ -60,6 +66,8 @@ class MouseDefault(MouseBase):
     def __init__(self) -> None:
         self.natural_scroll: bool = True
         self.mouse_hover: bool = False
+        self._current_x: float = 0
+        self._current_y: float = 0
 
     def convert_click_action(self, event: Gdk.Event) -> AMotionEventAction:
         if event.get_event_type() == Gdk.EventType.BUTTON_PRESS:
@@ -95,14 +103,14 @@ class MouseDefault(MouseBase):
         return buttons
 
     def motion_processor(
-        self, controller: 'Gtk.EventControllerMotion', x: float, y: float
+        self, controller: "Gtk.EventControllerMotion", x: float, y: float
     ) -> bool:
         # print(controller.get_current_event().get_event_type(), x, y)
         widget = controller.get_widget()
         if widget is None:
             return False
         root = widget.get_root()
-        root = cast('Gtk.Window', root)
+        root = cast("Gtk.Window", root)
         w = root.get_width()
         h = root.get_height()
         event = controller.get_current_event()
@@ -118,6 +126,8 @@ class MouseDefault(MouseBase):
         )
         x = max(0, x)
         y = max(0, y)
+        self._current_x = x
+        self._current_y = y
         position = (int(x), int(y), w, h)
         pressure = 1.0
         msg = InjectTouchEventMsg(
@@ -132,13 +142,13 @@ class MouseDefault(MouseBase):
         return True
 
     def click_processor(
-        self, controller: 'Gtk.GestureClick', n_press: int, x: float, y: float
+        self, controller: "Gtk.GestureClick", n_press: int, x: float, y: float
     ) -> bool:
         widget = controller.get_widget()
         if widget is None:
             return False
         root = widget.get_root()
-        root = cast('Gtk.Window', root)
+        root = cast("Gtk.Window", root)
 
         w = root.get_width()
         h = root.get_height()
@@ -163,22 +173,15 @@ class MouseDefault(MouseBase):
 
     def scroll_processor(
         self,
-        controller: 'Gtk.EventControllerScroll',
+        controller: "Gtk.EventControllerScroll",
         dx: float | None = None,
         dy: float | None = None,
     ) -> bool:
-        event = controller.get_current_event()
-        event = cast(Gdk.ScrollEvent, event)
-        if event:
-            begin, x, y = event.get_position()
-        else:
-            return False
-
         widget = controller.get_widget()
         if widget is None:
             return False
         root = widget.get_root()
-        root = cast('Gtk.Window', root)
+        root = cast("Gtk.Window", root)
         w = root.get_width()
         h = root.get_height()
 
@@ -187,21 +190,20 @@ class MouseDefault(MouseBase):
             return False
         state = event.get_modifier_state()
 
-        if begin:
-            self.scroll_begin_x = round(x)
-            self.scroll_begin_y = round(y)
-            # ctrl+scroll begin
-            self.ctrl_zoom_range = 1.0
+        scroll_begin_x = round(self._current_x)
+        scroll_begin_y = round(self._current_y)
+        # ctrl+scroll begin
+        ctrl_zoom_range = 1.0
 
         # ctrl+scroll
         if (state & Gdk.ModifierType.CONTROL_MASK) and dy is not None:
-            self.ctrl_zoom_range = self.ctrl_zoom_range + dy * 0.01
-            if self.ctrl_zoom_range <= 0.01:
-                self.ctrl_zoom_range = 0.01
-            return self.zoom_processor(controller, self.ctrl_zoom_range)
+            ctrl_zoom_range = ctrl_zoom_range + dy * 0.01
+            if ctrl_zoom_range <= 0.01:
+                ctrl_zoom_range = 0.01
+            return self.zoom_processor(controller, ctrl_zoom_range)
         else:
 
-            position = (self.scroll_begin_x, self.scroll_begin_y, w, h)
+            position = (scroll_begin_x, scroll_begin_y, w, h)
             hscroll = dx if dx else 0
             vscroll = dy if dy else 0
             if controller.get_unit() == Gdk.ScrollUnit.SURFACE:
@@ -221,7 +223,7 @@ class MouseDefault(MouseBase):
         return True
 
     def zoom_processor(
-        self, controller: 'Gtk.EventControllerScroll', range: float
+        self, controller: "Gtk.EventControllerScroll", range: float
     ) -> bool:
         # msg = ControlMsg(
         #     ControlMsgType.INJECT_TOUCH_EVENT,
