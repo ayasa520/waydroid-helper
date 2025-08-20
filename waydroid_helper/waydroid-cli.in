@@ -129,15 +129,36 @@ function rm_apk() {
 }
 
 function rm_data(){
-    local files=("$@")
-    for file in "${files[@]}"; do
-        dest_path=$(realpath -m "$DATA_DIR/$file")
-        if [[ "$dest_path" == "$DATA_DIR"/* ]]; then
-            rm -rf "$dest_path"
-        else
-            echo "Error: $dest_path is outside of $DATA_DIR" >&2
-            exit 1
+    local patterns=("$@")
+    for pattern in "${patterns[@]}"; do
+        # Change to DATA_DIR to perform glob expansion
+        pushd "$DATA_DIR" > /dev/null 2>&1
+
+        # Expand the pattern using shell globbing
+        local expanded_files=()
+        shopt -s nullglob  # Don't include pattern itself if no matches
+        expanded_files=($pattern)
+        shopt -u nullglob
+
+        popd > /dev/null 2>&1
+
+        # If no files matched the pattern, show a warning
+        if [ ${#expanded_files[@]} -eq 0 ]; then
+            echo "Warning: No files matched pattern '$pattern' in $DATA_DIR" >&2
+            continue
         fi
+
+        # Process each expanded file
+        for file in "${expanded_files[@]}"; do
+            dest_path=$(realpath -m "$DATA_DIR/$file")
+            if [[ "$dest_path" == "$DATA_DIR"/* ]]; then
+                echo "Removing: $dest_path"
+                rm -rf "$dest_path"
+            else
+                echo "Error: $dest_path is outside of $DATA_DIR" >&2
+                exit 1
+            fi
+        done
     done
 }
 
