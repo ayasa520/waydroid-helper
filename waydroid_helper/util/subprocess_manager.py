@@ -39,6 +39,7 @@ class SubprocessManager:
         flag: bool = False,
         key: str | None = None,
         env: dict[str, str] | None = None,
+        wait: bool = True,
     )->SubprocessResult:
         if self._semaphore is None:
             raise RuntimeError("Semaphore is not initialized")
@@ -70,7 +71,16 @@ class SubprocessManager:
                 preexec_fn=os.setsid if flag else None,
             )
 
-            stdout, stderr = await process.communicate()
+            if wait:
+                stdout, stderr = await process.communicate()
+            else:
+                return {
+                    "command": command,
+                    "key": key if key else command,
+                    "returncode": 0,  # 假设成功启动
+                    "stdout": "",
+                    "stderr": "",
+                }
 
             result :SubprocessResult= {
                 "command": command,

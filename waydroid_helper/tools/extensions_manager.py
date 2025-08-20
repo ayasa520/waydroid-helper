@@ -418,6 +418,7 @@ class PackageManager(GObject.Object):
     async def install_package(self, name: str, version: str):
         async with self._package_lock:
             self.emit("installation-started", name, version)
+            should_start_session = self.waydroid.state == WaydroidState.RUNNING
             package_info = self.get_package_info(name, version)
             if package_info is None:
                 logger.error(f"Package {name} not found.")
@@ -509,6 +510,9 @@ class PackageManager(GObject.Object):
 
             self.installed_packages[package_name] = package_info
             logger.info(f"Package {name} installed successfully.")
+            await self.waydroid.stop_session()
+            if should_start_session:
+                await self.waydroid.start_session()
             self.emit("installation-completed", name, version)
 
     async def execute_post_operations(self, info: PackageInfo, operation_key: str):
@@ -647,6 +651,7 @@ class PackageManager(GObject.Object):
         """移除包"""
         async with self._package_lock:
             if package_name in self.installed_packages:
+                should_start_session = self.waydroid.state == WaydroidState.RUNNING
                 version = self.installed_packages[package_name]["version"]
                 self.emit("uninstallation-started", package_name, version)
                 await self._subprocess.run(
@@ -668,6 +673,9 @@ class PackageManager(GObject.Object):
 
                 del self.installed_packages[package_name]
                 logger.info(f"Package {package_name} removed successfully.")
+                await self.waydroid.stop_session()
+                if should_start_session:
+                    await self.waydroid.start_session()
                 self.emit("uninstallation-completed", package_name, version)
             else:
                 logger.warning(f"Package {package_name} is not installed.")

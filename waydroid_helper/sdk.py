@@ -58,7 +58,7 @@ class WaydroidSDK:
     async def start_session(self) -> bool:
         """Start Waydroid session"""
         try:
-            await self._subprocess.run("waydroid session start", flag=True)
+            await self._subprocess.run("waydroid session start", flag=True, wait=False)
             return True
         except SubprocessError as e:
             logger.error(f"Failed to start Waydroid session: {e}")
@@ -67,7 +67,7 @@ class WaydroidSDK:
     async def stop_session(self) -> bool:
         """Stop Waydroid session"""
         try:
-            await self._subprocess.run("waydroid session stop", flag=True)
+            await self._subprocess.run("waydroid session stop", flag=True, wait=False)
             return True
         except SubprocessError as e:
             logger.error(f"Failed to stop Waydroid session: {e}")
@@ -87,7 +87,7 @@ class WaydroidSDK:
     async def show_full_ui(self) -> bool:
         """Show Waydroid full UI"""
         try:
-            await self._subprocess.run("waydroid show-full-ui", flag=True)
+            await self._subprocess.run("waydroid show-full-ui", flag=True, wait=False)
             return True
         except SubprocessError as e:
             logger.error(f"Failed to show Waydroid full UI: {e}")
