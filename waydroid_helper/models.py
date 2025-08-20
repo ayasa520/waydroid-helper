@@ -68,6 +68,7 @@ class PropertyModel(GObject.Object):
     
     state = GObject.Property(type=object)  # For persist props
     privileged_state = GObject.Property(type=object)  # For privileged props
+    waydroid_state = GObject.Property(type=object)  # For waydroid config props
 
     def __init__(self):
         super().__init__()
@@ -76,6 +77,7 @@ class PropertyModel(GObject.Object):
         self._change_listeners: Set[Callable[[str, Any], None]] = set()
         self.set_property("state", ModelState.UNINITIALIZED)
         self.set_property("privileged-state", ModelState.UNINITIALIZED)
+        self.set_property("waydroid-state", ModelState.UNINITIALIZED)
         self._setup_property_definitions()
     
     def _setup_property_definitions(self):
@@ -235,9 +237,41 @@ class PropertyModel(GObject.Object):
                 is_privileged=True
             ),
         ]
-        
+
+        # Waydroid config properties (stored in [waydroid] section)
+        waydroid_props = [
+            PropertyDefinition(
+                name="mount_overlays",
+                nick="mount_overlays",
+                property_type=bool,
+                default_value=True,
+                description=_("Enable overlay mounting"),
+                transform_in=self._str_to_bool,
+                transform_out=lambda x: "true" if x else "false",
+                is_privileged=True # This is waydroid config, not privileged
+            ),
+            PropertyDefinition(
+                name="auto_adb",
+                nick="auto_adb",
+                property_type=bool,
+                default_value=False,
+                description=_("Enable automatic ADB connection"),
+                transform_in=self._str_to_bool,
+                transform_out=lambda x: "true" if x else "false",
+                is_privileged=True
+            ),
+            PropertyDefinition(
+                name="images_path",
+                nick="images_path",
+                property_type=str,
+                default_value="/etc/waydroid-extra/images",
+                description=_("Path to Waydroid images"),
+                is_privileged=True
+            ),
+        ]
+
         # Register all properties
-        for prop_def in persist_props + privileged_props:
+        for prop_def in persist_props + privileged_props + waydroid_props:
             self._property_definitions[prop_def.name] = prop_def
             self._properties[prop_def.name] = prop_def.default_value
     
@@ -316,13 +350,23 @@ class PropertyModel(GObject.Object):
     
     def get_privileged_properties(self) -> Dict[str, PropertyDefinition]:
         """Get all privileged properties"""
-        return {name: prop_def for name, prop_def in self._property_definitions.items() 
+        return {name: prop_def for name, prop_def in self._property_definitions.items()
                 if prop_def.is_privileged}
-    
-    def reset_to_defaults(self, privileged_only: bool = False):
+
+    def get_waydroid_properties(self) -> Dict[str, PropertyDefinition]:
+        """Get all waydroid config properties"""
+        waydroid_prop_names = {"mount_overlays", "auto_adb", "images_path"}
+        return {name: prop_def for name, prop_def in self._property_definitions.items()
+                if name in waydroid_prop_names}
+
+    def reset_to_defaults(self, privileged_only: bool = False, waydroid_only: bool = False):
         """Reset properties to their default values"""
         for name, prop_def in self._property_definitions.items():
             if privileged_only and not prop_def.is_privileged:
+                continue
+            if waydroid_only and name not in {"mount_overlays", "auto_adb", "images_path"}:
+                continue
+            if not privileged_only and not waydroid_only and (prop_def.is_privileged or name in {"mount_overlays", "auto_adb", "images_path"}):
                 continue
             self.set_property_value(name, prop_def.default_value)
 

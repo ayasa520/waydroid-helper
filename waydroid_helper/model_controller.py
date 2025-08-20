@@ -72,9 +72,10 @@ class ModelController(GObject.Object):
             # Set initial session state
             self.session_model.set_session_state(current_state)
 
-            # Force load privileged properties if waydroid is initialized
+            # Force load privileged and waydroid properties if waydroid is initialized
             if current_state in (SessionState.STOPPED, SessionState.RUNNING):
                 await self._load_privileged_properties()
+                await self._load_waydroid_properties()
 
             # Load persist properties if session is running
             if current_state == SessionState.RUNNING:
@@ -127,15 +128,17 @@ class ModelController(GObject.Object):
             self.property_model.set_property("state", ModelState.UNINITIALIZED)
             # privileged_state remains READY
 
-        # When Waydroid becomes initialized (stopped), load privileged properties
+        # When Waydroid becomes initialized (stopped), load privileged and waydroid properties
         elif new_state == SessionState.STOPPED and old_state == SessionState.UNINITIALIZED:
             await self._load_privileged_properties()
+            await self._load_waydroid_properties()
             await self._load_android_version()
 
-        # When waydroid becomes completely uninitialized, reset both states
+        # When waydroid becomes coproperty_modelmpletely uninitialized, reset all states
         elif new_state == SessionState.UNINITIALIZED:
             self.property_model.set_property("state", ModelState.UNINITIALIZED)
             self.property_model.set_property("privileged-state", ModelState.UNINITIALIZED)
+            self.property_model.set_property("waydroid-state", ModelState.UNINITIALIZED)
     
 
     
@@ -185,6 +188,31 @@ class ModelController(GObject.Object):
         except Exception as e:
             logger.error(f"Failed to load privileged properties: {e}")
             self.property_model.set_property("privileged-state", ModelState.ERROR)
+            raise
+
+    async def _load_waydroid_properties(self):
+        """Load waydroid config properties from [waydroid] section"""
+        self.property_model.set_property("waydroid-state", ModelState.LOADING)
+
+        try:
+            if not self.config_manager.load_config():
+                raise Exception("Failed to load config")
+
+            property_values = self.config_manager.get_all_waydroid_properties(
+                self.property_model._property_definitions
+            )
+
+            for prop_name, raw_value in property_values.items():
+                prop_def = self.property_model.get_property_definition(prop_name)
+                if prop_def:
+                    transformed_value = prop_def.transform_in(raw_value)
+                    self.property_model.set_property_value(prop_name, transformed_value)
+
+            self.property_model.set_property("waydroid-state", ModelState.READY)
+
+        except Exception as e:
+            logger.error(f"Failed to load waydroid properties: {e}")
+            self.property_model.set_property("waydroid-state", ModelState.ERROR)
             raise
 
     async def _load_android_version(self):
@@ -309,7 +337,51 @@ class ModelController(GObject.Object):
         except Exception as e:
             logger.error(f"Failed to reset privileged properties: {e}")
             return False
-    
+
+    async def save_all_waydroid_properties(self) -> bool:
+        """Save all waydroid config properties to [waydroid] section"""
+        try:
+            # Prepare all waydroid properties for saving
+            waydroid_props = self.property_model.get_waydroid_properties()
+            properties_to_save = {}
+
+            for prop_name, prop_def in waydroid_props.items():
+                value = self.property_model.get_property_value(prop_name)
+                transformed_value = prop_def.transform_out(value)
+                properties_to_save[prop_def.nick] = transformed_value
+
+            # Set all properties in config
+            self.config_manager.set_multiple_waydroid_properties(properties_to_save)
+
+            # Save config file
+            success = await self.config_manager.save_config()
+
+            if success:
+                # Trigger upgrade to apply changes
+                await self.waydroid_sdk.upgrade(offline=True)
+
+            return success
+
+        except Exception as e:
+            logger.error(f"Failed to save waydroid properties: {e}")
+            return False
+
+    async def reset_waydroid_properties(self) -> bool:
+        """Reset all waydroid config properties to defaults"""
+        try:
+            # Reset in model
+            self.property_model.reset_to_defaults(waydroid_only=True)
+
+            # Reset in config
+            self.config_manager.reset_waydroid_properties(self.property_model._property_definitions)
+
+            # Save config
+            return await self.config_manager.save_config()
+
+        except Exception as e:
+            logger.error(f"Failed to reset waydroid properties: {e}")
+            return False
+
     async def restore_privileged_properties(self) -> bool:
         """Restore privileged properties from saved config"""
         try:

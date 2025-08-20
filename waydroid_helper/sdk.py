@@ -220,7 +220,28 @@ class ConfigManager:
                 property_values[name] = ""
         
         return property_values
-    
+
+    def et_all_waydroid_properties(self, property_definitions: Dict[str, PropertyDefinition]) -> Dict[str, str]:
+        """Get all waydroid config properties from [waydroid] section"""
+        if not self._config_cache:
+            if not self.load_config():
+                return {}
+
+        waydroid_prop_names = {"mount_overlays", "auto_adb", "images_path"}
+        waydroid_props = {name: prop_def for name, prop_def in property_definitions.items()
+                         if name in waydroid_prop_names}
+
+        property_values = {}
+        for name, prop_def in waydroid_props.items():
+            try:
+                value = self._config_cache.get("waydroid", prop_def.nick, fallback="")
+                property_values[name] = value
+            except Exception as e:
+                logger.error(f"Failed to get waydroid property {name}: {e}")
+                property_values[name] = ""
+
+        return property_values
+
     def set_privileged_property(self, property_nick: str, value: str):
         """Set a privileged property in config (in memory only)"""
         if not self._config_cache:
@@ -246,7 +267,44 @@ class ConfigManager:
                     self._config_cache.remove_option("properties", property_nick)
             else:
                 self._config_cache.set("properties", property_nick, value)
-    
+
+    def set_multiple_waydroid_properties(self, properties: Dict[str, str]):
+        """Set multiple waydroid config properties in [waydroid] section (in memory only)"""
+        if not self._config_cache:
+            if not self.load_config():
+                logger.error("Failed to load config for setting waydroid properties")
+                return
+
+        # Ensure [waydroid] section exists
+        if not self._config_cache.has_section("waydroid"):
+            self._config_cache.add_section("waydroid")
+
+        for property_nick, value in properties.items():
+            if value == "":
+                if self._config_cache.has_option("waydroid", property_nick):
+                    self._config_cache.remove_option("waydroid", property_nick)
+            else:
+                self._config_cache.set("waydroid", property_nick, value)
+
+    def reset_waydroid_properties(self, property_definitions: Dict[str, PropertyDefinition]):
+        """Reset waydroid properties to defaults"""
+        if not self._config_cache:
+            if not self.load_config():
+                logger.error("Failed to load config for resetting waydroid properties")
+                return
+
+        waydroid_prop_names = {"mount_overlays", "auto_adb", "images_path"}
+        waydroid_props = {name: prop_def for name, prop_def in property_definitions.items()
+                         if name in waydroid_prop_names}
+
+        # Ensure [waydroid] section exists
+        if not self._config_cache.has_section("waydroid"):
+            self._config_cache.add_section("waydroid")
+
+        for name, prop_def in waydroid_props.items():
+            default_value = prop_def.transform_out(prop_def.default_value)
+            self._config_cache.set("waydroid", prop_def.nick, default_value)
+
     async def save_config(self) -> bool:
         """Save config to file using privileged access"""
         if not self._config_cache:

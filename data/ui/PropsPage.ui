@@ -225,6 +225,60 @@
             </child>
           </object>
         </child>
+        <child>
+          <object class="AdwPreferencesGroup">
+            <property name="title">Waydroid Configuration</property>
+            <property name="description" translatable="true">Configuration options for Waydroid itself. Changes require restarting Waydroid to take effect</property>
+            <property name="header-suffix">reset_waydroid_prop_btn</property>
+            <child>
+              <object class="AdwActionRow">
+                <property name="title">mount_overlays</property>
+                <property name="subtitle" translatable="true">Enable overlay mounting</property>
+                <property name="activatable-widget">waydroid_switch_1</property>
+                <property name="sensitive" bind-source="waydroid_switch_1" bind-property="sensitive" bind-flags="sync-create"/>
+                <child>
+                  <object class="GtkSwitch" id="waydroid_switch_1">
+                    <property name="name">mount-overlays</property>
+                    <property name="valign">3</property>
+                    <property name="sensitive">False</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="AdwActionRow">
+                <property name="title">auto_adb</property>
+                <property name="subtitle" translatable="true">Enable automatic ADB connection</property>
+                <property name="activatable-widget">waydroid_switch_2</property>
+                <property name="sensitive" bind-source="waydroid_switch_2" bind-property="sensitive" bind-flags="sync-create"/>
+                <child>
+                  <object class="GtkSwitch" id="waydroid_switch_2">
+                    <property name="name">auto-adb</property>
+                    <property name="valign">3</property>
+                    <property name="sensitive">False</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="AdwActionRow">
+                <property name="title">images_path</property>
+                <property name="subtitle" translatable="true">Path to Waydroid images</property>
+                <property name="activatable-widget">waydroid_entry_1</property>
+                <property name="sensitive" bind-source="waydroid_entry_1" bind-property="sensitive" bind-flags="sync-create"/>
+                <child>
+                  <object class="GtkEntry" id="waydroid_entry_1">
+                    <property name="name">images-path</property>
+                    <property name="placeholder-text" translatable="true">/etc/waydroid-extra/images</property>
+                    <property name="width-chars">20</property>
+                    <property name="valign">3</property>
+                    <property name="sensitive">False</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
       </object>
     </child><!-- <child>
       <object class="GtkOverlay" id="overlay"></object>
@@ -240,6 +294,13 @@
   <object class="GtkButton" id="reset_privileged_prop_btn">
     <property name="label" translatable="true">Reset</property>
     <signal name="clicked" handler="on_reset_privileged_clicked"/>
+    <property name="halign">end</property>
+    <property name="valign">center</property>
+    <property name="sensitive">False</property>
+  </object>
+  <object class="GtkButton" id="reset_waydroid_prop_btn">
+    <property name="label" translatable="true">Reset</property>
+    <signal name="clicked" handler="on_reset_waydroid_clicked"/>
     <property name="halign">end</property>
     <property name="valign">center</property>
     <property name="sensitive">False</property>

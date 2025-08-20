@@ -217,6 +217,56 @@ class PrivilegedPropsCompat(GObject.Object):
         await self._controller.restore_privileged_properties()
 
 
+class WaydroidPropsCompat(GObject.Object):
+    """Compatibility wrapper for waydroid config properties"""
+
+    state = GObject.Property(type=object)
+
+    def __init__(self, controller: ModelController):
+        super().__init__()
+        self._controller = controller
+
+        # Connect to model changes
+        self._controller.property_model.connect("notify::waydroid-state", self._on_waydroid_state_changed)
+
+        # Set initial state with a delay to ensure proper initialization
+        GLib.idle_add(self._set_initial_state)
+
+    def _set_initial_state(self):
+        # Sync initial state
+        initial_state = self._controller.property_model.get_property("waydroid-state")
+        self.set_property("state", initial_state)
+        return False  # Don't repeat
+
+    def _on_waydroid_state_changed(self, model: GObject.Object, param: GObject.ParamSpec):
+        """Update compatibility state when waydroid state changes"""
+        waydroid_state = model.get_property("waydroid-state")
+        self.set_property("state", waydroid_state)
+
+    def set_property(self, property_name: str, value: Any):
+        """Set property value in model"""
+        if property_name == "state":
+            super().set_property(property_name, value)
+            return
+
+        # Convert property name format (handle both dashes and underscores)
+        model_prop_name = property_name.replace("-", "_")
+        self._controller.property_model.set_property_value(model_prop_name, value)
+    # Compatibility methods for accessing properties
+    def get_property(self, property_name: str):
+        if property_name in ("state"):
+            return super().get_property(property_name)
+
+        """Get a waydroid property value (compatibility method)"""
+        normalized_name = property_name.replace("-", "_")
+        return self._controller.property_model.get_property_value(normalized_name)
+
+    def set_property_value(self, name: str, value):
+        """Set a waydroid property value (compatibility method)"""
+        normalized_name = name.replace("-", "_")
+        return self._controller.property_model.set_property_value(normalized_name, value)
+
+
 class WaydroidCompat(GObject.Object):
     """
     Compatibility wrapper for the old Waydroid class.
@@ -276,6 +326,13 @@ class WaydroidCompat(GObject.Object):
             self._privileged_props_compat = PrivilegedPropsCompat(self._controller)
         return self._privileged_props_compat
 
+    @property
+    def waydroid_props(self):
+        """Compatibility property for waydroid config props"""
+        if not hasattr(self, '_waydroid_props_compat'):
+            self._waydroid_props_compat = WaydroidPropsCompat(self._controller)
+        return self._waydroid_props_compat
+
     # Session management methods (delegate to controller)
     async def start_session(self):
         """Start Waydroid session"""
@@ -322,6 +379,14 @@ class WaydroidCompat(GObject.Object):
         """Restore privileged properties"""
         return await self._controller.restore_privileged_properties()
 
+    async def save_waydroid_props(self):
+        """Save waydroid config properties"""
+        return await self._controller.save_all_waydroid_properties()
+
+    async def reset_waydroid_props(self):
+        """Reset waydroid config properties"""
+        return await self._controller.reset_waydroid_properties()
+
     async def set_extension_props(self, pairs: Dict[str, Any]):
         """Set extension properties"""
         return await self._controller.set_extension_properties(pairs)
@@ -342,6 +407,11 @@ class WaydroidCompat(GObject.Object):
 
     def reset_privileged_props_state(self):
         """Reset privileged props state (compatibility)"""
+        # This is handled automatically by the new architecture
+        pass
+
+    def reset_waydroid_props_state(self):
+        """Reset waydroid props state (compatibility)"""
         # This is handled automatically by the new architecture
         pass
 
