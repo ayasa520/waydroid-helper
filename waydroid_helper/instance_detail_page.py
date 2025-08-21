@@ -19,8 +19,11 @@ from waydroid_helper.controller import TransparentWindow
 from waydroid_helper.infobar import InfoBar
 from waydroid_helper.shared_folder import SharedFoldersWidget
 from waydroid_helper.util import Task, logger
+from waydroid_helper.util.subprocess_manager import SubprocessManager
 from waydroid_helper.waydroid import Waydroid, WaydroidState
 from waydroid_helper.compat_widget import NavigationPage, HeaderBar, ToolbarView, ADW_VERSION
+from waydroid_helper.compat_widget.message_dialog import MessageDialog
+import os
 
 
 class InstanceDetailPage(NavigationPage):
@@ -208,20 +211,24 @@ class InstanceDetailPage(NavigationPage):
             stack.set_visible_child_name("icon")
         
     def _create_details_tab(self):
-        """创建详情标签页，包含共享文件夹和按键映射"""
+        """创建详情标签页，包含共享文件夹、按键映射和缓存管理"""
         box = Gtk.Box.new(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        
+
         # Create preferences page
         prefs_page = Adw.PreferencesPage.new()
-        
+
         # 共享文件夹组
         shared_folders_widget = SharedFoldersWidget()
         prefs_page.add(shared_folders_widget)
-        
+
         # 按键映射组
         key_mapping_group = self._create_key_mapping_group()
         prefs_page.add(key_mapping_group)
-        
+
+        # 缓存管理组
+        cache_management_group = self._create_cache_management_group()
+        prefs_page.add(cache_management_group)
+
         # InfoBar for shared folders
         self.infobar: InfoBar = InfoBar(
             label=_("Restart the systemd user service immediately"),
@@ -230,7 +237,7 @@ class InstanceDetailPage(NavigationPage):
         shared_folders_widget.connect(
             "updated", lambda _: self.infobar.set_reveal_child(True)
         )
-        
+
         box.append(prefs_page)
         box.append(self.infobar)
         return box
@@ -239,34 +246,45 @@ class InstanceDetailPage(NavigationPage):
         """创建按键映射组"""
         group = Adw.PreferencesGroup.new()
         group.set_title(_("Key Mapper"))
-        
+
         # 按键映射行
         key_mapping_row = Adw.ActionRow.new()
         key_mapping_row.set_title(_("Key Mapping Window"))
         key_mapping_row.set_subtitle(_("Manage key mapping overlay window for game control"))
-        
-        # 按钮容器
-        button_box = Gtk.Box.new(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        
-        # 打开按钮
-        self.open_key_mapping_button = Gtk.Button.new_with_label(_("Open"))
-        self.open_key_mapping_button.set_sensitive(False)
-        self.open_key_mapping_button.add_css_class("suggested-action")
-        self.open_key_mapping_button.connect("clicked", self.on_open_key_mapping_clicked)
-        button_box.append(self.open_key_mapping_button)
-        
-        # 关闭按钮
-        self.close_key_mapping_button = Gtk.Button.new_with_label(_("Close"))
-        self.close_key_mapping_button.set_sensitive(False)
-        self.close_key_mapping_button.add_css_class("destructive-action")
-        self.close_key_mapping_button.connect("clicked", self.on_close_key_mapping_clicked)
-        button_box.append(self.close_key_mapping_button)
-        
-        key_mapping_row.add_suffix(button_box)
+
+        # 切换按钮
+        self.key_mapping_toggle_button = Gtk.Button.new_with_label(_("Open"))
+        self.key_mapping_toggle_button.set_sensitive(False)
+        self.key_mapping_toggle_button.add_css_class("suggested-action")
+        self.key_mapping_toggle_button.set_size_request(120, -1)  # 设置固定宽度
+        self.key_mapping_toggle_button.connect("clicked", self.on_key_mapping_toggle_clicked)
+
+        key_mapping_row.add_suffix(self.key_mapping_toggle_button)
         group.add(key_mapping_row)
-        
+
         return group
-        
+
+    def _create_cache_management_group(self):
+        """创建缓存管理组"""
+        group = Adw.PreferencesGroup.new()
+        group.set_title(_("Cache Management"))
+
+        # 清除缓存行
+        clear_cache_row = Adw.ActionRow.new()
+        clear_cache_row.set_title(_("Clear Package Cache"))
+        clear_cache_row.set_subtitle(_("Fix startup issues after installing GApps or microG"))
+
+        # 清除缓存按钮
+        self.clear_cache_button = Gtk.Button.new_with_label(_("Clear Cache"))
+        self.clear_cache_button.add_css_class("destructive-action")
+        self.clear_cache_button.set_size_request(120, -1)  # 设置固定宽度，与上面按钮一致
+        self.clear_cache_button.connect("clicked", self.on_clear_cache_clicked)
+
+        clear_cache_row.add_suffix(self.clear_cache_button)
+        group.add(clear_cache_row)
+
+        return group
+
     def set_app(self, app: Gtk.Application):
         """设置应用实例"""
         self._app = app
@@ -303,40 +321,57 @@ class InstanceDetailPage(NavigationPage):
         self._update_key_mapping_buttons()
         
     def _update_key_mapping_buttons(self):
-        """Update key mapping buttons status"""
+        """Update key mapping button status"""
         try:
             if self._key_mapping_window and self._key_mapping_window.is_visible():
-                self.open_key_mapping_button.set_sensitive(False)
-                self.close_key_mapping_button.set_sensitive(True)
+                # 窗口已打开，显示关闭按钮
+                self.key_mapping_toggle_button.set_label(_("Close"))
+                self.key_mapping_toggle_button.remove_css_class("suggested-action")
+                self.key_mapping_toggle_button.add_css_class("destructive-action")
+                self.key_mapping_toggle_button.set_sensitive(True)
             else:
-                self.open_key_mapping_button.set_sensitive(True)
-                self.close_key_mapping_button.set_sensitive(False)
+                # 窗口未打开，显示打开按钮
+                self.key_mapping_toggle_button.set_label(_("Open"))
+                self.key_mapping_toggle_button.remove_css_class("destructive-action")
+                self.key_mapping_toggle_button.add_css_class("suggested-action")
+                self.key_mapping_toggle_button.set_sensitive(True)
         except Exception as e:
-            logger.error(f"Update key mapping buttons status failed: {e}")
-            self.open_key_mapping_button.set_sensitive(True)
-            self.close_key_mapping_button.set_sensitive(False)
+            logger.error(f"Update key mapping button status failed: {e}")
+            self.key_mapping_toggle_button.set_label(_("Open"))
+            self.key_mapping_toggle_button.remove_css_class("destructive-action")
+            self.key_mapping_toggle_button.add_css_class("suggested-action")
+            self.key_mapping_toggle_button.set_sensitive(True)
 
-    def on_open_key_mapping_clicked(self, button: Gtk.Button):
-        """Open key mapping window"""
-        logger.info("Open key mapping window")
+    def on_key_mapping_toggle_clicked(self, button: Gtk.Button):
+        """Toggle key mapping window"""
         try:
-            if self._app:
-                self._key_mapping_window = TransparentWindow(self._app)
-                self._key_mapping_window.connect("close-request", self._on_key_mapping_window_closed)
-                self._key_mapping_window.present()
-                self._update_key_mapping_buttons()
-                logger.info("Key mapping window opened")
-                
-                # Minimize the main window
-                root = self.get_root()
-                root = cast(Gtk.ApplicationWindow, root)
-                if root and hasattr(root, 'minimize'):
-                    root.minimize()
-                    logger.info("Main window minimized")
+            if self._key_mapping_window and self._key_mapping_window.is_visible():
+                # 窗口已打开，关闭它
+                logger.info("Close key mapping window")
+                self._key_mapping_window.close()
+                logger.info("Key mapping window close request sent")
             else:
-                logger.error("Cannot get application instance")
+                # 窗口未打开，打开它
+                logger.info("Open key mapping window")
+                if self._app:
+                    self._key_mapping_window = TransparentWindow(self._app)
+                    self._key_mapping_window.connect("close-request", self._on_key_mapping_window_closed)
+                    self._key_mapping_window.present()
+                    self._update_key_mapping_buttons()
+                    logger.info("Key mapping window opened")
+
+                    # Minimize the main window
+                    root = self.get_root()
+                    root = cast(Gtk.ApplicationWindow, root)
+                    if root and hasattr(root, 'minimize'):
+                        root.minimize()
+                        logger.info("Main window minimized")
+                else:
+                    logger.error("Cannot get application instance")
         except Exception as e:
-            logger.error(f"Open key mapping window failed: {e}")
+            logger.error(f"Toggle key mapping window failed: {e}")
+            self._key_mapping_window = None
+            self._update_key_mapping_buttons()
 
     def _on_key_mapping_window_closed(self, window):
         """Callback when key mapping window is closed"""
@@ -345,16 +380,118 @@ class InstanceDetailPage(NavigationPage):
         self._update_key_mapping_buttons()
         return False
 
-    def on_close_key_mapping_clicked(self, button: Gtk.Button):
-        """Close key mapping window"""
-        logger.info("Close key mapping window")
+    def on_clear_cache_clicked(self, button: Gtk.Button):
+        """Handle clear cache button click"""
+        logger.info("Clear package cache button clicked")
+        self._show_clear_cache_confirmation(button)
+
+    def _show_clear_cache_confirmation(self, button: Gtk.Button):
+        """Show confirmation dialog before clearing cache"""
+        dialog = MessageDialog(
+            heading=_("Clear Package Cache"),
+            body=_("This will clear Waydroid package cache files to fix startup issues after installing GApps or microG.\n\nA backup will be created before clearing. Do you want to continue?"),
+            parent=self.get_root()
+        )
+
+        dialog.add_response(Gtk.ResponseType.CANCEL, _("Cancel"))
+        dialog.add_response(Gtk.ResponseType.OK, _("Clear Cache"))
+        dialog.set_response_appearance(Gtk.ResponseType.OK, "destructive-action")
+        dialog.set_default_response(Gtk.ResponseType.CANCEL)
+
+        dialog.connect("response", self._on_confirmation_response, button)
+        dialog.present()
+
+    def _on_confirmation_response(self, dialog, response, button: Gtk.Button):
+        """Handle confirmation dialog response"""
+        # 处理不同类型的响应，参考 available_version_page.py 的实现
+        if (response == Gtk.ResponseType.OK.value_nick or
+            response == Gtk.ResponseType.OK):
+            logger.info("User confirmed cache clearing")
+            self._task.create_task(self._clear_package_cache(button))
+        else:
+            logger.info("User cancelled cache clearing")
+
+    async def _clear_package_cache(self, button: Gtk.Button):
+        """Clear Waydroid package cache"""
         try:
-            if self._key_mapping_window:
-                self._key_mapping_window.close()
-                logger.info("Key mapping window close request sent")
+            # 禁用按钮防止重复点击
+            button.set_sensitive(False)
+            button.set_label(_("Clearing..."))
+
+            # 获取waydroid-cli路径
+            cli_path = os.environ.get('WAYDROID_CLI_PATH')
+            if not cli_path:
+                logger.error("WAYDROID_CLI_PATH environment variable not set")
+                self._show_cache_clear_result(False, _("WAYDROID_CLI_PATH not found"))
+                return
+
+            # 构建命令
+            command = f"{cli_path} clear_package_cache"
+
+            # 执行命令
+            subprocess_manager = SubprocessManager()
+            result = await subprocess_manager.run(command)
+
+            logger.info(f"Clear cache command result: {result}")
+
+            if result["returncode"] == 0:
+                # 从输出中提取备份文件路径
+                backup_path = self._extract_backup_path(result["stdout"])
+                self._show_cache_clear_result(True, _("Package cache cleared successfully"), backup_path)
             else:
-                logger.warning("No open key mapping window")
+                self._show_cache_clear_result(False, f"Error: {result['stderr']}")
+
         except Exception as e:
-            logger.error(f"Close key mapping window failed: {e}")
-            self._key_mapping_window = None
-            self._update_key_mapping_buttons()
+            logger.error(f"Failed to clear package cache: {e}")
+            self._show_cache_clear_result(False, str(e))
+        finally:
+            # 恢复按钮状态
+            button.set_sensitive(True)
+            button.set_label(_("Clear Cache"))
+
+    def _extract_backup_path(self, stdout: str) -> str:
+        """Extract backup file path from command output"""
+        try:
+            # 查找 "Creating backup: " 行
+            lines = stdout.split('\n')
+            for line in lines:
+                if "Creating backup:" in line:
+                    # 提取文件名，例如 "Creating backup: ../package_cache_backup_1755763729.tar.gz"
+                    backup_filename = line.split("Creating backup: ")[1].strip()
+                    # 构建完整路径
+                    data_dir = os.path.expanduser("~/.local/share/waydroid/data")
+                    if backup_filename.startswith("../"):
+                        backup_path = os.path.join(data_dir, backup_filename[3:])  # 去掉 "../"
+                    else:
+                        backup_path = os.path.join(data_dir, "system", backup_filename)
+                    return backup_path
+        except Exception as e:
+            logger.error(f"Failed to extract backup path: {e}")
+        return ""
+
+    def _show_cache_clear_result(self, success: bool, message: str, backup_path: str = ""):
+        """Show cache clear operation result"""
+        if success:
+            logger.info(f"Cache clear success: {message}")
+            # 显示成功对话框，包含备份位置信息
+            heading = _("Cache Cleared Successfully")
+            if backup_path:
+                body = _("Package cache has been cleared successfully.\n\nBackup saved to:\n{0}").format(backup_path)
+            else:
+                body = _("Package cache has been cleared successfully.")
+        else:
+            logger.error(f"Cache clear failed: {message}")
+            # 显示失败对话框
+            heading = _("Cache Clear Failed")
+            body = _("Failed to clear package cache:\n\n{0}").format(message)
+
+        dialog = MessageDialog(
+            heading=heading,
+            body=body,
+            parent=self.get_root()
+        )
+
+        dialog.add_response(Gtk.ResponseType.OK, _("OK"))
+        dialog.set_default_response(Gtk.ResponseType.OK)
+
+        dialog.present()
