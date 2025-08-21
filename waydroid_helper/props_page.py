@@ -172,40 +172,15 @@ class PropsPage(Gtk.Box):
             ok_callback=self.on_apply_button_clicked,
         )
         self.save_waydroid_notification: InfoBar = InfoBar(
-            label=_("Save and restart Waydroid"),
+            label=_("Save and restart the container"),
             cancel_callback=self.on_restore_waydroid_button_clicked,
             ok_callback=self.on_apply_waydroid_button_clicked,
         )
 
         model = Gtk.StringList.new(strings=list(self.items["index"].keys()))
         self.device_combo.set_model(model=model)
-
-        # 用 bind 也行？
-        # self.waydroid.privileged_props.bind_property(
-        #     "ro-product-model",
-        #     self.device_combo,
-        #     "selected",
-        #     GObject.BindingFlags.DEFAULT,
-        #     # from the source to target
-        #     self.on_device_info_changed,
-        #     # partial(self.on_adw_combo_row_selected_item,prop_name="ro-product-brand"),
-        # )
-        # self.waydroid.privileged_props.bind_property(
-        #     "ro-product-brand",
-        #     self.device_combo,
-        #     "selected",
-        #     GObject.BindingFlags.DEFAULT,
-        #     self.on_device_info_changed,
-        #     # partial(self.on_adw_combo_row_selected_item,prop_name="ro-product-model"),
-        # )
         self._model_changed: bool = False
         self._brand_changed: bool = False
-        self.waydroid.privileged_props.connect(
-            "notify::ro-product-model", self.__on_model_changed
-        )
-        self.waydroid.privileged_props.connect(
-            "notify::ro-product-brand", self.__on_brand_changed
-        )
 
         # Set up simple, permanent signal connections (no more dynamic connect/disconnect!)
         self._setup_permanent_signal_connections()
@@ -268,66 +243,42 @@ class PropsPage(Gtk.Box):
     def _on_model_property_changed(self, property_name: str, value: Any):
         """Handle property changes from the model and update UI"""
         # Map property names to UI widgets
+        # This is really ugly...
         self._sync_props = True
-        widget_map = {
-            "multi_windows": self.switch_1,
-            "cursor_on_subsurface": self.switch_2,
-            "invert_colors": self.switch_3,
-            "suspend": self.switch_4,
-            "uevent": self.switch_5,
-            "fake_touch": self.entry_1,
-            "fake_wifi": self.entry_2,
-            "height_padding": self.entry_3,
-            "width_padding": self.entry_4,
-            "width": self.entry_5,
-            "height": self.entry_6,
-            "qemu_hw_mainkeys": self.switch_21,
-            # Waydroid config widgets
-            "mount_overlays": self.waydroid_switch_1,
-            "auto_adb": self.waydroid_switch_2,
-            "images_path": self.waydroid_entry_1,
-        }
 
-        widget = widget_map.get(property_name)
-        if widget:
-            # Temporarily block signals to avoid circular updates
-            if hasattr(widget, 'set_active'):  # Switch
-                widget.set_active(bool(value))
-            elif hasattr(widget, 'set_text'):  # Entry
-                widget.set_text(str(value) if value else "")
+        if property_name == "ro_product_model":
+            self.__on_model_changed()
+        elif property_name == "ro_product_brand":
+            self.__on_brand_changed()
+        else:
+            widget_map = {
+                "multi_windows": self.switch_1,
+                "cursor_on_subsurface": self.switch_2,
+                "invert_colors": self.switch_3,
+                "suspend": self.switch_4,
+                "uevent": self.switch_5,
+                "fake_touch": self.entry_1,
+                "fake_wifi": self.entry_2,
+                "height_padding": self.entry_3,
+                "width_padding": self.entry_4,
+                "width": self.entry_5,
+                "height": self.entry_6,
+                "qemu_hw_mainkeys": self.switch_21,
+                # Waydroid config widgets
+                "mount_overlays": self.waydroid_switch_1,
+                "auto_adb": self.waydroid_switch_2,
+                "images_path": self.waydroid_entry_1,
+            }
+
+            widget = widget_map.get(property_name)
+            if widget:
+                # Temporarily block signals to avoid circular updates
+                if hasattr(widget, 'set_active'):  # Switch
+                    widget.set_active(bool(value))
+                elif hasattr(widget, 'set_text'):  # Entry
+                    widget.set_text(str(value) if value else "")
+
         self._sync_props = False
-
-# TODO 此处应该是model同步过来, 现在只会在状态切换到 ready时读取一次
-    # def _sync_persist_props_to_ui(self, props_obj: GObject.Object, param: GObject.ParamSpec):
-    #     """Sync persist properties to UI when they become ready"""
-    #     if props_obj.get_property("state") == PropsState.READY:
-    #         # Update all persist property UI elements
-    #         self.switch_1.set_active(self.waydroid._controller.property_model.get_property_value("multi_windows") or False)
-    #         self.switch_2.set_active(self.waydroid._controller.property_model.get_property_value("cursor_on_subsurface") or False)
-    #         self.switch_3.set_active(self.waydroid._controller.property_model.get_property_value("invert_colors") or False)
-    #         self.switch_4.set_active(self.waydroid._controller.property_model.get_property_value("suspend") or False)
-    #         self.switch_5.set_active(self.waydroid._controller.property_model.get_property_value("uevent") or False)
-
-    #         self.entry_1.set_text(str(self.waydroid._controller.property_model.get_property_value("fake_touch") or ""))
-    #         self.entry_2.set_text(str(self.waydroid._controller.property_model.get_property_value("fake_wifi") or ""))
-    #         self.entry_3.set_text(str(self.waydroid._controller.property_model.get_property_value("height_padding") or ""))
-    #         self.entry_4.set_text(str(self.waydroid._controller.property_model.get_property_value("width_padding") or ""))
-    #         self.entry_5.set_text(str(self.waydroid._controller.property_model.get_property_value("width") or ""))
-    #         self.entry_6.set_text(str(self.waydroid._controller.property_model.get_property_value("height") or ""))
-
-    # def _sync_privileged_props_to_ui(self, props_obj: GObject.Object, param: GObject.ParamSpec):
-    #     """Sync privileged properties to UI when they become ready"""
-    #     if props_obj.get_property("state") == PropsState.READY:
-    #         # Update privileged property UI elements
-    #         self.switch_21.set_active(self.waydroid._controller.property_model.get_property_value("qemu_hw_mainkeys") or False)
-
-    # def _sync_waydroid_props_to_ui(self, props_obj: GObject.Object, param: GObject.ParamSpec):
-    #     """Sync waydroid config properties to UI when they become ready"""
-    #     if props_obj.get_property("state") == PropsState.READY:
-    #         # Update waydroid config UI elements
-    #         self.waydroid_switch_1.set_active(self.waydroid._controller.property_model.get_property_value("mount_overlays") or False)
-    #         self.waydroid_switch_2.set_active(self.waydroid._controller.property_model.get_property_value("auto_adb") or False)
-    #         self.waydroid_entry_1.set_text(str(self.waydroid._controller.property_model.get_property_value("images_path") or ""))
 
     def check_both_properties_changed(self):
         if self._model_changed and self._brand_changed:
@@ -335,11 +286,11 @@ class PropsPage(Gtk.Box):
             self._brand_changed = False
             self.on_device_info_changed()
 
-    def __on_model_changed(self, obj: GObject.Object, param_spec: GObject.ParamSpec):
+    def __on_model_changed(self):
         self._model_changed = True
         self.check_both_properties_changed()
 
-    def __on_brand_changed(self, obj: GObject.Object, param_spec: GObject.ParamSpec):
+    def __on_brand_changed(self):
         self._brand_changed = True
         self.check_both_properties_changed()
 
@@ -370,7 +321,7 @@ class PropsPage(Gtk.Box):
     ):
         """Handle combo box selection - now with simple state checking"""
         # Simple state check - no more complex connect/disconnect needed!
-        if self.waydroid.privileged_props.get_property("state") != PropsState.READY and self._sync_props:
+        if self.waydroid.privileged_props.get_property("state") != PropsState.READY or self._sync_props:
             return
 
         self.set_reveal(self.save_privileged_notification, True)
@@ -464,7 +415,7 @@ class PropsPage(Gtk.Box):
     ):
         """Handle privileged switch clicks - now with simple state checking"""
         # Simple state check - no more complex connect/disconnect needed!
-        if self.waydroid.privileged_props.get_property("state") != PropsState.READY and self._sync_props:
+        if self.waydroid.privileged_props.get_property("state") != PropsState.READY or self._sync_props:
             return
 
         # Update the model with the new value
@@ -479,7 +430,7 @@ class PropsPage(Gtk.Box):
     def on_waydroid_switch_clicked(self, a: Gtk.Switch, b: GObject.ParamSpec, name: str):
         """Handle waydroid switch clicks - now with simple state checking"""
         # Simple state check - no more complex connect/disconnect needed!
-        if self.waydroid.waydroid_props.get_property("state") != PropsState.READY and self._sync_props:
+        if self.waydroid.waydroid_props.get_property("state") != PropsState.READY or self._sync_props:
             return
 
         # Update the model with the new value
@@ -495,7 +446,7 @@ class PropsPage(Gtk.Box):
     def on_waydroid_text_changed(self, a: Gtk.Entry, b: GObject.ParamSpec, name: str):
         """Handle waydroid text changes - now with simple state checking"""
         # Simple state check - no more complex connect/disconnect needed!
-        if self.waydroid.waydroid_props.get_property("state") != PropsState.READY and self._sync_props:
+        if self.waydroid.waydroid_props.get_property("state") != PropsState.READY or self._sync_props:
             return
 
         # Update the model with the new value
@@ -537,7 +488,7 @@ class PropsPage(Gtk.Box):
     ):
         """Handle persist text changes - now with simple state checking"""
         # Simple state check - no more complex connect/disconnect needed!
-        if self.waydroid.persist_props.get_property("state") != PropsState.READY and self._sync_props:
+        if self.waydroid.persist_props.get_property("state") != PropsState.READY or self._sync_props:
             return
 
         if self.timeout_id.get(name) is not None:
@@ -552,7 +503,7 @@ class PropsPage(Gtk.Box):
     def on_perisit_switch_clicked(self, a: Gtk.Switch, b: GObject.ParamSpec, name: str):
         """Handle persist switch clicks - now with simple state checking"""
         # Simple state check - no more complex connect/disconnect needed!
-        if self.waydroid.persist_props.get_property("state") != PropsState.READY and self._sync_props:
+        if self.waydroid.persist_props.get_property("state") != PropsState.READY or self._sync_props:
             return
 
         # Update the model with the new value
@@ -586,7 +537,7 @@ class PropsPage(Gtk.Box):
 
     def on_restore_waydroid_button_clicked(self, button: Gtk.Button):
         # Restore waydroid config properties from file
-        self._task.create_task(self.waydroid._controller.reset_waydroid_properties())
+        self._task.create_task(self.waydroid.restore_waydroid_props())
 
     def on_apply_waydroid_button_clicked(self, button: Gtk.Button):
         # Save waydroid config properties

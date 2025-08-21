@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from gi.repository import GLib
 
 from waydroid_helper.util import SubprocessError, SubprocessManager, logger
-from waydroid_helper.models import SessionState, PropertyDefinition
+from waydroid_helper.models import PropertyCategory, SessionState, PropertyDefinition
 
 
 CONFIG_PATH = os.environ.get("WAYDROID_CONFIG", "/var/lib/waydroid/waydroid.cfg")
@@ -55,19 +55,19 @@ class WaydroidSDK:
             logger.error(f"Failed to get Waydroid status: {e}")
             return SessionState.UNINITIALIZED
     
-    async def start_session(self) -> bool:
+    async def start_session(self, wait: bool = False) -> bool:
         """Start Waydroid session"""
         try:
-            await self._subprocess.run("waydroid session start", flag=True, wait=False)
+            await self._subprocess.run("waydroid session start", flag=True, wait=wait)
             return True
         except SubprocessError as e:
             logger.error(f"Failed to start Waydroid session: {e}")
             return False
     
-    async def stop_session(self) -> bool:
+    async def stop_session(self, wait: bool = False) -> bool:
         """Stop Waydroid session"""
         try:
-            await self._subprocess.run("waydroid session stop", flag=True, wait=False)
+            await self._subprocess.run("waydroid session stop", flag=True, wait=wait)
             return True
         except SubprocessError as e:
             logger.error(f"Failed to stop Waydroid session: {e}")
@@ -91,6 +91,15 @@ class WaydroidSDK:
             return True
         except SubprocessError as e:
             logger.error(f"Failed to show Waydroid full UI: {e}")
+            return False
+    
+    async def restart_container(self, wait: bool = False) -> bool:
+        """"""
+        try:
+            await self._subprocess.run(f"pkexec {os.environ['WAYDROID_CLI_PATH']} restart_container", flag=True, wait=wait)
+            return True
+        except SubprocessError as e:
+            logger.error(f"Failed to restart Waydroid container: {e}")
             return False
     
     async def upgrade(self, offline: bool = False) -> bool:
@@ -145,7 +154,7 @@ class PropertyManager:
     async def get_all_persist_properties(self, property_definitions: Dict[str, PropertyDefinition]) -> Dict[str, str]:
         """Get all persist properties in parallel"""
         persist_props = {name: prop_def for name, prop_def in property_definitions.items()
-                        if not prop_def.is_privileged}
+                        if prop_def.category == PropertyCategory.PERSIST}
 
         if not persist_props:
             return {}
@@ -208,7 +217,7 @@ class ConfigManager:
                 return {}
         
         privileged_props = {name: prop_def for name, prop_def in property_definitions.items() 
-                           if prop_def.is_privileged}
+                           if prop_def.category == PropertyCategory.PRIVILEGED}
         
         property_values = {}
         for name, prop_def in privileged_props.items():
@@ -221,15 +230,14 @@ class ConfigManager:
         
         return property_values
 
-    def et_all_waydroid_properties(self, property_definitions: Dict[str, PropertyDefinition]) -> Dict[str, str]:
+    def get_all_waydroid_properties(self, property_definitions: Dict[str, PropertyDefinition]) -> Dict[str, str]:
         """Get all waydroid config properties from [waydroid] section"""
         if not self._config_cache:
             if not self.load_config():
                 return {}
 
-        waydroid_prop_names = {"mount_overlays", "auto_adb", "images_path"}
         waydroid_props = {name: prop_def for name, prop_def in property_definitions.items()
-                         if name in waydroid_prop_names}
+                         if prop_def.category == PropertyCategory.WAYDROID}
 
         property_values = {}
         for name, prop_def in waydroid_props.items():
@@ -293,9 +301,8 @@ class ConfigManager:
                 logger.error("Failed to load config for resetting waydroid properties")
                 return
 
-        waydroid_prop_names = {"mount_overlays", "auto_adb", "images_path"}
         waydroid_props = {name: prop_def for name, prop_def in property_definitions.items()
-                         if name in waydroid_prop_names}
+                         if prop_def.category == PropertyCategory.WAYDROID}
 
         # Ensure [waydroid] section exists
         if not self._config_cache.has_section("waydroid"):
@@ -323,7 +330,6 @@ class ConfigManager:
             # Copy to system location with pkexec
             cmd = f"pkexec {os.environ['WAYDROID_CLI_PATH']} copy_to_var {cache_config_path} waydroid.cfg"
             await self._subprocess.run(cmd, flag=True)
-            
             return True
         except SubprocessError as e:
             logger.error(f"Failed to save config: {e}")
@@ -347,14 +353,12 @@ class ConfigManager:
             logger.error(f"Failed to get Android version: {e}")
             return ""
     
-    def reset_privileged_properties(self, property_definitions: Dict[str, PropertyDefinition]):
+    def reset_privileged_properties(self):
         """Reset all privileged properties to defaults (in memory only)"""
         if not self._config_cache:
             if not self.load_config():
                 return
         
-        privileged_props = {name: prop_def for name, prop_def in property_definitions.items() 
-                           if prop_def.is_privileged}
-        
-        for name, prop_def in privileged_props.items():
-            self._config_cache.remove_option("properties", prop_def.nick)
+        # 清空 [properties] 下面的所有内容, 但保留 section
+        for option in self._config_cache.options("properties"):
+            self._config_cache.remove_option("properties", option)

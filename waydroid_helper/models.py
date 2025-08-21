@@ -42,6 +42,12 @@ class SessionState(enum.IntEnum):
     CONNECTED = 0x10
 
 
+class PropertyCategory (enum.IntEnum):
+    """Type of a property"""
+    PRIVILEGED = 1
+    PERSIST = 2
+    WAYDROID = 3
+
 @dataclass
 class PropertyDefinition:
     """Definition of a Waydroid property"""
@@ -49,10 +55,10 @@ class PropertyDefinition:
     nick: str  # The actual waydroid property name (e.g., persist.waydroid.multi_windows)
     property_type: type
     default_value: Any
+    category: PropertyCategory 
     description: str = ""
     transform_in: Callable[[str], Any] = lambda x: x
     transform_out: Callable[[Any], str] = lambda x: str(x)
-    is_privileged: bool = False  # True for properties that require root/config file changes
 
 
 class PropertyModel(GObject.Object):
@@ -89,98 +95,98 @@ class PropertyModel(GObject.Object):
                 nick="persist.waydroid.multi_windows",
                 property_type=bool,
                 default_value=False,
+                category=PropertyCategory.PERSIST,
                 description=_("Enable window integration with the desktop"),
                 transform_in=self._str_to_bool,
                 transform_out=partial(self._bool_to_str, flag=1),
-                is_privileged=False
             ),
             PropertyDefinition(
                 name="cursor_on_subsurface",
                 nick="persist.waydroid.cursor_on_subsurface",
                 property_type=bool,
                 default_value=False,
+                category=PropertyCategory.PERSIST,
                 description=_("Workaround for showing the cursor in multi_windows mode on some compositors"),
                 transform_in=self._str_to_bool,
                 transform_out=partial(self._bool_to_str, flag=1),
-                is_privileged=False
             ),
             PropertyDefinition(
                 name="invert_colors",
                 nick="persist.waydroid.invert_colors",
                 property_type=bool,
                 default_value=False,
+                category=PropertyCategory.PERSIST,
                 description=_("Swaps the color space from RGBA to BGRA"),
                 transform_in=self._str_to_bool,
                 transform_out=partial(self._bool_to_str, flag=1),
-                is_privileged=False
             ),
             PropertyDefinition(
                 name="suspend",
                 nick="persist.waydroid.suspend",
                 property_type=bool,
                 default_value=False,
+                category=PropertyCategory.PERSIST,
                 description=_("Let the Waydroid container sleep when no apps are active"),
                 transform_in=self._str_to_bool,
                 transform_out=partial(self._bool_to_str, flag=1),
-                is_privileged=False
             ),
             PropertyDefinition(
                 name="uevent",
                 nick="persist.waydroid.uevent",
                 property_type=bool,
                 default_value=False,
+                category=PropertyCategory.PERSIST,
                 description=_("Allow android direct access to hotplugged devices"),
                 transform_in=self._str_to_bool,
                 transform_out=partial(self._bool_to_str, flag=1),
-                is_privileged=False
             ),
             PropertyDefinition(
                 name="fake_touch",
                 nick="persist.waydroid.fake_touch",
                 property_type=str,
+                category=PropertyCategory.PERSIST,
                 default_value="",
                 description=_("Interpret mouse inputs as touch inputs"),
-                is_privileged=False
             ),
             PropertyDefinition(
                 name="fake_wifi",
                 nick="persist.waydroid.fake_wifi",
                 property_type=str,
+                category=PropertyCategory.PERSIST,
                 default_value="",
                 description=_("Make the Apps appear as if connected to WiFi"),
-                is_privileged=False
             ),
             PropertyDefinition(
                 name="height_padding",
                 nick="persist.waydroid.height_padding",
                 property_type=str,
+                category=PropertyCategory.PERSIST,
                 default_value="",
                 description=_("Adjust height padding"),
-                is_privileged=False
             ),
             PropertyDefinition(
                 name="width_padding",
                 nick="persist.waydroid.width_padding",
                 property_type=str,
+                category=PropertyCategory.PERSIST,
                 default_value="",
                 description=_("Adjust width padding"),
-                is_privileged=False
             ),
             PropertyDefinition(
                 name="height",
                 nick="persist.waydroid.height",
                 property_type=str,
+                category=PropertyCategory.PERSIST,
                 default_value="",
                 description=_("Used for user to override desired resolution"),
-                is_privileged=False
             ),
             PropertyDefinition(
                 name="width",
                 nick="persist.waydroid.width",
                 property_type=str,
+                category=PropertyCategory.PERSIST,
                 default_value="",
                 description=_("Used for user to override desired resolution"),
-                is_privileged=False
             ),
             # 其实不是 persist, 但是先放这里
             PropertyDefinition(
@@ -188,10 +194,10 @@ class PropertyModel(GObject.Object):
                 nick="sys.boot_completed",
                 property_type=bool,
                 default_value=False,
+                category=PropertyCategory.PERSIST,
                 description=_("Enable window integration with the desktop"),
                 transform_in=self._str_to_bool,
                 transform_out=partial(self._bool_to_str, flag=2),
-                is_privileged=False
             ),
         ]
         
@@ -202,10 +208,10 @@ class PropertyModel(GObject.Object):
                 nick="qemu.hw.mainkeys",
                 property_type=bool,
                 default_value=False,
+                category=PropertyCategory.PRIVILEGED,
                 description=_("Hide navbar"),
                 transform_in=self._str_to_bool,
                 transform_out=lambda x: "1" if x else "0",
-                is_privileged=True
             ),
             # Device info properties
             PropertyDefinition(
@@ -213,28 +219,28 @@ class PropertyModel(GObject.Object):
                 nick="ro.product.brand",
                 property_type=str,
                 default_value="",
-                is_privileged=True
+                category=PropertyCategory.PRIVILEGED
             ),
             PropertyDefinition(
                 name="ro_product_manufacturer",
                 nick="ro.product.manufacturer",
                 property_type=str,
                 default_value="",
-                is_privileged=True
+                category=PropertyCategory.PRIVILEGED
             ),
             PropertyDefinition(
                 name="ro_product_model",
                 nick="ro.product.model",
                 property_type=str,
                 default_value="",
-                is_privileged=True
+                category=PropertyCategory.PRIVILEGED
             ),
             PropertyDefinition(
                 name="ro_product_device",
                 nick="ro.product.device",
                 property_type=str,
                 default_value="",
-                is_privileged=True
+                category=PropertyCategory.PRIVILEGED
             ),
         ]
 
@@ -245,28 +251,28 @@ class PropertyModel(GObject.Object):
                 nick="mount_overlays",
                 property_type=bool,
                 default_value=True,
+                category=PropertyCategory.WAYDROID,
                 description=_("Enable overlay mounting"),
                 transform_in=self._str_to_bool,
-                transform_out=lambda x: "true" if x else "false",
-                is_privileged=True # This is waydroid config, not privileged
+                transform_out=partial(self._bool_to_str, flag=0),
             ),
             PropertyDefinition(
                 name="auto_adb",
                 nick="auto_adb",
                 property_type=bool,
                 default_value=False,
+                category=PropertyCategory.WAYDROID,
                 description=_("Enable automatic ADB connection"),
                 transform_in=self._str_to_bool,
-                transform_out=lambda x: "true" if x else "false",
-                is_privileged=True
+                transform_out=partial(self._bool_to_str, flag=0),
             ),
             PropertyDefinition(
                 name="images_path",
                 nick="images_path",
                 property_type=str,
                 default_value="/etc/waydroid-extra/images",
+                category=PropertyCategory.WAYDROID,
                 description=_("Path to Waydroid images"),
-                is_privileged=True
             ),
         ]
 
@@ -318,10 +324,10 @@ class PropertyModel(GObject.Object):
             except (ValueError, TypeError):
                 logger.error(f"Invalid value type for property {name}: {value}")
                 return False
-        
-        old_value = self._properties.get(name)
-        if old_value == value:
-            return False
+
+        # old_value = self._properties.get(name)
+        # if old_value == value:
+        #     return False
         
         self._properties[name] = value
         self._emit_property_changed(name, value)
@@ -346,27 +352,22 @@ class PropertyModel(GObject.Object):
     def get_persist_properties(self) -> Dict[str, PropertyDefinition]:
         """Get all persist properties (non-privileged)"""
         return {name: prop_def for name, prop_def in self._property_definitions.items() 
-                if not prop_def.is_privileged}
+                if prop_def.category == PropertyCategory.PERSIST}
     
     def get_privileged_properties(self) -> Dict[str, PropertyDefinition]:
         """Get all privileged properties"""
         return {name: prop_def for name, prop_def in self._property_definitions.items()
-                if prop_def.is_privileged}
+                if prop_def.category == PropertyCategory.PRIVILEGED}
 
     def get_waydroid_properties(self) -> Dict[str, PropertyDefinition]:
         """Get all waydroid config properties"""
-        waydroid_prop_names = {"mount_overlays", "auto_adb", "images_path"}
         return {name: prop_def for name, prop_def in self._property_definitions.items()
-                if name in waydroid_prop_names}
+                if prop_def.category == PropertyCategory.WAYDROID}
 
-    def reset_to_defaults(self, privileged_only: bool = False, waydroid_only: bool = False):
+    def reset_to_defaults(self, category: PropertyCategory):
         """Reset properties to their default values"""
         for name, prop_def in self._property_definitions.items():
-            if privileged_only and not prop_def.is_privileged:
-                continue
-            if waydroid_only and name not in {"mount_overlays", "auto_adb", "images_path"}:
-                continue
-            if not privileged_only and not waydroid_only and (prop_def.is_privileged or name in {"mount_overlays", "auto_adb", "images_path"}):
+            if prop_def.category != category:
                 continue
             self.set_property_value(name, prop_def.default_value)
 

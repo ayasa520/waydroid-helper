@@ -14,7 +14,7 @@ from typing import Any, Dict, Optional
 from gi.repository import GLib, GObject
 
 from waydroid_helper.util import Task, logger
-from waydroid_helper.models import PropertyModel, SessionModel, ModelState, SessionState
+from waydroid_helper.models import PropertyCategory, PropertyModel, SessionModel, ModelState, SessionState
 from waydroid_helper.sdk import WaydroidSDK, PropertyManager, ConfigManager
 
 
@@ -232,7 +232,7 @@ class ModelController(GObject.Object):
             normalized_name = property_name.replace("-", "_")
 
             prop_def = self.property_model.get_property_definition(normalized_name)
-            if not prop_def or prop_def.is_privileged:
+            if not prop_def or prop_def.category != PropertyCategory.PERSIST:
                 logger.error(f"Property {property_name} (normalized: {normalized_name}) is not a persist property")
                 return False
 
@@ -253,7 +253,7 @@ class ModelController(GObject.Object):
             normalized_name = property_name.replace("-", "_")
 
             prop_def = self.property_model.get_property_definition(normalized_name)
-            if not prop_def or prop_def.is_privileged:
+            if not prop_def or prop_def.category != PropertyCategory.PERSIST:
                 logger.error(f"Property {property_name} (normalized: {normalized_name}) is not a persist property")
                 return False
 
@@ -305,7 +305,7 @@ class ModelController(GObject.Object):
             persist_props = self.property_model.get_persist_properties()
             
             # Reset in model
-            self.property_model.reset_to_defaults(privileged_only=False)
+            self.property_model.reset_to_defaults(PropertyCategory.PERSIST)
             
             # Save all persist properties
             tasks = []
@@ -326,10 +326,10 @@ class ModelController(GObject.Object):
         """Reset all privileged properties to defaults"""
         try:
             # Reset in model
-            self.property_model.reset_to_defaults(privileged_only=True)
+            self.property_model.reset_to_defaults(PropertyCategory.PRIVILEGED)
             
             # Reset in config
-            self.config_manager.reset_privileged_properties(self.property_model._property_definitions)
+            self.config_manager.reset_privileged_properties()
             
             # Save config
             return await self.config_manager.save_config()
@@ -358,7 +358,8 @@ class ModelController(GObject.Object):
 
             if success:
                 # Trigger upgrade to apply changes
-                await self.waydroid_sdk.upgrade(offline=True)
+                await self.waydroid_sdk.stop_session(wait=True)
+                await self.waydroid_sdk.restart_container(wait=True)
 
             return success
 
@@ -370,7 +371,7 @@ class ModelController(GObject.Object):
         """Reset all waydroid config properties to defaults"""
         try:
             # Reset in model
-            self.property_model.reset_to_defaults(waydroid_only=True)
+            self.property_model.reset_to_defaults(PropertyCategory.WAYDROID)
 
             # Reset in config
             self.config_manager.reset_waydroid_properties(self.property_model._property_definitions)
@@ -398,6 +399,22 @@ class ModelController(GObject.Object):
             logger.error(f"Failed to restore privileged properties: {e}")
             return False
     
+    async def restore_waydroid_properties(self) -> bool:
+        """Restore waydroid config properties from saved config"""
+        try:
+            # Reload config from file
+            if not self.config_manager.load_config():
+                return False
+            
+            # Reload properties into model
+            await self._load_waydroid_properties()
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to restore waydroid properties: {e}")
+            return False
+    
     async def set_device_info(self, device_properties: Dict[str, Any]) -> bool:
         """Set device information properties"""
         try:
@@ -406,7 +423,7 @@ class ModelController(GObject.Object):
                 # Convert property names (e.g., "ro.product.brand" -> "ro_product_brand")
                 model_prop_name = prop_name.replace(".", "_")
                 self.property_model.set_property_value(model_prop_name, value)
-            
+            self.config_manager.set_multiple_privileged_properties(device_properties)        
             return True
             
         except Exception as e:
@@ -421,8 +438,6 @@ class ModelController(GObject.Object):
             
             # Save and upgrade
             success = await self.config_manager.save_config()
-            if success:
-                await self.waydroid_sdk.upgrade(offline=True)
             
             return success
             

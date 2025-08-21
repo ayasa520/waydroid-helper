@@ -175,6 +175,9 @@ case "$action" in
         done
         run_waydroid_upgrade "$o_option"
     ;;
+    restart_container)
+        waydroid container restart
+    ;;
     # copy)
     #     if [ $# -lt 2 ]; then
     #         echo "Usage: $0 copy <source> <destination> [--contents-only]"

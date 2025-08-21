@@ -482,7 +482,9 @@ class PackageManager(GObject.Object):
                 ) as f:
                     content = await f.read()
                     props: dict[str, Any] = json.loads(content)
-                    await self.waydroid.set_extension_props(props)
+                    success = await self.waydroid.set_extension_props(props)
+                    if success:
+                        await self.waydroid.upgrade(offline=True)
 
                 package_info["props"] = list(props.keys())
 

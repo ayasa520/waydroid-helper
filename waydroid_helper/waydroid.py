@@ -387,6 +387,10 @@ class WaydroidCompat(GObject.Object):
         """Reset waydroid config properties"""
         return await self._controller.reset_waydroid_properties()
 
+    async def restore_waydroid_props(self):
+        """Restore waydroid config properties"""
+        return await self._controller.restore_waydroid_properties()
+
     async def set_extension_props(self, pairs: Dict[str, Any]):
         """Set extension properties"""
         return await self._controller.set_extension_properties(pairs)
