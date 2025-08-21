@@ -22,6 +22,14 @@ body:
 
   - type: input
     attributes:
+      label: waydroid-helper Version
+      description: "Provide the exact version including date for nightly builds."
+      placeholder: "Example: 0.2.5-0~202508201457"
+    validations:
+      required: true
+
+  - type: input
+    attributes:
       label: Operating System
       placeholder: "Example: Ubuntu 20.04 amd64"
     validations:
@@ -60,6 +68,6 @@ body:
         /var/lib/waydroid/waydroid.log
         `sudo waydroid shell -- logcat -d | tee logcat.txt`
         `sudo dmesg | tee dmesg.txt`
-        `waydroid-helper > log.txt 2>&1`
+        `waydroid-helper --log-level=DEBUG>log.txt 2>&1`
     validations:
       required: true
