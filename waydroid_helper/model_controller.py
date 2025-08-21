@@ -62,6 +62,9 @@ class ModelController(GObject.Object):
         # Schedule periodic updates every 2 seconds
         GLib.timeout_add_seconds(2, self._schedule_status_update)
 
+        # Schedule periodic ERROR state recovery checks every 10 seconds
+        GLib.timeout_add_seconds(10, self._schedule_error_recovery)
+
         return False  # Don't repeat this idle callback
 
     async def _initial_status_check(self):
@@ -91,6 +94,11 @@ class ModelController(GObject.Object):
     def _schedule_status_update(self) -> bool:
         """Schedule a status update task"""
         self._task.create_task(self._update_session_status())
+        return True  # Continue the timeout
+
+    def _schedule_error_recovery(self) -> bool:
+        """Schedule an error recovery check"""
+        self._task.create_task(self._handle_error_state_recovery())
         return True  # Continue the timeout
     
     async def _update_session_status(self):
@@ -130,15 +138,18 @@ class ModelController(GObject.Object):
 
         # When Waydroid becomes initialized (stopped), load privileged and waydroid properties
         elif new_state == SessionState.STOPPED and old_state == SessionState.UNINITIALIZED:
-            await self._load_privileged_properties()
-            await self._load_waydroid_properties()
+            await self._load_privileged_properties_with_retry()
+            await self._load_waydroid_properties_with_retry()
             await self._load_android_version()
 
-        # When waydroid becomes coproperty_modelmpletely uninitialized, reset all states
+        # When waydroid becomes completely uninitialized, reset all states
         elif new_state == SessionState.UNINITIALIZED:
             self.property_model.set_property("state", ModelState.UNINITIALIZED)
             self.property_model.set_property("privileged-state", ModelState.UNINITIALIZED)
             self.property_model.set_property("waydroid-state", ModelState.UNINITIALIZED)
+
+        # Handle ERROR state recovery - retry loading if states are in ERROR
+        await self._handle_error_state_recovery()
     
 
     
@@ -188,7 +199,7 @@ class ModelController(GObject.Object):
         except Exception as e:
             logger.error(f"Failed to load privileged properties: {e}")
             self.property_model.set_property("privileged-state", ModelState.ERROR)
-            raise
+            # Don't raise - allow other operations to continue
 
     async def _load_waydroid_properties(self):
         """Load waydroid config properties from [waydroid] section"""
@@ -213,7 +224,49 @@ class ModelController(GObject.Object):
         except Exception as e:
             logger.error(f"Failed to load waydroid properties: {e}")
             self.property_model.set_property("waydroid-state", ModelState.ERROR)
-            raise
+            # Don't raise - allow other operations to continue
+
+    async def _load_privileged_properties_with_retry(self, max_retries: int = 3):
+        """Load privileged properties with retry mechanism"""
+        for attempt in range(max_retries):
+            try:
+                await self._load_privileged_properties()
+                return  # Success, exit retry loop
+            except Exception as e:
+                logger.warning(f"Attempt {attempt + 1}/{max_retries} to load privileged properties failed: {e}")
+                if attempt < max_retries - 1:
+                    # Wait before retry (exponential backoff)
+                    await asyncio.sleep(2 ** attempt)
+                else:
+                    logger.error(f"Failed to load privileged properties after {max_retries} attempts")
+
+    async def _load_waydroid_properties_with_retry(self, max_retries: int = 3):
+        """Load waydroid properties with retry mechanism"""
+        for attempt in range(max_retries):
+            try:
+                await self._load_waydroid_properties()
+                return  # Success, exit retry loop
+            except Exception as e:
+                logger.warning(f"Attempt {attempt + 1}/{max_retries} to load waydroid properties failed: {e}")
+                if attempt < max_retries - 1:
+                    # Wait before retry (exponential backoff)
+                    await asyncio.sleep(2 ** attempt)
+                else:
+                    logger.error(f"Failed to load waydroid properties after {max_retries} attempts")
+
+    async def _handle_error_state_recovery(self):
+        """Handle recovery from ERROR states by retrying failed operations"""
+        # Check if privileged properties are in ERROR state and retry
+        privileged_state = self.property_model.get_property("privileged-state")
+        if privileged_state == ModelState.ERROR:
+            logger.info("Attempting to recover from privileged properties ERROR state")
+            await self._load_privileged_properties_with_retry(max_retries=2)
+
+        # Check if waydroid properties are in ERROR state and retry
+        waydroid_state = self.property_model.get_property("waydroid-state")
+        if waydroid_state == ModelState.ERROR:
+            logger.info("Attempting to recover from waydroid properties ERROR state")
+            await self._load_waydroid_properties_with_retry(max_retries=2)
 
     async def _load_android_version(self):
         """Load Android version from config"""

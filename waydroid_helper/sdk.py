@@ -189,13 +189,49 @@ class ConfigManager:
         self._config_cache: Optional[configparser.ConfigParser] = None
     
     def load_config(self) -> bool:
-        """Load Waydroid configuration file"""
+        """Load Waydroid configuration file with improved error handling"""
         try:
+            # Check if config file exists
+            if not os.path.exists(CONFIG_PATH):
+                logger.warning(f"Config file does not exist: {CONFIG_PATH}")
+                # Try to create a minimal config
+                return self._create_minimal_config()
+
+            # Check if config file is readable
+            if not os.access(CONFIG_PATH, os.R_OK):
+                logger.error(f"Config file is not readable: {CONFIG_PATH}")
+                return False
+
             self._config_cache = configparser.ConfigParser()
             self._config_cache.read(CONFIG_PATH)
+
+            # Verify config has required sections
+            if not self._config_cache.has_section("properties"):
+                logger.warning("Config missing [properties] section, adding it")
+                self._config_cache.add_section("properties")
+
+            if not self._config_cache.has_section("waydroid"):
+                logger.warning("Config missing [waydroid] section, adding it")
+                self._config_cache.add_section("waydroid")
+
             return True
         except Exception as e:
             logger.error(f"Failed to load config: {e}")
+            # Try to create a minimal config as fallback
+            return self._create_minimal_config()
+
+    def _create_minimal_config(self) -> bool:
+        """Create a minimal configuration as fallback"""
+        try:
+            logger.info("Creating minimal configuration as fallback")
+            self._config_cache = configparser.ConfigParser()
+            self._config_cache.add_section("properties")
+            self._config_cache.add_section("waydroid")
+            # Add some default waydroid settings
+            self._config_cache.set("waydroid", "images_path", "/var/lib/waydroid/images")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create minimal config: {e}")
             return False
     
     def get_privileged_property(self, property_nick: str) -> str:

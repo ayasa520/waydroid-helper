@@ -344,27 +344,41 @@ class PropsPage(Gtk.Box):
     def on_waydroid_privileged_state_changed(
         self, w: GObject.Object, param: GObject.ParamSpec
     ):
-        """Simplified state handling - just enable/disable UI elements"""
+        """Improved state handling with ERROR state recovery"""
         state = w.get_property("state")
         is_ready = state == PropsState.READY
+        is_error = state == PropsState.ERROR
 
         # Enable/disable all privileged property controls
         self.switch_21.set_sensitive(is_ready)
         self.device_combo.set_sensitive(is_ready)
         self.reset_privileged_prop_btn.set_sensitive(is_ready)
 
+        # If in ERROR state, try to recover after a short delay
+        if is_error:
+            logger.warning("Privileged properties in ERROR state, attempting recovery...")
+            self._show_error_notification("特权属性加载失败，正在尝试恢复...")
+            GLib.timeout_add_seconds(2, self._retry_load_privileged_properties)
+
     def on_waydroid_waydroid_state_changed(
         self, w: GObject.Object, param: GObject.ParamSpec
     ):
-        """Simplified state handling for waydroid config properties"""
+        """Improved state handling for waydroid config properties with ERROR recovery"""
         state = w.get_property("state")
         is_ready = state == PropsState.READY
+        is_error = state == PropsState.ERROR
 
         # Enable/disable waydroid config controls
         self.waydroid_switch_1.set_sensitive(is_ready)
         self.waydroid_switch_2.set_sensitive(is_ready)
         self.waydroid_entry_1.set_sensitive(is_ready)
         self.reset_waydroid_prop_btn.set_sensitive(is_ready)
+
+        # If in ERROR state, try to recover after a short delay
+        if is_error:
+            logger.warning("Waydroid properties in ERROR state, attempting recovery...")
+            self._show_error_notification("Waydroid配置加载失败，正在尝试恢复...")
+            GLib.timeout_add_seconds(2, self._retry_load_waydroid_properties)
 
     def on_waydroid_persist_state_changed(
         self, w: GObject.Object, param: GObject.ParamSpec
@@ -554,6 +568,41 @@ class PropsPage(Gtk.Box):
     @Gtk.Template.Callback()
     def on_reset_waydroid_clicked(self, button: Gtk.Button):
         self._task.create_task(self.waydroid.reset_waydroid_props())
+
+    def _retry_load_privileged_properties(self) -> bool:
+        """Retry loading privileged properties (called from GLib timeout)"""
+        try:
+            self._task.create_task(self.waydroid.retry_load_privileged_properties())
+        except Exception as e:
+            logger.error(f"Failed to retry loading privileged properties: {e}")
+        return False  # Don't repeat the timeout
+
+    def _retry_load_waydroid_properties(self) -> bool:
+        """Retry loading waydroid properties (called from GLib timeout)"""
+        try:
+            self._task.create_task(self.waydroid.retry_load_waydroid_properties())
+        except Exception as e:
+            logger.error(f"Failed to retry loading waydroid properties: {e}")
+        return False  # Don't repeat the timeout
+
+    def _show_error_notification(self, message: str):
+        """Show a temporary error notification to the user"""
+        try:
+            # Create a temporary InfoBar for error notification
+            error_notification = InfoBar(
+                label=message,
+                ok_callback=lambda x: None  # Do nothing on OK
+            )
+
+            # Show the notification temporarily
+            if self.overlay:
+                self.overlay.add_overlay(error_notification)
+                error_notification.set_reveal_child(True)
+
+                # Auto-hide after 5 seconds
+                GLib.timeout_add_seconds(5, lambda: error_notification.set_reveal_child(False))
+        except Exception as e:
+            logger.error(f"Failed to show error notification: {e}")
 
     # @Gtk.Template.Callback()
     # def on_switch_clicked(self, a:Gtk.Switch, b=None, c=None, d=None):

@@ -419,6 +419,14 @@ class WaydroidCompat(GObject.Object):
         # This is handled automatically by the new architecture
         pass
 
+    async def retry_load_privileged_properties(self):
+        """Retry loading privileged properties (public interface)"""
+        return await self._controller._load_privileged_properties_with_retry()
+
+    async def retry_load_waydroid_properties(self):
+        """Retry loading waydroid properties (public interface)"""
+        return await self._controller._load_waydroid_properties_with_retry()
+
 
 # Create alias for backward compatibility
 Waydroid = WaydroidCompat
