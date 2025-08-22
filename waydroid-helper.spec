@@ -4,7 +4,7 @@ Release:        0.%(date +%%Y%%m%%d.%%H%%M)%{?dist}
 Summary:        A GUI application for Waydroid configuration and extension installation
 
 License:        GPLv3+
-URL:            https://github.com/ayasa520/waydroid-helper
+URL:            https://github.com/waydroid-helper/waydroid-helper
 Source:        {{{ git_dir_pack }}}
 
 BuildRequires:  meson

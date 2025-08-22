@@ -98,7 +98,7 @@ class PackageManager(GObject.Object):
     available_extensions: dict[str, PackageInfo] = {}
     installed_packages: dict[str, PackageInfo] = {}
     arch = host()
-    remote = "https://github.com/ayasa520/extensions/raw/master/"
+    remote = "https://github.com/waydroid-helper/extensions/raw/master/"
     extensions_json: list[PackageClassListItem] = []
     storage_dir = os.path.join(
         GLib.get_user_data_dir(), os.getenv("PROJECT_NAME", "waydroid-helper")

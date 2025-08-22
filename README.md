@@ -79,7 +79,7 @@ sudo apt install waydroid-helper
 ```
 
 ### Installing from Releases
-1. Go to the [releases](https://github.com/ayasa520/waydroid-helper/releases) page
+1. Go to the [releases](https://github.com/waydroid-helper/waydroid-helper/releases) page
 2. Download the appropriate package for your distribution
 3. Install the package
 
@@ -97,7 +97,7 @@ For manual installation, you'll need to install the dependencies and build the p
 
 2. Clone the repository:
     ```
-    git clone https://github.com/ayasa520/waydroid-helper.git
+    git clone https://github.com/waydroid-helper/waydroid-helper.git
     cd waydroid-helper
     ```
 3. Build and install using Meson:
@@ -122,7 +122,7 @@ For manual installation, you'll need to install the dependencies and build the p
 
 2. Clone the repository:
     ```
-    git clone https://github.com/ayasa520/waydroid-helper.git
+    git clone https://github.com/waydroid-helper/waydroid-helper.git
     cd waydroid-helper
     ```
 3. Build and install using Meson:
@@ -147,7 +147,7 @@ For manual installation, you'll need to install the dependencies and build the p
 
 2. Clone the repository:
     ```
-    git clone https://github.com/ayasa520/waydroid-helper.git
+    git clone https://github.com/waydroid-helper/waydroid-helper.git
     cd waydroid-helper
     ```
 3. Build and install using Meson:

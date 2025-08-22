@@ -79,7 +79,7 @@ sudo apt install waydroid-helper
 ```
 
 ### 从发布版本安装
-1. 前往[发布页面](https://github.com/ayasa520/waydroid-helper/releases)
+1. 前往[发布页面](https://github.com/waydroid-helper/waydroid-helper/releases)
 2. 下载适合您发行版的软件包
 3. 安装软件包
 
@@ -97,7 +97,7 @@ sudo apt install waydroid-helper
 
 2. 克隆仓库：
     ```
-    git clone https://github.com/ayasa520/waydroid-helper.git
+    git clone https://github.com/waydroid-helper/waydroid-helper.git
     cd waydroid-helper
     ```
 3. 使用 Meson 构建和安装：
@@ -121,7 +121,7 @@ sudo apt install waydroid-helper
 
 2. 克隆仓库：
     ```
-    git clone https://github.com/ayasa520/waydroid-helper.git
+    git clone https://github.com/waydroid-helper/waydroid-helper.git
     cd waydroid-helper
     ```
 3. 使用 Meson 构建和安装：
@@ -146,7 +146,7 @@ sudo apt install waydroid-helper
 
 2. 克隆仓库：
     ```
-    git clone https://github.com/ayasa520/waydroid-helper.git
+    git clone https://github.com/waydroid-helper/waydroid-helper.git
     cd waydroid-helper
     ```
 3. 使用 Meson 构建和安装：
