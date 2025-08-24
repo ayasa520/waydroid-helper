@@ -15,13 +15,10 @@ import os
 from typing import Any, Dict, List, Optional, Tuple
 
 from gi.repository import GLib
+from gi.repository.GObject import ParamSpec
 
 from waydroid_helper.util import SubprocessError, SubprocessManager, logger
-from waydroid_helper.models import PropertyCategory, SessionState, PropertyDefinition
-
-
-CONFIG_PATH = os.environ.get("WAYDROID_CONFIG", "/var/lib/waydroid/waydroid.cfg")
-
+from waydroid_helper.models import SessionState
 
 class WaydroidSDK:
     """
@@ -151,27 +148,25 @@ class PropertyManager:
             logger.error(f"Failed to set persist property {property_nick}: {e}")
             return False
     
-    async def get_all_persist_properties(self, property_definitions: Dict[str, PropertyDefinition]) -> Dict[str, str]:
+    async def get_all_persist_properties(self, param_specs: list[ParamSpec]) -> dict[str, str]:
         """Get all persist properties in parallel"""
-        persist_props = {name: prop_def for name, prop_def in property_definitions.items()
-                        if prop_def.category == PropertyCategory.PERSIST}
-
-        if not persist_props:
+        if not param_specs:
             return {}
 
-        # Load properties sequentially with error handling
-        property_values = {}
-        for name, prop_def in persist_props.items():
+        async def get_prop(p: ParamSpec):
             try:
-                result = await self._subprocess.run(f"waydroid prop get {prop_def.nick}")
+                result = await self._subprocess.run(f"waydroid prop get {p.get_nick()}")
                 output = result["stdout"].replace(
                     "[gbinder] Service manager /dev/binder has appeared", ""
                 ).strip().split("\n")[-1]
-                property_values[name] = output
+                return (p.get_name(), output)
             except Exception as e:
-                logger.warning(f"Failed to get property {name}: {e}")
-                property_values[name] = ""
-        return property_values
+                logger.warning(f"Failed to get property {p.get_name()}: {e}")
+                return (p.get_name(), "")
+
+        tasks = [get_prop(p) for p in param_specs]
+        results = await asyncio.gather(*tasks)
+        return dict(results)
 
 
 class ConfigManager:
@@ -185,25 +180,25 @@ class ConfigManager:
     """
     
     def __init__(self):
-        self._subprocess = SubprocessManager()
-        self._config_cache: Optional[configparser.ConfigParser] = None
+        self._subprocess: SubprocessManager = SubprocessManager()
+        self._config_cache: configparser.ConfigParser | None = None
     
-    def load_config(self) -> bool:
+    def load_config(self, config_path: str = "/var/lib/waydroid/waydroid.cfg") -> bool:
         """Load Waydroid configuration file with improved error handling"""
         try:
             # Check if config file exists
-            if not os.path.exists(CONFIG_PATH):
-                logger.warning(f"Config file does not exist: {CONFIG_PATH}")
+            if not os.path.exists(config_path):
+                logger.warning(f"Config file does not exist: {config_path}")
                 # Try to create a minimal config
                 return self._create_minimal_config()
 
             # Check if config file is readable
-            if not os.access(CONFIG_PATH, os.R_OK):
-                logger.error(f"Config file is not readable: {CONFIG_PATH}")
+            if not os.access(config_path, os.R_OK):
+                logger.error(f"Config file is not readable: {config_path}")
                 return False
 
             self._config_cache = configparser.ConfigParser()
-            self._config_cache.read(CONFIG_PATH)
+            self._config_cache.read(config_path)
 
             # Verify config has required sections
             if not self._config_cache.has_section("properties"):
@@ -246,73 +241,80 @@ class ConfigManager:
             logger.error(f"Failed to get privileged property {property_nick}: {e}")
             return ""
     
-    def get_all_privileged_properties(self, property_definitions: Dict[str, PropertyDefinition]) -> Dict[str, str]:
+    def get_all_privileged_properties(self, param_specs: list[ParamSpec]) -> dict[str, str]:
         """Get all privileged properties from config"""
         if not self._config_cache:
             if not self.load_config():
                 return {}
         
-        privileged_props = {name: prop_def for name, prop_def in property_definitions.items() 
-                           if prop_def.category == PropertyCategory.PRIVILEGED}
-        
         property_values = {}
-        for name, prop_def in privileged_props.items():
+        for p in param_specs:
             try:
-                value = self._config_cache.get("properties", prop_def.nick, fallback="")
-                property_values[name] = value
+                value = self._config_cache.get("properties", p.get_nick(), fallback="")
+                property_values[p.get_name()] = value
             except Exception as e:
-                logger.error(f"Failed to get privileged property {name}: {e}")
-                property_values[name] = ""
+                logger.error(f"Failed to get privileged property {p.get_name()}: {e}")
+                property_values[p.get_name()] = ""
         
         return property_values
 
-    def get_all_waydroid_properties(self, property_definitions: Dict[str, PropertyDefinition]) -> Dict[str, str]:
+    def get_all_waydroid_properties(self, param_specs: list[ParamSpec]) -> dict[str, str]:
         """Get all waydroid config properties from [waydroid] section"""
         if not self._config_cache:
             if not self.load_config():
                 return {}
 
-        waydroid_props = {name: prop_def for name, prop_def in property_definitions.items()
-                         if prop_def.category == PropertyCategory.WAYDROID}
-
         property_values = {}
-        for name, prop_def in waydroid_props.items():
+        for p in param_specs:
             try:
-                value = self._config_cache.get("waydroid", prop_def.nick, fallback="")
-                property_values[name] = value
+                value = self._config_cache.get("waydroid", p.get_nick(), fallback="")
+                property_values[p.get_name()] = value
             except Exception as e:
-                logger.error(f"Failed to get waydroid property {name}: {e}")
-                property_values[name] = ""
+                logger.error(f"Failed to get waydroid property {p.get_name()}: {e}")
+                property_values[p.get_name()] = ""
 
         return property_values
 
-    def set_privileged_property(self, property_nick: str, value: str):
+
+    def set_waydroid_property(self, property_nick: str, raw_value: str):
+        """Set a waydroid property in config (in memory only)"""
+        if not self._config_cache:
+            if not self.load_config():
+                return
+        
+        if raw_value == "":
+            # Remove empty properties
+            self._config_cache.remove_option("waydroid", property_nick)
+        else:
+            self._config_cache.set("waydroid", property_nick, raw_value)
+
+    def set_privileged_property(self, property_nick: str, raw_value: str):
         """Set a privileged property in config (in memory only)"""
         if not self._config_cache:
             if not self.load_config():
                 return
         
-        if value == "":
+        if raw_value == "":
             # Remove empty properties
             self._config_cache.remove_option("properties", property_nick)
         else:
-            self._config_cache.set("properties", property_nick, value)
+            self._config_cache.set("properties", property_nick, raw_value)
     
-    def set_multiple_privileged_properties(self, properties: Dict[str, str]):
+    def set_multiple_privileged_properties(self, properties: dict[str, str]):
         """Set multiple privileged properties in config (in memory only)"""
         if not self._config_cache:
             if not self.load_config():
                 logger.error("Failed to load config for setting privileged properties")
                 return
 
-        for property_nick, value in properties.items():
-            if value == "":
+        for property_nick, raw_value in properties.items():
+            if raw_value == "":
                 if self._config_cache.has_option("properties", property_nick):
                     self._config_cache.remove_option("properties", property_nick)
             else:
-                self._config_cache.set("properties", property_nick, value)
+                self._config_cache.set("properties", property_nick, raw_value)
 
-    def set_multiple_waydroid_properties(self, properties: Dict[str, str]):
+    def set_multiple_waydroid_properties(self, properties: dict[str, str]):
         """Set multiple waydroid config properties in [waydroid] section (in memory only)"""
         if not self._config_cache:
             if not self.load_config():
@@ -323,30 +325,26 @@ class ConfigManager:
         if not self._config_cache.has_section("waydroid"):
             self._config_cache.add_section("waydroid")
 
-        for property_nick, value in properties.items():
-            if value == "":
+        for property_nick, raw_value in properties.items():
+            if raw_value == "":
                 if self._config_cache.has_option("waydroid", property_nick):
                     self._config_cache.remove_option("waydroid", property_nick)
             else:
-                self._config_cache.set("waydroid", property_nick, value)
+                self._config_cache.set("waydroid", property_nick, raw_value)
 
-    def reset_waydroid_properties(self, property_definitions: Dict[str, PropertyDefinition]):
-        """Reset waydroid properties to defaults"""
-        if not self._config_cache:
-            if not self.load_config():
-                logger.error("Failed to load config for resetting waydroid properties")
-                return
+    # def reset_waydroid_properties(self, param_specs: list[ParamSpec]):
+    #     """Reset waydroid properties to defaults"""
+    #     if not self._config_cache:
+    #         if not self.load_config():
+    #             logger.error("Failed to load config for resetting waydroid properties")
+    #             return
 
-        waydroid_props = {name: prop_def for name, prop_def in property_definitions.items()
-                         if prop_def.category == PropertyCategory.WAYDROID}
+    #     # Ensure [waydroid] section exists
+    #     if not self._config_cache.has_section("waydroid"):
+    #         self._config_cache.add_section("waydroid")
 
-        # Ensure [waydroid] section exists
-        if not self._config_cache.has_section("waydroid"):
-            self._config_cache.add_section("waydroid")
-
-        for name, prop_def in waydroid_props.items():
-            default_value = prop_def.transform_out(prop_def.default_value)
-            self._config_cache.set("waydroid", prop_def.nick, default_value)
+    #     for p in param_specs:
+    #         self._config_cache.set("waydroid", p.get_nick(), p.get_default_value())
 
     async def save_config(self) -> bool:
         """Save config to file using privileged access"""
@@ -389,12 +387,12 @@ class ConfigManager:
             logger.error(f"Failed to get Android version: {e}")
             return ""
     
-    def reset_privileged_properties(self):
-        """Reset all privileged properties to defaults (in memory only)"""
-        if not self._config_cache:
-            if not self.load_config():
-                return
+    # def reset_privileged_properties(self):
+    #     """Reset all privileged properties to defaults (in memory only)"""
+    #     if not self._config_cache:
+    #         if not self.load_config():
+    #             return
         
-        # 清空 [properties] 下面的所有内容, 但保留 section
-        for option in self._config_cache.options("properties"):
-            self._config_cache.remove_option("properties", option)
+    #     # 清空 [properties] 下面的所有内容, 但保留 section
+    #     for option in self._config_cache.options("properties"):
+    #         self._config_cache.remove_option("properties", option)
