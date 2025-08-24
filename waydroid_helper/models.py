@@ -8,6 +8,7 @@ This module implements a clean separation between data models and business logic
 eliminating the complex signal management issues in the original implementation.
 """
 
+from tkinter import N
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -48,17 +49,30 @@ class PropertyCategory (enum.IntEnum):
     PERSIST = 2
     WAYDROID = 3
 
-@dataclass
-class PropertyDefinition:
-    """Definition of a Waydroid property"""
-    name: str
-    nick: str  # The actual waydroid property name (e.g., persist.waydroid.multi_windows)
-    property_type: type
-    default_value: Any
-    category: PropertyCategory 
-    description: str = ""
-    transform_in: Callable[[str], Any] = lambda x: x
-    transform_out: Callable[[Any], str] = lambda x: str(x)
+def _str_to_bool(s: str) -> bool:
+    """Convert string to boolean"""
+    s = s.strip().lower()
+    return s in ("true", "1", "yes", "on")
+
+def _bool_to_str(b: bool, flag: int = 0) -> str:
+    """Convert boolean to string with different formats"""
+    if flag == 0:
+        return "True" if b else "False"
+    elif flag == 1:
+        return "true" if b else "false"
+    elif flag == 2:
+        return "1" if b else "0"
+    return str(b)
+
+def categorized_property(*, category=None, transform_in=None, transform_out=None, **kwargs):
+    """
+    包装 GObject.Property，增加 category 字段
+    """
+    prop = GObject.Property(**kwargs)
+    prop._category = category
+    prop._transform_in = transform_in if transform_in is not None else lambda x: x
+    prop._transform_out = transform_out if transform_out is not None else lambda x: str(x)
+    return prop
 
 
 class PropertyModel(GObject.Object):
@@ -75,301 +89,272 @@ class PropertyModel(GObject.Object):
     state = GObject.Property(type=object)  # For persist props
     privileged_state = GObject.Property(type=object)  # For privileged props
     waydroid_state = GObject.Property(type=object)  # For waydroid config props
+    multi_windows = categorized_property(
+        type=bool,
+        default=False,
+        nick="persist.waydroid.multi_windows",
+        blurb=_("Enable window integration with the desktop"),
+        category=PropertyCategory.PERSIST,
+        transform_in=_str_to_bool,
+        transform_out=partial(_bool_to_str, flag=1),
+   )
+    cursor_on_subsurface = categorized_property(
+        type=bool,
+        default=False,
+        nick="persist.waydroid.cursor_on_subsurface",
+        blurb=_("Workaround for showing the cursor in multi_windows mode on some compositors"),
+        category=PropertyCategory.PERSIST,
+        transform_in=_str_to_bool,
+        transform_out=partial(_bool_to_str, flag=1),
+    )
+    invert_colors = categorized_property(
+        type=bool,
+        default=False,
+        nick="persist.waydroid.invert_colors",
+        blurb=_("Swaps the color space from RGBA to BGRA"),
+        category=PropertyCategory.PERSIST,
+        transform_in=_str_to_bool,
+        transform_out=partial(_bool_to_str, flag=1),
+    )
+    suspend = categorized_property(
+        type=bool,
+        default=False,
+        nick="persist.waydroid.suspend",
+        blurb=_("Let the Waydroid container sleep when no apps are active"),
+        category=PropertyCategory.PERSIST,
+        transform_in=_str_to_bool,
+        transform_out=partial(_bool_to_str, flag=1),
+    )
+    uevent = categorized_property(
+        type=bool,
+        default=False,
+        nick="persist.waydroid.uevent",
+        blurb=_("Allow android direct access to hotplugged devices"),
+        category=PropertyCategory.PERSIST,
+        transform_in=_str_to_bool,
+        transform_out=partial(_bool_to_str, flag=1),
+    )
+    fake_touch = categorized_property(
+        type=str,
+        default="",
+        nick="persist.waydroid.fake_touch",
+        blurb=_("Interpret mouse inputs as touch inputs"),
+        category=PropertyCategory.PERSIST,
+    )
+    
+    fake_wifi = categorized_property(
+        type=str,
+        default="",
+        nick="persist.waydroid.fake_wifi",
+        blurb=_("Make the Apps appear as if connected to WiFi"),
+        category=PropertyCategory.PERSIST,
+    )
+
+    height_padding = categorized_property(
+        type=str,
+        default="",
+        nick="persist.waydroid.height_padding",
+        blurb=_("Adjust height padding"),
+        category=PropertyCategory.PERSIST,
+    )
+    
+    width_padding = categorized_property(
+        type=str,
+        default="",
+        nick="persist.waydroid.width_padding",
+        blurb=_("Adjust width padding"),
+        category=PropertyCategory.PERSIST,
+    )
+    
+    height = categorized_property(
+        type=str,
+        default="",
+        nick="persist.waydroid.height",
+        blurb=_("Used for user to override desired resolution"),
+        category=PropertyCategory.PERSIST,
+    )
+    
+    width = categorized_property(
+        type=str,
+        default="",
+        nick="persist.waydroid.width",
+        blurb=_("Used for user to override desired resolution"),
+        category=PropertyCategory.PERSIST,
+    )
+    
+    # 其实不是 persist, 但是先放这里
+    boot_completed = categorized_property(
+        type=bool,
+        default=False,
+        nick="sys.boot_completed",
+        blurb=_("Enable window integration with the desktop"),
+        category=PropertyCategory.PERSIST,
+        transform_in=_str_to_bool,
+        transform_out=partial(_bool_to_str, flag=2),
+    )
+
+    qemu_hw_mainkeys = categorized_property(
+        type=bool,
+        default=False,
+        nick="qemu.hw.mainkeys",
+        blurb=_("Hide navbar"),
+        category=PropertyCategory.PRIVILEGED,
+        transform_in=_str_to_bool,
+        transform_out=partial(_bool_to_str, flag=2),
+    )
+
+    ro_product_brand = categorized_property(
+        type=str,
+        default="",
+        nick="ro.product.brand",
+        blurb=_("Brand of the product"),
+        category=PropertyCategory.PRIVILEGED,
+    )
+
+    ro_product_manufacturer = categorized_property(
+        type=str,
+        default="",
+        nick="ro.product.manufacturer",
+        blurb=_("Manufacturer of the product"),
+        category=PropertyCategory.PRIVILEGED,
+    )
+    
+    ro_product_model = categorized_property(
+        type=str,
+        default="",
+        nick="ro.product.model",
+        blurb=_("Model of the product"),
+        category=PropertyCategory.PRIVILEGED,
+    )
+    
+    ro_product_device = categorized_property(
+        type=str,
+        default="",
+        nick="ro.product.device",
+        blurb=_("Device of the product"),
+        category=PropertyCategory.PRIVILEGED,
+    )
+
+    mount_overlays = categorized_property(
+        type=bool,
+        default=True,
+        nick="mount_overlays",
+        blurb=_("Enable overlay mounting"),
+        category=PropertyCategory.WAYDROID,
+        transform_in=_str_to_bool,
+        transform_out=partial(_bool_to_str, flag=0),
+    )
+    
+    auto_adb = categorized_property(
+        type=bool,
+        default=False,
+        nick="auto_adb",
+        blurb=_("Enable automatic ADB connection"),
+        category=PropertyCategory.WAYDROID,
+        transform_in=_str_to_bool,
+        transform_out=partial(_bool_to_str, flag=0),
+    )
+
+    images_path = categorized_property(
+        type=str,
+        default="/etc/waydroid-extra/images",
+        nick="images_path",
+        blurb=_("Path to Waydroid images"),
+        category=PropertyCategory.WAYDROID,
+    )
 
     def __init__(self):
         super().__init__()
-        self._properties: Dict[str, Any] = {}
-        self._property_definitions: Dict[str, PropertyDefinition] = {}
-        self._change_listeners: Set[Callable[[str, Any], None]] = set()
+        # self._properties: Dict[str, Any] = {}
+        # self._property_definitions: Dict[str, PropertyDefinition] = {}
+        # self._change_listeners: Set[Callable[[str, Any], None]] = set()
         self.set_property("state", ModelState.UNINITIALIZED)
         self.set_property("privileged-state", ModelState.UNINITIALIZED)
         self.set_property("waydroid-state", ModelState.UNINITIALIZED)
-        self._setup_property_definitions()
+        # self._setup_property_definitions()
     
-    def _setup_property_definitions(self):
-        """Setup all property definitions"""
-        # Persist properties (can be changed via waydroid prop commands)
-        persist_props = [
-            PropertyDefinition(
-                name="multi_windows",
-                nick="persist.waydroid.multi_windows",
-                property_type=bool,
-                default_value=False,
-                category=PropertyCategory.PERSIST,
-                description=_("Enable window integration with the desktop"),
-                transform_in=self._str_to_bool,
-                transform_out=partial(self._bool_to_str, flag=1),
-            ),
-            PropertyDefinition(
-                name="cursor_on_subsurface",
-                nick="persist.waydroid.cursor_on_subsurface",
-                property_type=bool,
-                default_value=False,
-                category=PropertyCategory.PERSIST,
-                description=_("Workaround for showing the cursor in multi_windows mode on some compositors"),
-                transform_in=self._str_to_bool,
-                transform_out=partial(self._bool_to_str, flag=1),
-            ),
-            PropertyDefinition(
-                name="invert_colors",
-                nick="persist.waydroid.invert_colors",
-                property_type=bool,
-                default_value=False,
-                category=PropertyCategory.PERSIST,
-                description=_("Swaps the color space from RGBA to BGRA"),
-                transform_in=self._str_to_bool,
-                transform_out=partial(self._bool_to_str, flag=1),
-            ),
-            PropertyDefinition(
-                name="suspend",
-                nick="persist.waydroid.suspend",
-                property_type=bool,
-                default_value=False,
-                category=PropertyCategory.PERSIST,
-                description=_("Let the Waydroid container sleep when no apps are active"),
-                transform_in=self._str_to_bool,
-                transform_out=partial(self._bool_to_str, flag=1),
-            ),
-            PropertyDefinition(
-                name="uevent",
-                nick="persist.waydroid.uevent",
-                property_type=bool,
-                default_value=False,
-                category=PropertyCategory.PERSIST,
-                description=_("Allow android direct access to hotplugged devices"),
-                transform_in=self._str_to_bool,
-                transform_out=partial(self._bool_to_str, flag=1),
-            ),
-            PropertyDefinition(
-                name="fake_touch",
-                nick="persist.waydroid.fake_touch",
-                property_type=str,
-                category=PropertyCategory.PERSIST,
-                default_value="",
-                description=_("Interpret mouse inputs as touch inputs"),
-            ),
-            PropertyDefinition(
-                name="fake_wifi",
-                nick="persist.waydroid.fake_wifi",
-                property_type=str,
-                category=PropertyCategory.PERSIST,
-                default_value="",
-                description=_("Make the Apps appear as if connected to WiFi"),
-            ),
-            PropertyDefinition(
-                name="height_padding",
-                nick="persist.waydroid.height_padding",
-                property_type=str,
-                category=PropertyCategory.PERSIST,
-                default_value="",
-                description=_("Adjust height padding"),
-            ),
-            PropertyDefinition(
-                name="width_padding",
-                nick="persist.waydroid.width_padding",
-                property_type=str,
-                category=PropertyCategory.PERSIST,
-                default_value="",
-                description=_("Adjust width padding"),
-            ),
-            PropertyDefinition(
-                name="height",
-                nick="persist.waydroid.height",
-                property_type=str,
-                category=PropertyCategory.PERSIST,
-                default_value="",
-                description=_("Used for user to override desired resolution"),
-            ),
-            PropertyDefinition(
-                name="width",
-                nick="persist.waydroid.width",
-                property_type=str,
-                category=PropertyCategory.PERSIST,
-                default_value="",
-                description=_("Used for user to override desired resolution"),
-            ),
-            # 其实不是 persist, 但是先放这里
-            PropertyDefinition(
-                name="boot_completed",
-                nick="sys.boot_completed",
-                property_type=bool,
-                default_value=False,
-                category=PropertyCategory.PERSIST,
-                description=_("Enable window integration with the desktop"),
-                transform_in=self._str_to_bool,
-                transform_out=partial(self._bool_to_str, flag=2),
-            ),
-        ]
-        
-        # Privileged properties (require root access to modify config files)
-        privileged_props = [
-            PropertyDefinition(
-                name="qemu_hw_mainkeys",
-                nick="qemu.hw.mainkeys",
-                property_type=bool,
-                default_value=False,
-                category=PropertyCategory.PRIVILEGED,
-                description=_("Hide navbar"),
-                transform_in=self._str_to_bool,
-                transform_out=lambda x: "1" if x else "0",
-            ),
-            # Device info properties
-            PropertyDefinition(
-                name="ro_product_brand",
-                nick="ro.product.brand",
-                property_type=str,
-                default_value="",
-                category=PropertyCategory.PRIVILEGED
-            ),
-            PropertyDefinition(
-                name="ro_product_manufacturer",
-                nick="ro.product.manufacturer",
-                property_type=str,
-                default_value="",
-                category=PropertyCategory.PRIVILEGED
-            ),
-            PropertyDefinition(
-                name="ro_product_model",
-                nick="ro.product.model",
-                property_type=str,
-                default_value="",
-                category=PropertyCategory.PRIVILEGED
-            ),
-            PropertyDefinition(
-                name="ro_product_device",
-                nick="ro.product.device",
-                property_type=str,
-                default_value="",
-                category=PropertyCategory.PRIVILEGED
-            ),
-        ]
-
-        # Waydroid config properties (stored in [waydroid] section)
-        waydroid_props = [
-            PropertyDefinition(
-                name="mount_overlays",
-                nick="mount_overlays",
-                property_type=bool,
-                default_value=True,
-                category=PropertyCategory.WAYDROID,
-                description=_("Enable overlay mounting"),
-                transform_in=self._str_to_bool,
-                transform_out=partial(self._bool_to_str, flag=0),
-            ),
-            PropertyDefinition(
-                name="auto_adb",
-                nick="auto_adb",
-                property_type=bool,
-                default_value=False,
-                category=PropertyCategory.WAYDROID,
-                description=_("Enable automatic ADB connection"),
-                transform_in=self._str_to_bool,
-                transform_out=partial(self._bool_to_str, flag=0),
-            ),
-            PropertyDefinition(
-                name="images_path",
-                nick="images_path",
-                property_type=str,
-                default_value="/etc/waydroid-extra/images",
-                category=PropertyCategory.WAYDROID,
-                description=_("Path to Waydroid images"),
-            ),
-        ]
-
-        # Register all properties
-        for prop_def in persist_props + privileged_props + waydroid_props:
-            self._property_definitions[prop_def.name] = prop_def
-            self._properties[prop_def.name] = prop_def.default_value
     
-    @staticmethod
-    def _str_to_bool(s: str) -> bool:
-        """Convert string to boolean"""
-        s = s.strip().lower()
-        return s in ("true", "1", "yes", "on")
-    
-    @staticmethod
-    def _bool_to_str(b: bool, flag: int = 0) -> str:
-        """Convert boolean to string with different formats"""
-        if flag == 0:
-            return "True" if b else "False"
-        elif flag == 1:
-            return "true" if b else "false"
-        elif flag == 2:
-            return "1" if b else "0"
-        return str(b)
-    
-    def get_property_definition(self, name: str) -> Optional[PropertyDefinition]:
-        """Get property definition by name"""
-        return self._property_definitions.get(name)
-    
-    def get_property_value(self, name: str) -> Any:
+    def get_property_raw_value(self, name: str) -> Any:
         """Get current property value"""
-        return self._properties.get(name)
+        prop = self.get_property(name)
+        attr_name = name.replace("-", "_")
+        prop_obj = getattr(PropertyModel, attr_name, None)
+        if prop_obj is None:
+            logger.warning(f"Unknown property: {name}")
+            return None
+        return prop_obj._transform_out(prop)
     
-    def set_property_value(self, name: str, value: Any) -> bool:
+    def set_property_raw_value(self, name: str, raw_value: str) -> bool:
         """
         Set property value and emit change signal.
         Returns True if value was changed, False if it was the same.
         """
-        if name not in self._property_definitions:
+
+        attr_name = name.replace("-", "_")
+        prop_obj = getattr(PropertyModel, attr_name, None)
+        if prop_obj is None:
             logger.warning(f"Unknown property: {name}")
             return False
-        
-        prop_def = self._property_definitions[name]
-        
-        # Type validation
-        if not isinstance(value, prop_def.property_type):
-            try:
-                value = prop_def.property_type(value)
-            except (ValueError, TypeError):
-                logger.error(f"Invalid value type for property {name}: {value}")
-                return False
-
-        # old_value = self._properties.get(name)
-        # if old_value == value:
-        #     return False
-        
-        self._properties[name] = value
-        self._emit_property_changed(name, value)
+        self.set_property(name, prop_obj._transform_in(raw_value))
         return True
     
-    def _emit_property_changed(self, name: str, value: Any):
-        """Emit property changed signal to all listeners"""
-        for listener in self._change_listeners:
-            try:
-                listener(name, value)
-            except Exception as e:
-                logger.error(f"Error in property change listener: {e}")
+    # def _emit_property_changed(self, name: str, value: Any):
+    #     """Emit property changed signal to all listeners"""
+    #     for listener in self._change_listeners:
+    #         try:
+    #             listener(name, value)
+    #         except Exception as e:
+    #             logger.error(f"Error in property change listener: {e}")
     
-    def add_change_listener(self, listener: Callable[[str, Any], None]):
-        """Add a listener for property changes"""
-        self._change_listeners.add(listener)
+    # def add_change_listener(self, listener: Callable[[str, Any], None]):
+    #     """Add a listener for property changes"""
+    #     self._change_listeners.add(listener)
     
-    def remove_change_listener(self, listener: Callable[[str, Any], None]):
-        """Remove a property change listener"""
-        self._change_listeners.discard(listener)
+    # def remove_change_listener(self, listener: Callable[[str, Any], None]):
+    #     """Remove a property change listener"""
+    #     self._change_listeners.discard(listener)
     
-    def get_persist_properties(self) -> Dict[str, PropertyDefinition]:
+    def get_persist_properties(self):
         """Get all persist properties (non-privileged)"""
-        return {name: prop_def for name, prop_def in self._property_definitions.items() 
-                if prop_def.category == PropertyCategory.PERSIST}
-    
-    def get_privileged_properties(self) -> Dict[str, PropertyDefinition]:
-        """Get all privileged properties"""
-        return {name: prop_def for name, prop_def in self._property_definitions.items()
-                if prop_def.category == PropertyCategory.PRIVILEGED}
 
-    def get_waydroid_properties(self) -> Dict[str, PropertyDefinition]:
+        props = self.list_properties()
+        result = []
+        for prop in props:
+            attr_name = prop.name.replace("-", "_")
+            prop_obj = getattr(PropertyModel, attr_name, None)
+            if prop_obj is not None and getattr(prop_obj, "_category", None) == PropertyCategory.PERSIST:
+                result.append(prop)
+        return result
+    
+    def get_privileged_properties(self):
+        """Get all privileged properties"""
+        props = self.list_properties()
+        result = []
+        for prop in props:
+            attr_name = prop.name.replace("-", "_")
+            prop_obj = getattr(PropertyModel, attr_name, None)
+            if prop_obj is not None and getattr(prop_obj, "_category", None) == PropertyCategory.PRIVILEGED:
+                result.append(prop)
+        return result
+
+    def get_waydroid_properties(self):
         """Get all waydroid config properties"""
-        return {name: prop_def for name, prop_def in self._property_definitions.items()
-                if prop_def.category == PropertyCategory.WAYDROID}
+        props = self.list_properties()
+        result = []
+        for prop in props:
+            attr_name = prop.name.replace("-", "_")
+            prop_obj = getattr(PropertyModel, attr_name, None)
+            if prop_obj is not None and getattr(prop_obj, "_category", None) == PropertyCategory.WAYDROID:
+                result.append(prop)
+        return result
 
     def reset_to_defaults(self, category: PropertyCategory):
-        """Reset properties to their default values"""
-        for name, prop_def in self._property_definitions.items():
-            if prop_def.category != category:
-                continue
-            self.set_property_value(name, prop_def.default_value)
+        props = self.list_properties()
+        for prop in props:
+            attr_name = prop.name.replace("-", "_")
+            prop_obj = getattr(PropertyModel, attr_name, None)
+            if prop_obj is not None and getattr(prop_obj, "_category", None) == category:
+                self.set_property(prop.name, prop.get_default_value())
 
 
 class SessionModel(GObject.Object):
@@ -383,11 +368,12 @@ class SessionModel(GObject.Object):
     """
     
     state = GObject.Property(type=object)
+    # FIXME why android version is here?
     android_version = GObject.Property(type=str, default="")
     
     def __init__(self):
         super().__init__()
-        self._change_listeners: Set[Callable[[SessionState], None]] = set()
+        # self._change_listeners: Set[Callable[[SessionState], None]] = set()
         self.set_property("state", SessionState.LOADING)
     
     def set_session_state(self, new_state: SessionState):
@@ -395,20 +381,3 @@ class SessionModel(GObject.Object):
         old_state = self.get_property("state")
         if old_state != new_state:
             self.set_property("state", new_state)
-            self._emit_state_changed(new_state)
-    
-    def _emit_state_changed(self, new_state: SessionState):
-        """Emit state changed signal to all listeners"""
-        for listener in self._change_listeners:
-            try:
-                listener(new_state)
-            except Exception as e:
-                logger.error(f"Error in session state change listener: {e}")
-    
-    def add_change_listener(self, listener: Callable[[SessionState], None]):
-        """Add a listener for session state changes"""
-        self._change_listeners.add(listener)
-    
-    def remove_change_listener(self, listener: Callable[[SessionState], None]):
-        """Remove a session state change listener"""
-        self._change_listeners.discard(listener)

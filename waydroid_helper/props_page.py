@@ -80,86 +80,6 @@ class PropsPage(Gtk.Box):
             "notify::state", self.on_waydroid_waydroid_state_changed
         )
         self._sync_props = True
-        # # self.waydroid.bind_property(
-        # #     "state", self.switch_1, "sensitive", GObject.BindingFlags.SYNC_CREATE)
-
-        # REMOVED: bind_property calls - new architecture handles this automatically
-        # self.waydroid.persist_props.bind_property(
-        #     self.switch_1.get_name(),
-        #     self.switch_1,
-        #     "active",
-        #     GObject.BindingFlags.BIDIRECTIONAL,
-        # )
-
-        # self.waydroid.persist_props.bind_property(
-        #     self.switch_2.get_name(),
-        #     self.switch_2,
-        #     "active",
-        #     GObject.BindingFlags.BIDIRECTIONAL,
-        # )
-        # self.waydroid.persist_props.bind_property(
-        #     self.switch_3.get_name(),
-        #     self.switch_3,
-        #     "active",
-        #     GObject.BindingFlags.BIDIRECTIONAL,
-        # )
-        # self.waydroid.persist_props.bind_property(
-        #     self.switch_4.get_name(),
-        #     self.switch_4,
-        #     "active",
-        #     GObject.BindingFlags.BIDIRECTIONAL,
-        # )
-        # self.waydroid.persist_props.bind_property(
-        #     self.switch_5.get_name(),
-        #     self.switch_5,
-        #     "active",
-        #     GObject.BindingFlags.BIDIRECTIONAL,
-        # )
-        # self.waydroid.persist_props.bind_property(
-        #     self.entry_1.get_name(),
-        #     self.entry_1,
-        #     "text",
-        #     GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
-        # )
-        # self.waydroid.persist_props.bind_property(
-        #     self.entry_2.get_name(),
-        #     self.entry_2,
-        #     "text",
-        #     GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
-        # )
-
-        # self.waydroid.persist_props.bind_property(
-        #     self.entry_3.get_name(),
-        #     self.entry_3,
-        #     "text",
-        #     GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
-        # )
-
-        # self.waydroid.persist_props.bind_property(
-        #     self.entry_4.get_name(),
-        #     self.entry_4,
-        #     "text",
-        #     GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
-        # )
-
-        # self.waydroid.persist_props.bind_property(
-        #     self.entry_5.get_name(),
-        #     self.entry_5,
-        #     "text",
-        #     GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
-        # )
-        # self.waydroid.persist_props.bind_property(
-        #     self.entry_6.get_name(),
-        #     self.entry_6,
-        #     "text",
-        #     GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
-        # )
-        # self.waydroid.privileged_props.bind_property(
-        #     self.switch_21.get_name(),
-        #     self.switch_21,
-        #     "active",
-        #     GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
-        # )
 
         self.save_notification: InfoBar = InfoBar(
             label=_("Restart the session to apply the changes"),
@@ -233,49 +153,49 @@ class PropsPage(Gtk.Box):
     def _setup_property_synchronization(self):
         """Set up manual property synchronization to replace bind_property"""
         # Listen for model changes and update UI accordingly
-        self.waydroid._controller.property_model.add_change_listener(self._on_model_property_changed)
-
+        self.waydroid._controller.property_model.connect("notify", self._on_model_property_changed)
         # Set up initial UI state when properties are loaded
         # self.waydroid.persist_props.connect("notify::state", self._sync_persist_props_to_ui)
         # self.waydroid.privileged_props.connect("notify::state", self._sync_privileged_props_to_ui)
         # self.waydroid.waydroid_props.connect("notify::state", self._sync_waydroid_props_to_ui)
 
-    def _on_model_property_changed(self, property_name: str, value: Any):
+    def _on_model_property_changed(self, obj: GObject.Object, pspec: GObject.ParamSpec):
         """Handle property changes from the model and update UI"""
         # Map property names to UI widgets
         # This is really ugly...
         self._sync_props = True
 
-        if property_name == "ro_product_model":
+        if pspec.name == "ro-product-model":
             self.__on_model_changed()
-        elif property_name == "ro_product_brand":
+        elif pspec.name == "ro-product-brand":
             self.__on_brand_changed()
         else:
             widget_map = {
-                "multi_windows": self.switch_1,
-                "cursor_on_subsurface": self.switch_2,
-                "invert_colors": self.switch_3,
+                "multi-windows": self.switch_1,
+                "cursor-on-subsurface": self.switch_2,
+                "invert-colors": self.switch_3,
                 "suspend": self.switch_4,
                 "uevent": self.switch_5,
-                "fake_touch": self.entry_1,
-                "fake_wifi": self.entry_2,
-                "height_padding": self.entry_3,
-                "width_padding": self.entry_4,
+                "fake-touch": self.entry_1,
+                "fake-wifi": self.entry_2,
+                "height-padding": self.entry_3,
+                "width-padding": self.entry_4,
                 "width": self.entry_5,
                 "height": self.entry_6,
-                "qemu_hw_mainkeys": self.switch_21,
+                "qemu-hw-mainkeys": self.switch_21,
                 # Waydroid config widgets
-                "mount_overlays": self.waydroid_switch_1,
-                "auto_adb": self.waydroid_switch_2,
-                "images_path": self.waydroid_entry_1,
+                "mount-overlays": self.waydroid_switch_1,
+                "auto-adb": self.waydroid_switch_2,
+                "images-path": self.waydroid_entry_1,
             }
 
-            widget = widget_map.get(property_name)
+            widget = widget_map.get(pspec.name)
+            value = obj.get_property(pspec.name)
             if widget:
                 # Temporarily block signals to avoid circular updates
-                if hasattr(widget, 'set_active'):  # Switch
+                if isinstance(widget, Gtk.Switch):
                     widget.set_active(bool(value))
-                elif hasattr(widget, 'set_text'):  # Entry
+                else:
                     widget.set_text(str(value) if value else "")
 
         self._sync_props = False
@@ -357,7 +277,7 @@ class PropsPage(Gtk.Box):
         # If in ERROR state, try to recover after a short delay
         if is_error:
             logger.warning("Privileged properties in ERROR state, attempting recovery...")
-            self._show_error_notification("特权属性加载失败，正在尝试恢复...")
+            self._show_error_notification(_("Privileged properties in ERROR state, attempting recovery..."))
             GLib.timeout_add_seconds(2, self._retry_load_privileged_properties)
 
     def on_waydroid_waydroid_state_changed(
@@ -377,7 +297,7 @@ class PropsPage(Gtk.Box):
         # If in ERROR state, try to recover after a short delay
         if is_error:
             logger.warning("Waydroid properties in ERROR state, attempting recovery...")
-            self._show_error_notification("Waydroid配置加载失败，正在尝试恢复...")
+            self._show_error_notification(_("Waydroid properties in ERROR state, attempting recovery..."))
             GLib.timeout_add_seconds(2, self._retry_load_waydroid_properties)
 
     def on_waydroid_persist_state_changed(
@@ -425,7 +345,7 @@ class PropsPage(Gtk.Box):
         widget.set_reveal_child(reveal_child)
 
     def on_privileged_switch_clicked(
-        self, a: Gtk.Widget, b: GObject.ParamSpec, name: str
+        self, a: Gtk.Switch, b: GObject.ParamSpec, name: str
     ):
         """Handle privileged switch clicks - now with simple state checking"""
         # Simple state check - no more complex connect/disconnect needed!
@@ -433,11 +353,10 @@ class PropsPage(Gtk.Box):
             return
 
         # Update the model with the new value
-        normalized_name = name.replace("-", "_")
-        new_value = a.get_active() if hasattr(a, 'get_active') else False
+        new_value = a.get_active()
 
         # Update the model
-        self.waydroid._controller.property_model.set_property_value(normalized_name, new_value)
+        self.waydroid._controller.property_model.set_property(name, new_value)
 
         self.set_reveal(self.save_privileged_notification, True)
 
@@ -447,12 +366,10 @@ class PropsPage(Gtk.Box):
         if self.waydroid.waydroid_props.get_property("state") != PropsState.READY or self._sync_props:
             return
 
-        # Update the model with the new value
-        normalized_name = name.replace("-", "_")
         new_value = a.get_active()
 
         # Update the model
-        self.waydroid._controller.property_model.set_property_value(normalized_name, new_value)
+        self.waydroid._controller.property_model.set_property(name, new_value)
 
         # Show notification for waydroid config changes
         self.set_reveal(self.save_waydroid_notification, True)
@@ -464,41 +381,24 @@ class PropsPage(Gtk.Box):
             return
 
         # Update the model with the new value
-        normalized_name = name.replace("-", "_")
         new_value = a.get_text()
 
         # Update the model
-        self.waydroid._controller.property_model.set_property_value(normalized_name, new_value)
+        self.waydroid._controller.property_model.set_property(name, new_value)
 
         # Show notification for waydroid config changes
         self.set_reveal(self.save_waydroid_notification, True)
 
-    def __on_persist_text_changed(self, name: str):
-        # Update the model with the new value before saving
-        normalized_name = name.replace("-", "_")
+    def __on_persist_text_changed(self, entry: Gtk.Entry, name: str):
+        new_value = entry.get_text()
 
-        # Find the corresponding entry widget to get the current value
-        widget_map = {
-            "fake-touch": self.entry_1,
-            "fake-wifi": self.entry_2,
-            "height-padding": self.entry_3,
-            "width-padding": self.entry_4,
-            "width": self.entry_5,
-            "height": self.entry_6,
-        }
+        self.waydroid._controller.property_model.set_property(name, new_value)
 
-        widget = widget_map.get(name)
-        if widget:
-            new_value = widget.get_text()
-
-            # Update the model
-            self.waydroid._controller.property_model.set_property_value(normalized_name, new_value)
-
-        self._task.create_task(self.waydroid.save_persist_prop(name))
+        _ = self._task.create_task(self.waydroid.save_persist_prop(name))
         self.timeout_id[name] = None
 
     def on_persist_text_changed(
-        self, a: Gtk.Widget, b: GObject.ParamSpec, name: str, flag: bool = False
+        self, a: Gtk.Entry, b: GObject.ParamSpec, name: str, flag: bool = False
     ):
         """Handle persist text changes - now with simple state checking"""
         # Simple state check - no more complex connect/disconnect needed!
@@ -509,7 +409,7 @@ class PropsPage(Gtk.Box):
             GLib.source_remove(self.timeout_id[name])
 
         self.timeout_id[name] = GLib.timeout_add(
-            1000, partial(self.__on_persist_text_changed, name)
+            1000, partial(self.__on_persist_text_changed, a, name)
         )
         if flag:
             self.set_reveal(self.save_notification, True)
@@ -521,11 +421,10 @@ class PropsPage(Gtk.Box):
             return
 
         # Update the model with the new value
-        normalized_name = name.replace("-", "_")
         new_value = a.get_active()
 
         # Update the model
-        self.waydroid._controller.property_model.set_property_value(normalized_name, new_value)
+        self.waydroid._controller.property_model.set_property(name, new_value)
 
         self.set_reveal(self.save_notification, True)
         self._task.create_task(self.waydroid.save_persist_prop(name))

@@ -663,9 +663,11 @@ class PackageManager(GObject.Object):
                 #     f"pkexec waydroid-cli rm {os.path.join(self.storage_dir, 'local', package_name)}"
                 # )
                 if "props" in self.installed_packages[package_name].keys():
-                    await self.waydroid.remove_extension_props(
+                    success = await self.waydroid.remove_extension_props(
                         self.installed_packages[package_name]["props"]
                     )
+                    if success:
+                        _ = await self.waydroid.upgrade(offline=True)
                 if "install" in self.installed_packages[package_name].keys():
                     await self.post_remove(self.installed_packages[package_name])
                 await self._subprocess.run(
