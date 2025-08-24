@@ -93,10 +93,12 @@ class SharedFoldersWidget(Adw.PreferencesGroup):
         mount_service_name = "waydroid-mount.service"
         try:
             await self._subprocess.run(
-                f"systemctl --user list-unit-files {monitor_service_name}"
+                f"systemctl --user list-unit-files {monitor_service_name}",
+                shell=False
             )
             await self._subprocess.run(
-                f"systemctl list-unit-files {mount_service_name}"
+                f"systemctl list-unit-files {mount_service_name}",
+                shell=False
             )
         except Exception:
             logger.error(
@@ -165,9 +167,10 @@ class SharedFoldersWidget(Adw.PreferencesGroup):
     def restart_service(self):
         async def _restart_service():
             try:
-                await self._subprocess.run("systemctl --user daemon-reload")
+                await self._subprocess.run("systemctl --user daemon-reload", shell=False)
                 await self._subprocess.run(
-                    "systemctl --user restart waydroid-monitor.service"
+                    "systemctl --user restart waydroid-monitor.service",
+                    shell=False
                 )
             except Exception as e:
                 logger.error(e)

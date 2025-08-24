@@ -1,6 +1,7 @@
 # pyright: reportUnknownArgumentType=false, reportUnknownParameterType=false, reportMissingParameterType=false
 import asyncio
 import os
+import shlex
 from typing import TypedDict
 
 
@@ -40,6 +41,7 @@ class SubprocessManager:
         key: str | None = None,
         env: dict[str, str] | None = None,
         wait: bool = True,
+        shell: bool = False,
     )->SubprocessResult:
         if self._semaphore is None:
             raise RuntimeError("Semaphore is not initialized")
@@ -55,21 +57,31 @@ class SubprocessManager:
             #         or "waydroid" == command_list[1]
             #     ):
             #         command = f'flatpak-spawn --host bash -c "{command}"'
-
-            process = await asyncio.create_subprocess_shell(
-                command,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                env={
-                    **os.environ.copy(),
-                    **env,
-                    "PATH": f"/usr/bin:/bin:{os.environ['PATH']}",
-                    "LD_LIBRARY_PATH": "",
-                    "PYTHONPATH": "",
-                    "PYTHONHOME": "",
-                },
-                preexec_fn=os.setsid if flag else None,
-            )
+            env_vars = {
+                **os.environ.copy(),
+                **env,
+                "PATH": f"/usr/bin:/bin:{os.environ['PATH']}",
+                "LD_LIBRARY_PATH": "",
+                "PYTHONPATH": "",
+                "PYTHONHOME": "",
+            }
+            if shell:
+                process = await asyncio.create_subprocess_shell(
+                    command,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    env=env_vars,
+                    preexec_fn=os.setsid if flag else None,
+                )
+            else:
+                command_list = shlex.split(command)
+                process = await asyncio.create_subprocess_exec(
+                    *command_list,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    env=env_vars,
+                    preexec_fn=os.setsid if flag else None,
+                )
 
             if wait:
                 stdout, stderr = await process.communicate()

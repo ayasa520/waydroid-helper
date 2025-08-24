@@ -6,6 +6,7 @@
 import asyncio
 import json
 import os
+import re
 import xml.etree.ElementTree as ET
 from collections.abc import Coroutine, Iterable
 from enum import IntEnum
@@ -77,6 +78,16 @@ class PackageClassListItem(TypedDict):
     description: str
     path: str
     list: list[VariantListItem] | list[PackageListItem]
+
+
+def bash_var_replacement_regex(command: str, var_dict: dict[str, str]) -> str:
+    def replace_match(match: re.Match[str]):
+        var = match.group(1)
+        return var_dict.get(
+            var, match.group(0)
+        )  # 如果找不到对应的变量，返回原始的匹配值
+
+    return re.sub(r"\$(\w+)", replace_match, command)
 
 
 # TODO
@@ -171,9 +182,7 @@ class PackageManager(GObject.Object):
     def __init__(self):
         super().__init__()
         self.state = ExtensionManagerState.UNINITIALIZED
-        self._task.create_task(
-            self.init_manager()
-        )
+        self._task.create_task(self.init_manager())
         os.makedirs(self.storage_dir, exist_ok=True)
 
     async def load_installed(self):
@@ -309,14 +318,18 @@ class PackageManager(GObject.Object):
 
                 # Prefer SHA-256 validation; fall back to MD5 if SHA-256 not provided
                 if sha256 is not None:
-                    result = await self._subprocess.run(f'sha256sum "{dest_path}"')
+                    result = await self._subprocess.run(
+                        f'sha256sum "{dest_path}"', shell=False
+                    )
                     actual_sha256 = result["stdout"].split()[0]
                     if actual_sha256 != sha256:
                         raise ValueError(
                             f"SHA256 mismatch: expected {sha256}, got {actual_sha256}"
                         )
                 elif md5 is not None:
-                    result = await self._subprocess.run(f'md5sum "{dest_path}"')
+                    result = await self._subprocess.run(
+                        f'md5sum "{dest_path}"', shell=False
+                    )
                     actual_md5 = result["stdout"].split()[0]
                     if actual_md5 != md5:
                         raise ValueError(
@@ -342,7 +355,9 @@ class PackageManager(GObject.Object):
 
     def get_all_files_relative(self, directory: str):
         all_files: list[str] = []
-        for root, dirs, files in os.walk(directory): # pyright: ignore[reportUnusedVariable]
+        for root, dirs, files in os.walk(
+            directory
+        ):  # pyright: ignore[reportUnusedVariable]
             for file in files:
                 file_path = os.path.relpath(os.path.join(root, file), directory)
                 all_files.append(file_path)
@@ -367,9 +382,7 @@ class PackageManager(GObject.Object):
                 _md5sums = "md5sums"
 
             if _source not in package_info:
-                logger.warning(
-                    f"Package {package_info['name']} missing {_source}"
-                )
+                logger.warning(f"Package {package_info['name']} missing {_source}")
                 return
 
             has_sha256 = _sha256sums in package_info and bool(package_info[_sha256sums])
@@ -394,24 +407,38 @@ class PackageManager(GObject.Object):
                 )
                 if os.path.exists(file_path):
                     if use_sha256:
-                        result = await self._subprocess.run(f'sha256sum "{file_path}"')
+                        result = await self._subprocess.run(
+                            f'sha256sum "{file_path}"', shell=False
+                        )
                         actual = result["stdout"].split()[0]
                     else:
-                        result = await self._subprocess.run(f'md5sum "{file_path}"')
+                        result = await self._subprocess.run(
+                            f'md5sum "{file_path}"', shell=False
+                        )
                         actual = result["stdout"].split()[0]
 
                     if actual == expected:
                         continue
                     else:
                         if use_sha256:
-                            tasks.append(self.download_file(client, url, file_path, sha256=expected))
+                            tasks.append(
+                                self.download_file(
+                                    client, url, file_path, sha256=expected
+                                )
+                            )
                         else:
-                            tasks.append(self.download_file(client, url, file_path, md5=expected))
+                            tasks.append(
+                                self.download_file(client, url, file_path, md5=expected)
+                            )
                 else:
                     if use_sha256:
-                        tasks.append(self.download_file(client, url, file_path, sha256=expected))
+                        tasks.append(
+                            self.download_file(client, url, file_path, sha256=expected)
+                        )
                     else:
-                        tasks.append(self.download_file(client, url, file_path, md5=expected))
+                        tasks.append(
+                            self.download_file(client, url, file_path, md5=expected)
+                        )
 
             await asyncio.gather(*tasks)
 
@@ -421,18 +448,20 @@ class PackageManager(GObject.Object):
         version_to_sdk = {
             "11": "30",  # Android 11
             "12": "31",  # Android 12
-            "12L": "32", # Android 12L
+            "12L": "32",  # Android 12L
             "13": "33",  # Android 13
             "14": "34",  # Android 14
             "15": "35",  # Android 15
         }
-        
+
         # 精确匹配
         if android_version in version_to_sdk:
             return version_to_sdk[android_version]
-        
+
         # 如果找不到精确匹配，返回默认值 30 (Android 11)
-        logger.warning(f"Unknown Android version: {android_version}, using default SDK 30")
+        logger.warning(
+            f"Unknown Android version: {android_version}, using default SDK 30"
+        )
         return "30"
 
     async def install_package(self, name: str, version: str):
@@ -481,12 +510,19 @@ class PackageManager(GObject.Object):
             package = f"{startdir}/{package_name}-{package_version}.tar.gz"
             await self._subprocess.run(
                 f'{os.environ["WAYDROID_CLI_PATH"]} call_package "{startdir}" "{package_name}" "{package_version}"',
-                env={"CARCH": self.arch, "SDK": self.get_android_version_to_sdk(self.waydroid.get_android_version())},
+                env={
+                    "CARCH": self.arch,
+                    "SDK": self.get_android_version_to_sdk(
+                        self.waydroid.get_android_version()
+                    ),
+                },
+                shell=False,
             )
             if "install" in package_info.keys():
                 await self.pre_install(package_info)
             await self._subprocess.run(
-                f'pkexec {os.environ["WAYDROID_CLI_PATH"]} install "{package}"'
+                f'pkexec {os.environ["WAYDROID_CLI_PATH"]} install "{package}"',
+                shell=False,
             )
 
             installed_files = self.get_all_files_relative(pkgdir)
@@ -512,7 +548,7 @@ class PackageManager(GObject.Object):
                 cache_install = os.path.join(startdir, package_info["install"])
                 local_install = os.path.join(local_dir, "install")
                 await self._subprocess.run(
-                    f"install -Dm 755 {cache_install} {local_install}"
+                    f"install -Dm 755 {cache_install} {local_install}", shell=False
                 )
 
             # 标记已安装包
@@ -561,14 +597,16 @@ class PackageManager(GObject.Object):
                 commands = await self.generate_command(func_name, args)
                 if commands:
                     for cmd in commands:
-                        resp = await self._subprocess.run(
+
+                        cmd = bash_var_replacement_regex(
                             cmd,
-                            env={
+                            {
                                 "pkgdir": os.path.join(
                                     self.cache_dir, "extensions", info["name"], "pkg"
                                 )
                             },
                         )
+                        resp = await self._subprocess.run(cmd, shell=False)
                         logger.info(resp)
                 else:
                     logger.error(
@@ -592,7 +630,7 @@ class PackageManager(GObject.Object):
         package_path = os.path.join(data_dir, "system/packages.xml")
         async with aiofiles.open(package_path, "rb") as f:
             header = await f.read(4)
-            if header == b'ABX\0':
+            if header == b"ABX\0":
                 content = AbxReader(package_path).to_xml_string()
             else:
                 await f.seek(0)
@@ -623,40 +661,58 @@ class PackageManager(GObject.Object):
                 src = args.get("src")
                 dest = args.get("dest")
                 if src and dest:
-                    return [command_map[func_name].format(
-                        cli_path=os.environ["WAYDROID_CLI_PATH"], src=src, dest=dest
-                    )]
+                    return [
+                        command_map[func_name].format(
+                            cli_path=os.environ["WAYDROID_CLI_PATH"], src=src, dest=dest
+                        )
+                    ]
             elif func_name == "rm_apk":
                 apks = " ".join(['"' + apk + '"' for apk in args])
+
                 # 等待直到 self.waydroid.state == WaydroidState.RUNNING, 超时 raise
                 async def wait_for_running(timeout: float = 30.0):
                     start_time = asyncio.get_event_loop().time()
                     while True:
                         await self.waydroid.refresh_persist_prop("boot_completed")
-                        if self.waydroid.state == WaydroidState.RUNNING and self.waydroid.persist_props.get_property("boot_completed"): 
+                        if (
+                            self.waydroid.state == WaydroidState.RUNNING
+                            and self.waydroid.persist_props.get_property(
+                                "boot_completed"
+                            )
+                        ):
                             return
                         if asyncio.get_event_loop().time() - start_time > timeout:
-                            raise asyncio.TimeoutError(f"Failed to start waydroid session")
+                            raise asyncio.TimeoutError(
+                                f"Failed to start waydroid session"
+                            )
                         await asyncio.sleep(0.5)
+
                 if self.waydroid.state == WaydroidState.STOPPED:
                     self._task.create_task(self.waydroid.start_session())
                 await wait_for_running()
 
-                commands = [command_map[func_name].format(
-                    cli_path=os.environ["WAYDROID_CLI_PATH"], apks=apks
-                )]
+                commands = [
+                    command_map[func_name].format(
+                        cli_path=os.environ["WAYDROID_CLI_PATH"], apks=apks
+                    )
+                ]
                 paths = await self.get_apk_path(args)
                 if paths.strip() != "":
-                    commands.insert(0, command_map["rm_data"].format(
-                        cli_path=os.environ["WAYDROID_CLI_PATH"], paths=paths
-                    ))
+                    commands.insert(
+                        0,
+                        command_map["rm_data"].format(
+                            cli_path=os.environ["WAYDROID_CLI_PATH"], paths=paths
+                        ),
+                    )
                 return commands
-                
+
             else:
                 paths = " ".join(['"' + path + '"' for path in args])
-                return [command_map[func_name].format(
-                    cli_path=os.environ["WAYDROID_CLI_PATH"], paths=paths
-                )]
+                return [
+                    command_map[func_name].format(
+                        cli_path=os.environ["WAYDROID_CLI_PATH"], paths=paths
+                    )
+                ]
 
         return None
 
@@ -677,7 +733,8 @@ class PackageManager(GObject.Object):
                 version = self.installed_packages[package_name]["version"]
                 self.emit("uninstallation-started", package_name, version)
                 await self._subprocess.run(
-                    f'pkexec {os.environ["WAYDROID_CLI_PATH"]} rm_overlay {" ".join(self.installed_packages[package_name]["installed_files"])}'
+                    f'pkexec {os.environ["WAYDROID_CLI_PATH"]} rm_overlay {" ".join(self.installed_packages[package_name]["installed_files"])}',
+                    shell=False,
                 )
                 # await self._subprocess.run(
                 #     f"pkexec waydroid-cli rm {os.path.join(self.storage_dir, 'local', package_name)}"
@@ -691,7 +748,8 @@ class PackageManager(GObject.Object):
                 if "install" in self.installed_packages[package_name].keys():
                     await self.post_remove(self.installed_packages[package_name])
                 await self._subprocess.run(
-                    f"rm -rf {os.path.join(self.storage_dir, 'local', package_name)}"
+                    f"rm -rf {os.path.join(self.storage_dir, 'local', package_name)}",
+                    shell=False,
                 )
                 # await asyncio.gather(coro1, coro2, coro3)
 

@@ -434,7 +434,7 @@ class InstanceDetailPage(NavigationPage):
 
             # 执行命令
             subprocess_manager = SubprocessManager()
-            result = await subprocess_manager.run(command)
+            result = await subprocess_manager.run(command, shell=False)
 
             logger.info(f"Clear cache command result: {result}")
 

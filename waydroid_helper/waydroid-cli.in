@@ -116,7 +116,7 @@ function install_tar_gz() {
 }
 
 function cp_to_data() {
-    eval "src_path=\"$1\""
+    src_path=$1
     dest_path=$(realpath -m "$DATA_DIR/$2")
     if [[ "$dest_path" == "$DATA_DIR"/* ]]; then
         # copy -rf "$1" "$dest_path"
