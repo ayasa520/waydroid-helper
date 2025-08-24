@@ -48,6 +48,7 @@ waydroid_helper_sources = [
     'waydroid.py',
     'general_page.py',
     'instance_detail_page.py',
+    'gsf_retriever.py',
     'props_page.py',
     'extensions_page.py',
     'infobar.py',
@@ -68,6 +69,7 @@ util_sources = [
     'util/template.py',
     'util/abx_reader.py', 
     'util/adb_helper.py',
+    'util/state_waiter.py',
 ]
 
 tools_sources = [
@@ -88,6 +90,7 @@ compat_widget_sources = [
     'compat_widget/file_dialog.py',
     'compat_widget/shared_folder_dialog.py',
     'compat_widget/animation_target.py',
+    'compat_widget/dialog.py',
 ]
 
 # 按子目录分组的 controller 源文件

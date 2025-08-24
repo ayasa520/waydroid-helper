@@ -17,6 +17,23 @@ function run_waydroid_upgrade {
     fi
 }
 
+function get_android_id {
+    waydroid shell -- sh -c "am start -a android.settings.ADD_ACCOUNT_SETTINGS"
+    
+    # 捕获 sqlite3 命令的输出
+    local output
+    output=$(waydroid shell -- sh -c "sqlite3 /data/data/*/*/gservices.db 'select * from main where name = \"android_id\";'" 2>&1)
+    
+    # 检查输出是否匹配预期的 android_id 格式
+    if [[ "$output" =~ ^android_id\|([0-9]+)$ ]]; then
+        # 提取数字部分并输出
+        echo "$output"
+    else
+        # 如果不是正常格式，重定向到标准错误流
+        echo "$output" >&2
+    fi
+}
+
 # $1: source
 # $2: /var/lib/waydroid/$2
 function copy_to_var() {
@@ -162,6 +179,22 @@ function rm_data(){
     done
 }
 
+function clear_package_data() {
+    local packages=("$@")
+    for package in "${packages[@]}"; do
+        echo "Clearing all data for package: $package"
+        # 使用 pm clear 命令清除包的所有数据
+        waydroid shell -- sh -c "pm clear $package"
+        
+        # 检查命令执行结果
+        if [ $? -eq 0 ]; then
+            echo "Successfully cleared data for package: $package"
+        else
+            echo "Failed to clear data for package: $package" >&2
+        fi
+    done
+}
+
 action=$1
 shift
 
@@ -226,6 +259,13 @@ case "$action" in
         fi
         rm_data "$@"
     ;;
+    clear_package_data)
+        if [ $# -lt 1 ]; then
+            echo "Usage: $0 clear_package_data <package_names>"
+            exit 1
+        fi
+        clear_package_data "$@"
+    ;;
     install)
         if [ $# -lt 1 ]; then
             echo "Usage: $0 install <package>"
@@ -257,6 +297,9 @@ case "$action" in
         source=$1
         destination=$2
         cp_to_data "$source" "$destination"
+    ;;
+    get_android_id)
+        get_android_id
     ;;
     clear_package_cache)
         # Change to the system directory to handle wildcards properly

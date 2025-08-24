@@ -11,6 +11,7 @@ waydroid_helper/infobar.py
 waydroid_helper/shared_folder.py
 waydroid_helper/available_version_page.py
 waydroid_helper/waydroid.py
+waydroid_helper/gsf_retriever.py
 waydroid_helper/util/subprocess_manager.py
 waydroid_helper/util/log.py
 waydroid_helper/util/adb_helper.py
@@ -19,6 +20,7 @@ waydroid_helper/util/template.py
 waydroid_helper/util/abx_reader.py
 waydroid_helper/util/task.py
 waydroid_helper/util/arch.py
+waydroid_helper/util/state_waiter.py
 waydroid_helper/util/__init__.py
 waydroid_helper/tools/extensions_manager.py
 waydroid_helper/tools/monitor_service.py

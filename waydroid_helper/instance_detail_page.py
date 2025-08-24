@@ -20,7 +20,7 @@ from waydroid_helper.infobar import InfoBar
 from waydroid_helper.shared_folder import SharedFoldersWidget
 from waydroid_helper.util import Task, logger
 from waydroid_helper.util.subprocess_manager import SubprocessManager
-from waydroid_helper.waydroid import Waydroid, WaydroidState
+from waydroid_helper.waydroid import Waydroid
 from waydroid_helper.compat_widget import NavigationPage, HeaderBar, ToolbarView, ADW_VERSION
 from waydroid_helper.compat_widget.message_dialog import MessageDialog
 import os
@@ -229,6 +229,10 @@ class InstanceDetailPage(NavigationPage):
         cache_management_group = self._create_cache_management_group()
         prefs_page.add(cache_management_group)
 
+        # Google Play 服务组
+        google_play_group = self._create_google_play_group()
+        prefs_page.add(google_play_group)
+
         # InfoBar for shared folders
         self.infobar: InfoBar = InfoBar(
             label=_("Restart the systemd user service immediately"),
@@ -256,7 +260,7 @@ class InstanceDetailPage(NavigationPage):
         self.key_mapping_toggle_button = Gtk.Button.new_with_label(_("Open"))
         self.key_mapping_toggle_button.set_sensitive(False)
         self.key_mapping_toggle_button.add_css_class("suggested-action")
-        self.key_mapping_toggle_button.set_size_request(120, -1)  # 设置固定宽度
+        self.key_mapping_toggle_button.set_size_request(160, 40)  # 统一宽度
         self.key_mapping_toggle_button.connect("clicked", self.on_key_mapping_toggle_clicked)
 
         key_mapping_row.add_suffix(self.key_mapping_toggle_button)
@@ -277,7 +281,7 @@ class InstanceDetailPage(NavigationPage):
         # 清除缓存按钮
         self.clear_cache_button = Gtk.Button.new_with_label(_("Clear Cache"))
         self.clear_cache_button.add_css_class("destructive-action")
-        self.clear_cache_button.set_size_request(120, -1)  # 设置固定宽度，与上面按钮一致
+        self.clear_cache_button.set_size_request(160, 40)  # 统一宽度
         self.clear_cache_button.connect("clicked", self.on_clear_cache_clicked)
 
         clear_cache_row.add_suffix(self.clear_cache_button)
@@ -495,3 +499,32 @@ class InstanceDetailPage(NavigationPage):
         dialog.set_default_response(Gtk.ResponseType.OK)
 
         dialog.present()
+
+    def _create_google_play_group(self):
+        """创建 Google Play 服务组"""
+        group = Adw.PreferencesGroup.new()
+        group.set_title(_("Google Play Services"))
+
+        # GSF ID Retriever row
+        gsf_id_row = Adw.ActionRow.new()
+        gsf_id_row.set_title(_("GSF ID Retriever"))
+        gsf_id_row.set_subtitle(_("Retrieve Google Services Framework ID for Google Play registration"))
+
+        # GSF ID Retriever button
+        self.gsf_id_button = Gtk.Button.new_with_label(_("Retrieve GSF ID"))
+        self.gsf_id_button.add_css_class("suggested-action")
+        self.gsf_id_button.set_size_request(160, 40)
+        self.gsf_id_button.connect("clicked", self._on_gsf_id_button_clicked)
+
+        gsf_id_row.add_suffix(self.gsf_id_button)
+        group.add(gsf_id_row)
+
+        return group
+
+    def _on_gsf_id_button_clicked(self, button):
+        """Handle GSF ID Retriever button click"""
+        from .gsf_retriever import GSFIDRetrieverDialog
+        parent_window = self.get_root()
+        if parent_window:
+            retriever = GSFIDRetrieverDialog(parent_window, self.waydroid)
+            retriever.present()

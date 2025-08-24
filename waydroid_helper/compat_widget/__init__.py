@@ -6,6 +6,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
 from .animation_target import PropertyAnimationTarget
+from .dialog import Dialog
 from .file_dialog import FileDialog
 from .header_bar import HeaderBar
 from .message_dialog import MessageDialog
@@ -25,6 +26,7 @@ __all__ = [
     "ToolbarView",
     "Spinner",
     "MessageDialog",
+    "Dialog",
     "HeaderBar",
     "FileDialog",
     "SharedFolderDialog",

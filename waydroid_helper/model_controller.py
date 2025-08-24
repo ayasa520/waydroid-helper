@@ -120,6 +120,8 @@ class ModelController(GObject.Object):
                 # Update session state
                 self.session_model.set_session_state(new_state)
 
+                _ = await self.refresh_persist_property("boot-completed")
+
                 # Handle state transitions
                 await self._handle_session_state_transition(old_state, new_state)
 
@@ -310,7 +312,7 @@ class ModelController(GObject.Object):
 
             self.property_model.set_property_raw_value(property_name, raw_value)
 
-            logger.info(f"Refreshed persist property {property_name} = {raw_value}")
+            logger.debug(f"Refreshed persist property {property_name} = {raw_value}")
             return True
 
         except Exception as e:
