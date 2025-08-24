@@ -8,7 +8,6 @@ This module implements a clean separation between data models and business logic
 eliminating the complex signal management issues in the original implementation.
 """
 
-from tkinter import N
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -16,8 +15,7 @@ gi.require_version("Adw", "1")
 
 import asyncio
 import enum
-from typing import Any, Callable, Dict, Optional, Set
-from dataclasses import dataclass, field
+from typing import Any
 from functools import partial
 from gettext import gettext as _
 
