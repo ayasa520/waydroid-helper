@@ -415,6 +415,26 @@ class PackageManager(GObject.Object):
 
             await asyncio.gather(*tasks)
 
+    def get_android_version_to_sdk(self, android_version: str) -> str:
+        """将 Android 版本转换为对应的 SDK 版本"""
+        # Android 版本到 SDK 版本的映射
+        version_to_sdk = {
+            "11": "30",  # Android 11
+            "12": "31",  # Android 12
+            "12L": "32", # Android 12L
+            "13": "33",  # Android 13
+            "14": "34",  # Android 14
+            "15": "35",  # Android 15
+        }
+        
+        # 精确匹配
+        if android_version in version_to_sdk:
+            return version_to_sdk[android_version]
+        
+        # 如果找不到精确匹配，返回默认值 30 (Android 11)
+        logger.warning(f"Unknown Android version: {android_version}, using default SDK 30")
+        return "30"
+
     async def install_package(self, name: str, version: str):
         async with self._package_lock:
             self.emit("installation-started", name, version)
@@ -461,7 +481,7 @@ class PackageManager(GObject.Object):
             package = f"{startdir}/{package_name}-{package_version}.tar.gz"
             await self._subprocess.run(
                 f'{os.environ["WAYDROID_CLI_PATH"]} call_package "{startdir}" "{package_name}" "{package_version}"',
-                env={"CARCH": self.arch, "SDK": "30"},
+                env={"CARCH": self.arch, "SDK": self.get_android_version_to_sdk(self.waydroid.get_android_version())},
             )
             if "install" in package_info.keys():
                 await self.pre_install(package_info)
