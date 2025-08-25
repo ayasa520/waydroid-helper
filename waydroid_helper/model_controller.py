@@ -373,16 +373,17 @@ class ModelController(GObject.Object):
     async def reset_privileged_properties(self) -> bool:
         """Reset all privileged properties to defaults"""
         try:
-            # Reset in model
             self.property_model.reset_to_defaults(PropertyCategory.PRIVILEGED)
 
-            # Reset in config
             props = self.property_model.get_privileged_properties()
             for prop in props:
                 self.config_manager.set_privileged_property(prop.get_nick(), "")
 
-            # Save config
-            return await self.config_manager.save_config()
+            success = await self.config_manager.save_config()
+            if success:
+                return await self.upgrade(offline=True)
+
+            return success
 
         except Exception as e:
             logger.error(f"Failed to reset privileged properties: {e}")
@@ -420,18 +421,19 @@ class ModelController(GObject.Object):
     async def reset_waydroid_properties(self) -> bool:
         """Reset all waydroid config properties to defaults"""
         try:
-            # Reset in model
             self.property_model.reset_to_defaults(PropertyCategory.WAYDROID)
 
-            # Reset in config
             props = self.property_model.get_waydroid_properties()
             for prop in props:
                 nick = prop.get_nick()
                 raw_value = self.property_model.get_property_raw_value(prop.get_name())
                 self.config_manager.set_waydroid_property(nick, raw_value)
 
-            # Save config
-            return await self.config_manager.save_config()
+            success = await self.config_manager.save_config()
+            if success:
+                return await self.upgrade(offline=True)
+
+            return success
 
         except Exception as e:
             logger.error(f"Failed to reset waydroid properties: {e}")

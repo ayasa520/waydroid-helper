@@ -8,6 +8,8 @@ from typing import Any, Callable
 
 import gi
 
+from waydroid_helper.gpu_combo_row import GpuComboRow
+
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
@@ -45,6 +47,7 @@ class PropsPage(Gtk.Box):
     waydroid_switch_1: Gtk.Switch = Gtk.Template.Child()
     waydroid_switch_2: Gtk.Switch = Gtk.Template.Child()
     waydroid_entry_1: Gtk.Entry = Gtk.Template.Child()
+    gpu_combo_row: GpuComboRow = Gtk.Template.Child()
     overlay: Gtk.Overlay | None = None
     waydroid: Waydroid = GObject.Property(
         default=None, type=Waydroid
@@ -95,6 +98,12 @@ class PropsPage(Gtk.Box):
             label=_("Save and restart the container"),
             cancel_callback=self.on_restore_waydroid_button_clicked,
             ok_callback=self.on_apply_waydroid_button_clicked,
+        )
+
+        self.save_waydroid_notification_upgrade: InfoBar = InfoBar(
+            label=_("Save and restart the container"),
+            cancel_callback=self.on_restore_waydroid_button_clicked,
+            ok_callback=partial(self.on_apply_waydroid_button_clicked, upgrade=True),
         )
 
         model = Gtk.StringList.new(strings=list(self.items["index"].keys()))
@@ -149,6 +158,7 @@ class PropsPage(Gtk.Box):
                                      partial(self.on_waydroid_switch_clicked, name=self.waydroid_switch_2.get_name()))
         self.waydroid_entry_1.connect("notify::text",
                                     partial(self.on_waydroid_text_changed, name=self.waydroid_entry_1.get_name()))
+        self.gpu_combo_row.connect("notify::selected-item", partial(self.__on_waydroid_combo_row_selected_item, name=self.gpu_combo_row.get_name()))
 
     def _setup_property_synchronization(self):
         """Set up manual property synchronization to replace bind_property"""
@@ -169,6 +179,8 @@ class PropsPage(Gtk.Box):
             self.__on_model_changed()
         elif pspec.name == "ro-product-brand":
             self.__on_brand_changed()
+        elif pspec.name == "gpu":
+            self.gpu_combo_row.set_selected_value(obj.get_property(pspec.name))
         else:
             widget_map = {
                 "multi-windows": self.switch_1,
@@ -292,6 +304,7 @@ class PropsPage(Gtk.Box):
         self.waydroid_switch_1.set_sensitive(is_ready)
         self.waydroid_switch_2.set_sensitive(is_ready)
         self.waydroid_entry_1.set_sensitive(is_ready)
+        self.gpu_combo_row.set_sensitive(is_ready)
         self.reset_waydroid_prop_btn.set_sensitive(is_ready)
 
         # If in ERROR state, try to recover after a short delay
@@ -325,6 +338,7 @@ class PropsPage(Gtk.Box):
             and not self.save_notification.get_reveal_child()
             and not self.save_privileged_notification.get_reveal_child()
             and not self.save_waydroid_notification.get_reveal_child()
+            and not self.save_waydroid_notification_upgrade.get_reveal_child()
         ):
             if self.overlay:
                 self.remove(self.overlay)
@@ -334,14 +348,22 @@ class PropsPage(Gtk.Box):
                 self.overlay.set_child(self.save_notification)
                 self.overlay.add_overlay(self.save_privileged_notification)
                 self.overlay.add_overlay(self.save_waydroid_notification)
+                self.overlay.add_overlay(self.save_waydroid_notification_upgrade)
             elif widget == self.save_privileged_notification:
                 self.overlay.set_child(self.save_privileged_notification)
                 self.overlay.add_overlay(self.save_notification)
                 self.overlay.add_overlay(self.save_waydroid_notification)
-            else:  # waydroid notification
+                self.overlay.add_overlay(self.save_waydroid_notification_upgrade)
+            elif widget == self.save_waydroid_notification:
                 self.overlay.set_child(self.save_waydroid_notification)
                 self.overlay.add_overlay(self.save_notification)
                 self.overlay.add_overlay(self.save_privileged_notification)
+                self.overlay.add_overlay(self.save_waydroid_notification_upgrade)
+            else:
+                self.overlay.set_child(self.save_waydroid_notification_upgrade)
+                self.overlay.add_overlay(self.save_notification)
+                self.overlay.add_overlay(self.save_privileged_notification)
+                self.overlay.add_overlay(self.save_waydroid_notification)
         widget.set_reveal_child(reveal_child)
 
     def on_privileged_switch_clicked(
@@ -388,6 +410,17 @@ class PropsPage(Gtk.Box):
 
         # Show notification for waydroid config changes
         self.set_reveal(self.save_waydroid_notification, True)
+    
+    def __on_waydroid_combo_row_selected_item(self, comborow: GpuComboRow, GParamObject: GObject.ParamSpec, name: str):
+        """Handle gpu combo row selection - now with simple state checking"""
+        if self.waydroid.waydroid_props.get_property("state") != PropsState.READY or self._sync_props:
+            return
+
+        new_value = comborow.get_selected_value()
+
+        self.waydroid._controller.property_model.set_property(name, new_value)
+
+        self.set_reveal(self.save_waydroid_notification_upgrade, True)
 
     def __on_persist_text_changed(self, entry: Gtk.Entry, name: str):
         new_value = entry.get_text()
@@ -452,9 +485,9 @@ class PropsPage(Gtk.Box):
         # Restore waydroid config properties from file
         self._task.create_task(self.waydroid.restore_waydroid_props())
 
-    def on_apply_waydroid_button_clicked(self, button: Gtk.Button):
+    def on_apply_waydroid_button_clicked(self, button: Gtk.Button, upgrade: bool = False):
         # Save waydroid config properties
-        self._task.create_task(self.waydroid.save_waydroid_props())
+        self._task.create_task(self.waydroid.save_waydroid_props(upgrade=upgrade))
 
     @Gtk.Template.Callback()
     def on_reset_persist_clicked(self, button: Gtk.Button):

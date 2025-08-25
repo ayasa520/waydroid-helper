@@ -277,6 +277,14 @@
                 </child>
               </object>
             </child>
+            <child>
+              <object class="GpuComboRow" id="gpu_combo_row">
+                <property name="name">gpu</property>
+                <property name="title">gpu</property>
+                <property name="sensitive">False</property>
+                <property name="subtitle" translatable="true">Choose which GPU should be used by Waydroid</property>
+              </object>
+            </child>
           </object>
         </child>
       </object>

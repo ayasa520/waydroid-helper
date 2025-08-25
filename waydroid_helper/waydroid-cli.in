@@ -34,6 +34,20 @@ function get_android_id {
     fi
 }
 
+function get_gpu_info {
+    for render in /dev/dri/renderD*; do
+        pci_path=$(readlink -f /sys/class/drm/$(basename $render)/device)
+        pci_addr=$(basename $pci_path)
+        gpu_info=$(lspci -nn -s "$pci_addr" | grep '\[03')
+       
+        if [ -n "$gpu_info" ]; then
+            # e.g. "Display controller [0380]: Red Hat, Inc. Virtio 1.0 GPU [1af4:1050] (rev 01)"
+            short_name=$(echo "$gpu_info" | sed -E 's/.*]:\s*(.*)\s*\[.*$/\1/')
+            echo "$render : $short_name"
+        fi
+    done
+}
+
 # $1: source
 # $2: /var/lib/waydroid/$2
 function copy_to_var() {
@@ -329,6 +343,9 @@ case "$action" in
         else
             echo "No package cache files found to clear"
         fi
+    ;;
+    get_gpu_info)
+        get_gpu_info
     ;;
     *)
         echo "Unknown action: $action"

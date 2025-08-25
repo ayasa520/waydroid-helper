@@ -306,9 +306,13 @@ class WaydroidCompat(GObject.Object):
         """Restore privileged properties"""
         return await self._controller.restore_privileged_properties()
 
-    async def save_waydroid_props(self):
+    async def save_waydroid_props(self, upgrade: bool = False):
         """Save waydroid config properties"""
-        return await self._controller.save_all_waydroid_properties()
+        success = await self._controller.save_all_waydroid_properties()
+        if success and upgrade:
+            logger.debug("Upgrade waydroid config properties")
+            return await self._controller.upgrade(offline=True)
+        return success
 
     async def reset_waydroid_props(self):
         """Reset waydroid config properties"""

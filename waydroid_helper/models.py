@@ -261,6 +261,14 @@ class PropertyModel(GObject.Object):
         category=PropertyCategory.WAYDROID,
     )
 
+    gpu = categorized_property(
+        type=str,
+        default="",
+        nick="drm_device",
+        blurb=_("Choose which GPU should be used by Waydroid"),
+        category=PropertyCategory.WAYDROID,
+    )
+
     def __init__(self):
         super().__init__()
         # self._properties: Dict[str, Any] = {}

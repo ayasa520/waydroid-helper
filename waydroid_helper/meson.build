@@ -58,6 +58,7 @@ waydroid_helper_sources = [
     'model_controller.py',
     'models.py',
     'sdk.py',
+    'gpu_combo_row.py',
 ]
 util_sources = [
     'util/__init__.py',
